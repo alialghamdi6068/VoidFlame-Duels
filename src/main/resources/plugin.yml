@@ -18,6 +18,7 @@ commands:
     usage: /queue [kit|leave]
   rematch:
     description: Request a rematch with your last opponent.
+    usage: /rematch [accept <player>]
   rejoin:
     description: Rejoin your disconnected duel.
   duels:
@@ -26,6 +27,13 @@ commands:
   spectate:
     description: Spectate an active duel.
     usage: /spectate <player>
+  kiteditor:
+    description: Edit and save your inventory layout for a kit.
+    usage: /kiteditor <kit>
+    aliases: [kit-editor]
+  party:
+    description: Manage your party.
+    usage: /party <create|invite|accept|leave|kick|disband|info>
 
 permissions:
   voidflame.duels.admin:
