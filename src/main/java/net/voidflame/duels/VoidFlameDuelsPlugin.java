@@ -13,6 +13,8 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     private DuelRequestManager requests;
     private RematchManager rematches;
     private DuelMenu menu;
+    private ScoreboardManager scoreboardManager;
+    private SpectatorManager spectatorManager;
 
     @Override
     public void onEnable() {
@@ -32,6 +34,8 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         queueManager = new QueueManager(this);
         matchManager = new MatchManager(this, queueManager, arenaManager, kitManager);
         menu = new DuelMenu(this);
+        scoreboardManager = new ScoreboardManager(this);
+        spectatorManager = new SpectatorManager(this);
 
         coreServices.register(QueueManager.class, queueManager);
         coreServices.register(MatchManager.class, matchManager);
@@ -41,6 +45,9 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(queueManager, this);
         getServer().getPluginManager().registerEvents(matchManager, this);
         getServer().getPluginManager().registerEvents(menu, this);
+        getServer().getPluginManager().registerEvents(spectatorManager, this);
+        getServer().getScheduler().runTaskTimer(this, scoreboardManager::updateAll, 20L, 20L);
+        getServer().getScheduler().runTask(this, scoreboardManager::updateAll);
 
         DuelCommand command = new DuelCommand(this);
         register("duel", command);
@@ -63,6 +70,9 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         if (matchManager != null) matchManager.shutdown();
+        if (spectatorManager != null) spectatorManager.shutdown();
+        if (requests != null) requests.clear();
+        if (rematches != null) rematches.clear();
         if (queueManager != null) queueManager.shutdown();
         if (coreServices != null) {
             coreServices.unregister(QueueManager.class);
@@ -85,4 +95,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     public DuelRequestManager requests() { return requests; }
     public RematchManager rematches() { return rematches; }
     public DuelMenu menu() { return menu; }
+    public ScoreboardManager scoreboardManager() { return scoreboardManager; }
+    public SpectatorManager spectatorManager() { return spectatorManager; }
 }
