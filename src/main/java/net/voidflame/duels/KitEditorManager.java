@@ -69,7 +69,7 @@ public final class KitEditorManager implements Listener {
         event.setCancelled(true);
         if (event.getRawSlot() < 0 || event.getRawSlot() >= PLAYER_SLOTS) return;
         if (event.getClick().isShiftClick() || event.getClick().isKeyboardClick()
-                || event.getClick().isCreativeAction() || event.getClick().isDoubleClick()) return;
+                || event.getClick().isCreativeAction()) return;
         if (event.getClick() != ClickType.LEFT && event.getClick() != ClickType.RIGHT) return;
 
         int slot = event.getRawSlot();
