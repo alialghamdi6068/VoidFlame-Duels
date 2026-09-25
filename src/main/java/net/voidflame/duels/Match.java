@@ -107,8 +107,13 @@ public final class Match {
     }
 
     void restore(Player player) {
-        if (player.getUniqueId().equals(first)) firstSnapshot.restore(player);
-        else if (player.getUniqueId().equals(second)) secondSnapshot.restore(player);
+        snapshot(player.getUniqueId()).restore(player);
+    }
+
+    PlayerSnapshot snapshot(UUID player) {
+        if (player.equals(first)) return firstSnapshot;
+        if (player.equals(second)) return secondSnapshot;
+        throw new IllegalArgumentException("Player is not part of this match");
     }
 
     private void cancelTasks() {
