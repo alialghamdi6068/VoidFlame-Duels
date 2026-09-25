@@ -1,12 +1,29 @@
 name: VoidFlame-Duels
 version: 1.0.0
 main: net.voidflame.duels.VoidFlameDuelsPlugin
-description: Professional Minecraft practice and duels system for VoidFlame MC.
+description: Professional practice and duels system for VoidFlame MC.
 author: VoidFlame
 website: https://github.com/alialghamdi6068/VoidFlame-Duels
 api-version: '26.2'
 load: POSTWORLD
 depend: [VoidFlame-Core]
+
+commands:
+  duel:
+    description: Send or manage a duel request.
+    usage: /duel <player> [kit]
+    aliases: [duels]
+  queue:
+    description: Join or leave a duel queue.
+    usage: /queue [kit|leave]
+  rematch:
+    description: Request a rematch with your last opponent.
+  rejoin:
+    description: Rejoin your disconnected duel.
+  duels:
+    description: Open the duel queue menu.
+    usage: /duels
+
 permissions:
   voidflame.duels.admin:
     description: Administrative access to VoidFlame Duels.
