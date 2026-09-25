@@ -13,6 +13,7 @@ public final class RematchManager {
     public RematchManager(VoidFlameDuelsPlugin plugin) { this.plugin = plugin; }
 
     public void remember(UUID player, UUID opponent) { lastOpponent.put(player, opponent); }
+
     public boolean send(Player sender) {
         UUID opponent = lastOpponent.get(sender.getUniqueId());
         if (opponent == null) return false;
@@ -22,11 +23,12 @@ public final class RematchManager {
         target.sendMessage(plugin.message("rematch-received").replace("<player>", sender.getName()));
         return true;
     }
+
     public boolean accept(Player target, Player sender) {
         UUID pendingSender = pending.get(target.getUniqueId());
         if (pendingSender == null || !pendingSender.equals(sender.getUniqueId())) return false;
         pending.remove(target.getUniqueId());
-        plugin.matchManager().startDirect(target, sender, plugin.matchManager().lastKit(sender.getUniqueId()));
-        return true;
+        KitType kit = plugin.matchManager().lastKit(sender.getUniqueId());
+        return plugin.matchManager().startDirect(target, sender, kit);
     }
 }
