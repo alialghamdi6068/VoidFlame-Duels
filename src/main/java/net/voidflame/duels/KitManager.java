@@ -18,17 +18,29 @@ public final class KitManager {
     public KitManager(VoidFlameDuelsPlugin plugin) { this.plugin = plugin; }
 
     public boolean apply(Player player, KitType kit) {
+        if (!applyBase(player, kit)) return false;
+        plugin.kitEditorManager().applySavedLayout(player, kit);
+        player.updateInventory();
+        return true;
+    }
+
+    public boolean applyBase(Player player, KitType kit) {
         PlayerInventory inv = player.getInventory();
         inv.clear();
+
         ConfigurationSection root = plugin.getConfig().getConfigurationSection("kits." + key(kit));
         if (root == null) return false;
+
         applyArmor(inv, root.getString("armor", "NETHERITE_SET_PROT4"));
+
         for (Map<?, ?> item : root.getMapList("items")) {
             Object rawSlot = item.get("slot");
             int slot = rawSlot instanceof Number n ? n.intValue() : -1;
             if (slot < 0 || slot >= 36) continue;
+
             Material material = material(item.get("material"));
             if (material == null || material == Material.AIR) continue;
+
             Object rawAmount = item.get("amount");
             int amount = rawAmount instanceof Number n ? Math.max(1, n.intValue()) : 1;
             ItemStack stack = new ItemStack(material, amount);
@@ -36,9 +48,9 @@ public final class KitManager {
             enchant(stack, item.get("enchantments"));
             inv.setItem(slot, stack);
         }
+
         Material offhand = material(root.getString("offhand", "AIR"));
         inv.setItemInOffHand(new ItemStack(offhand == null ? Material.AIR : offhand));
-        plugin.kitEditorManager().applySavedLayout(player, kit);
         player.updateInventory();
         return true;
     }
@@ -68,16 +80,15 @@ public final class KitManager {
             PotionType type = PotionType.valueOf(normalized);
             meta.setBasePotionType(type);
             if (upgraded) {
-                meta.setBasePotionType(type);
                 try {
                     meta.setBasePotionType(PotionType.valueOf(normalized + "_STRONG"));
                 } catch (IllegalArgumentException ignored) {
-                    // Some Paper versions encode upgraded potion variants differently.
+                    // Paper versions may represent upgraded variants differently.
                 }
             }
             stack.setItemMeta(meta);
         } catch (IllegalArgumentException ignored) {
-            // Invalid configured potion leaves the item as a normal potion.
+            // Invalid configured potion remains a normal potion.
         }
     }
 
@@ -88,15 +99,21 @@ public final class KitManager {
             if (parts.length != 2) continue;
             Enchantment enchantment = Enchantment.getByName(parts[0].toUpperCase(Locale.ROOT));
             if (enchantment == null) continue;
-            try { stack.addUnsafeEnchantment(enchantment, Integer.parseInt(parts[1])); }
-            catch (NumberFormatException ignored) {}
+            try {
+                stack.addUnsafeEnchantment(enchantment, Integer.parseInt(parts[1]));
+            } catch (NumberFormatException ignored) {
+                // Invalid enchantment level is ignored.
+            }
         }
     }
 
     private Material material(Object raw) {
         if (raw == null) return Material.AIR;
-        try { return Material.valueOf(String.valueOf(raw).toUpperCase(Locale.ROOT)); }
-        catch (IllegalArgumentException e) { return null; }
+        try {
+            return Material.valueOf(String.valueOf(raw).toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private String key(KitType kit) { return kit.name().toLowerCase(Locale.ROOT); }
