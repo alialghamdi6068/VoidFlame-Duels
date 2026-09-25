@@ -2,6 +2,7 @@ package net.voidflame.duels;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class VoidFlameDuelsPlugin extends JavaPlugin {
@@ -54,6 +55,8 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         coreServices.register(PartyManager.class, partyManager);
         coreServices.register(KitEditorManager.class, kitEditorManager);
 
+        registerPublicServices();
+
         getServer().getPluginManager().registerEvents(queueManager, this);
         getServer().getPluginManager().registerEvents(matchManager, this);
         getServer().getPluginManager().registerEvents(menu, this);
@@ -78,6 +81,22 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         registerParty("party", partyCommand);
 
         getLogger().info("VoidFlame-Duels enabled with 7 ladders and external arena service.");
+    }
+
+    private void registerPublicServices() {
+        getServer().getServicesManager().register(QueueManager.class, queueManager, this, ServicePriority.Normal);
+        getServer().getServicesManager().register(MatchManager.class, matchManager, this, ServicePriority.Normal);
+        getServer().getServicesManager().register(KitManager.class, kitManager, this, ServicePriority.Normal);
+        getServer().getServicesManager().register(PartyManager.class, partyManager, this, ServicePriority.Normal);
+        getServer().getServicesManager().register(KitEditorManager.class, kitEditorManager, this, ServicePriority.Normal);
+    }
+
+    private void unregisterPublicServices() {
+        if (queueManager != null) getServer().getServicesManager().unregister(QueueManager.class, queueManager);
+        if (matchManager != null) getServer().getServicesManager().unregister(MatchManager.class, matchManager);
+        if (kitManager != null) getServer().getServicesManager().unregister(KitManager.class, kitManager);
+        if (partyManager != null) getServer().getServicesManager().unregister(PartyManager.class, partyManager);
+        if (kitEditorManager != null) getServer().getServicesManager().unregister(KitEditorManager.class, kitEditorManager);
     }
 
     private void register(String name, DuelCommand executor) {
@@ -105,6 +124,8 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         if (rematches != null) rematches.clear();
         if (partyManager != null) partyManager.shutdown();
         if (queueManager != null) queueManager.shutdown();
+        unregisterPublicServices();
+
         if (coreServices != null) {
             coreServices.unregister(QueueManager.class);
             coreServices.unregister(MatchManager.class);
