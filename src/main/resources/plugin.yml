@@ -1,0 +1,13 @@
+name: VoidFlame-Duels
+version: 1.0.0
+main: net.voidflame.duels.VoidFlameDuelsPlugin
+description: Professional Minecraft practice and duels system for VoidFlame MC.
+author: VoidFlame
+website: https://github.com/alialghamdi6068/VoidFlame-Duels
+api-version: '26.2'
+load: POSTWORLD
+depend: [VoidFlame-Core]
+permissions:
+  voidflame.duels.admin:
+    description: Administrative access to VoidFlame Duels.
+    default: op
