@@ -27,6 +27,7 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
             case "rematch" -> rematch(p, args);
             case "rejoin" -> rejoin(p);
             case "spectate" -> spectate(p, args);
+            case "kiteditor" -> kitEditor(p, args);
             default -> true;
         };
     }
@@ -40,6 +41,10 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
         }
         KitType kit = parseKit(args[0]);
         if (kit == null) { p.sendMessage(plugin.message("unknown-kit")); return true; }
+        if (plugin.partyManager().partyOf(p.getUniqueId()) != null) {
+            p.sendMessage(plugin.message("party-cannot-queue"));
+            return true;
+        }
         boolean ok = plugin.queueManager().join(p, kit);
         p.sendMessage(ok ? plugin.message("joined-queue").replace("<kit>", pretty(kit)) : plugin.message("already-queued"));
         plugin.scoreboardManager().update(p);
@@ -52,11 +57,11 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
             if (sender == null) { p.sendMessage(plugin.message("player-not-found")); return true; }
             DuelRequestManager.Request request = plugin.requests().getFrom(p, sender);
             if (request == null) { p.sendMessage(plugin.message("request-expired")); return true; }
-            plugin.requests().remove(p);
             if (!plugin.matchManager().startDirect(p, sender, request.kit())) {
                 p.sendMessage(plugin.message("duel-start-failed"));
                 return true;
             }
+            plugin.requests().remove(p);
             p.sendMessage(plugin.message("request-accepted"));
             return true;
         }
@@ -98,6 +103,22 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean kitEditor(Player p, String[] args) {
+        if (args.length < 1) {
+            p.sendMessage(ChatColor.YELLOW + "/kiteditor <kit>");
+            return true;
+        }
+        KitType kit = parseKit(args[0]);
+        if (kit == null) {
+            p.sendMessage(plugin.message("unknown-kit"));
+            return true;
+        }
+        if (!plugin.kitEditorManager().open(p, kit)) {
+            p.sendMessage(plugin.message("kit-editor-failed"));
+        }
+        return true;
+    }
+
     private KitType parseKit(String input) {
         try { return KitType.fromConfig(input); }
         catch (IllegalArgumentException e) { return null; }
@@ -109,10 +130,11 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> out = new ArrayList<>();
         String name = command.getName().toLowerCase(Locale.ROOT);
-        if ((name.equals("queue") || name.equals("duel")) && args.length == 1) {
+        if ((name.equals("queue") || name.equals("duel") || name.equals("kiteditor")) && args.length == 1) {
             if (name.equals("duel")) out.add("accept");
             for (KitType k : KitType.values()) out.add(pretty(k).toLowerCase(Locale.ROOT));
-            Bukkit.getOnlinePlayers().stream().map(Player::getName).filter(n -> n.toLowerCase(Locale.ROOT).startsWith(args[0].toLowerCase(Locale.ROOT))).forEach(out::add);
+            if (name.equals("duel")) Bukkit.getOnlinePlayers().stream().map(Player::getName)
+                    .filter(n -> n.toLowerCase(Locale.ROOT).startsWith(args[0].toLowerCase(Locale.ROOT))).forEach(out::add);
         } else if ((name.equals("duel") || name.equals("rematch")) && args.length == 2 && args[0].equalsIgnoreCase("accept")) {
             Bukkit.getOnlinePlayers().stream().map(Player::getName).filter(n -> n.toLowerCase(Locale.ROOT).startsWith(args[1].toLowerCase(Locale.ROOT))).forEach(out::add);
         } else if (name.equals("spectate") && args.length == 1) {
