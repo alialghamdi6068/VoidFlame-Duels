@@ -7,6 +7,8 @@ settings:
   request-expiry-seconds: 60
   prevent-duel-during-match: true
   rematch-expiry-seconds: 120
+  party-max-size: 8
+  party-invite-expiry-seconds: 60
   countdown-title: "&b&l<seconds>"
 
 messages:
@@ -38,6 +40,23 @@ messages:
   no-rejoin: "&cYou have no duel to rejoin."
   rematch-sent: "&aRematch request sent."
   rematch-received: "&e<player> &awants a rematch. Use &f/rematch accept <player>&a."
+  party-created: "&aParty created."
+  party-already-in: "&cYou are already in a party."
+  party-invite-sent: "&aParty invite sent to &e<player>&a."
+  party-invite-received: "&e<player> &ahas invited you to their party. Use &f/party accept&a."
+  party-invite-failed: "&cYou cannot invite that player right now."
+  party-joined: "&aYou joined the party."
+  party-no-invite: "&cYou have no valid party invite."
+  party-left: "&aYou left the party."
+  party-not-in: "&cYou are not in a party."
+  party-kicked: "&aRemoved &e<player> &afrom the party."
+  party-disbanded: "&aParty disbanded."
+  party-action-failed: "&cThat party action could not be completed."
+  party-info: "&fLeader: &e<leader> &7| &fMembers: &e<members>"
+  party-cannot-queue: "&cLeave your party before joining an individual queue."
+  kit-editor-opened: "&aEditing &e<kit>&a. Rearrange the items, then close the menu to save."
+  kit-editor-saved: "&aSaved your &e<kit> &akit layout."
+  kit-editor-failed: "&cThe kit editor could not be opened."
 
 gui:
   title: "&8⚔ Join Queue"
