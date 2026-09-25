@@ -15,6 +15,7 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:26.2.build.+")
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 java {
@@ -27,5 +28,13 @@ tasks.withType<JavaCompile>().configureEach {
     options.release.set(25)
 }
 
-tasks.test { useJUnitPlatform() }
-tasks.jar { archiveBaseName.set("VoidFlame-Duels") }
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
+
+tasks.jar {
+    archiveBaseName.set("VoidFlame-Duels")
+}
