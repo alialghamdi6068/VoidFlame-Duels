@@ -101,7 +101,7 @@ gui:
 
 kits:
   sword:
-    armor: NETHERITE_SET_PROT4
+    armor: DIAMOND_SET_PROT4
     items:
       - {slot: 0, material: NETHERITE_SWORD, amount: 1, enchantments: ["SHARPNESS:5", "FIRE_ASPECT:2", "UNBREAKING:3"]}
       - {slot: 1, material: ENDER_PEARL, amount: 16}
