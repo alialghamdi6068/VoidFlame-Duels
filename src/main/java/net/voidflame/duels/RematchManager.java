@@ -22,22 +22,38 @@ public final class RematchManager {
     }
 
     public boolean send(Player sender) {
+        if (plugin.matchManager().isInMatch(sender.getUniqueId())
+                || plugin.queueManager().isQueued(sender.getUniqueId())
+                || plugin.partyManager().partyOf(sender.getUniqueId()) != null) return false;
         History h = history.get(sender.getUniqueId());
-        if (h == null || h.expiresAt() <= System.currentTimeMillis()) return false;
+        if (h == null || h.expiresAt() <= System.currentTimeMillis()) {
+            history.remove(sender.getUniqueId(), h);
+            return false;
+        }
         Player target = plugin.getServer().getPlayer(h.opponent());
-        if (target == null || !target.isOnline() || plugin.matchManager().isInMatch(target.getUniqueId())) return false;
+        if (target == null || !target.isOnline()
+                || plugin.matchManager().isInMatch(target.getUniqueId())
+                || plugin.queueManager().isQueued(target.getUniqueId())) return false;
         pending.put(target.getUniqueId(), new Pending(sender.getUniqueId(), h.kit(), h.expiresAt()));
-        target.sendMessage(plugin.message("rematch-received").replace("<player>", sender.getName()).replace("<kit>", pretty(h.kit())));
+        target.sendMessage(plugin.message("rematch-received")
+                .replace("<player>", sender.getName()).replace("<kit>", pretty(h.kit())));
         return true;
     }
 
     public boolean accept(Player target, Player sender) {
         Pending p = pending.get(target.getUniqueId());
-        if (p == null || p.expiresAt() <= System.currentTimeMillis() || !p.sender().equals(sender.getUniqueId())) return false;
+        if (p == null || p.expiresAt() <= System.currentTimeMillis()
+                || !p.sender().equals(sender.getUniqueId())) return false;
+        if (plugin.matchManager().isInMatch(target.getUniqueId())
+                || plugin.matchManager().isInMatch(sender.getUniqueId())
+                || plugin.queueManager().isQueued(target.getUniqueId())
+                || plugin.queueManager().isQueued(sender.getUniqueId())) return false;
+        if (!plugin.matchManager().startDirect(target, sender, p.kit())) return false;
         pending.remove(target.getUniqueId(), p);
-        return plugin.matchManager().startDirect(target, sender, p.kit());
+        return true;
     }
 
     public void clear() { history.clear(); pending.clear(); }
+
     private String pretty(KitType k) { return k == KitType.SPEAR_MACE ? "Spear & Mace" : k.name().replace('_', ' '); }
 }
