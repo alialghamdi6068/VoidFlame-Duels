@@ -2,20 +2,25 @@ package net.voidflame.duels;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class PartyManager {
+public final class PartyManager implements Listener {
     public record Party(UUID leader, Set<UUID> members) {
         public Party {
             members = Collections.unmodifiableSet(new LinkedHashSet<>(members));
         }
     }
 
+    private record Invite(UUID leader, long expiresAt) {}
+
     private final VoidFlameDuelsPlugin plugin;
     private final Map<UUID, LinkedHashSet<UUID>> parties = new ConcurrentHashMap<>();
-    private final Map<UUID, UUID> pendingInvites = new ConcurrentHashMap<>();
+    private final Map<UUID, Invite> pendingInvites = new ConcurrentHashMap<>();
 
     public PartyManager(VoidFlameDuelsPlugin plugin) {
         this.plugin = plugin;
@@ -30,8 +35,8 @@ public final class PartyManager {
     }
 
     public synchronized Party partyOf(UUID player) {
-        for (Map.Entry<UUID, LinkedHashSet<UUID>> e : parties.entrySet()) {
-            if (e.getValue().contains(player)) return snapshot(e.getKey(), e.getValue());
+        for (Map.Entry<UUID, LinkedHashSet<UUID>> entry : parties.entrySet()) {
+            if (entry.getValue().contains(player)) return snapshot(entry.getKey(), entry.getValue());
         }
         return null;
     }
@@ -40,32 +45,44 @@ public final class PartyManager {
         Party party = partyOf(leader.getUniqueId());
         if (party == null || !party.leader().equals(leader.getUniqueId()) || target.equals(leader)) return false;
         if (party.members().contains(target.getUniqueId()) || partyOf(target.getUniqueId()) != null) return false;
-        pendingInvites.put(target.getUniqueId(), leader.getUniqueId());
+        int max = Math.max(2, plugin.getConfig().getInt("settings.party-max-size", 8));
+        if (party.members().size() >= max) return false;
+        long ttl = Math.max(5, plugin.getConfig().getLong("settings.party-invite-expiry-seconds", 60));
+        pendingInvites.put(target.getUniqueId(), new Invite(leader.getUniqueId(), System.currentTimeMillis() + ttl * 1000L));
         return true;
     }
 
     public synchronized boolean accept(Player target) {
-        UUID leader = pendingInvites.remove(target.getUniqueId());
-        if (leader == null) return false;
-        LinkedHashSet<UUID> members = parties.get(leader);
+        Invite invite = pendingInvites.remove(target.getUniqueId());
+        if (invite == null || invite.expiresAt() <= System.currentTimeMillis()) return false;
+        LinkedHashSet<UUID> members = parties.get(invite.leader());
         if (members == null || partyOf(target.getUniqueId()) != null) return false;
+        int max = Math.max(2, plugin.getConfig().getInt("settings.party-max-size", 8));
+        if (members.size() >= max) return false;
         members.add(target.getUniqueId());
         return true;
     }
 
     public synchronized boolean leave(Player player) {
-        Party party = partyOf(player.getUniqueId());
+        return leave(player.getUniqueId());
+    }
+
+    public synchronized boolean leave(UUID playerId) {
+        Party party = partyOf(playerId);
         if (party == null) return false;
         LinkedHashSet<UUID> members = parties.get(party.leader());
-        members.remove(player.getUniqueId());
+        if (members == null) return false;
+
+        members.remove(playerId);
+        clearInvitesFor(playerId);
+
         if (members.isEmpty()) {
             parties.remove(party.leader());
-        } else if (party.leader().equals(player.getUniqueId())) {
+        } else if (party.leader().equals(playerId)) {
             UUID newLeader = members.iterator().next();
             parties.remove(party.leader());
             parties.put(newLeader, members);
         }
-        pendingInvites.remove(player.getUniqueId());
         return true;
     }
 
@@ -73,27 +90,39 @@ public final class PartyManager {
         Party party = partyOf(leader.getUniqueId());
         if (party == null || !party.leader().equals(leader.getUniqueId()) || target.equals(leader)) return false;
         LinkedHashSet<UUID> members = parties.get(leader.getUniqueId());
-        return members != null && members.remove(target.getUniqueId());
+        if (members == null || !members.remove(target.getUniqueId())) return false;
+        clearInvitesFor(target.getUniqueId());
+        return true;
     }
 
     public synchronized boolean disband(Player leader) {
         Party party = partyOf(leader.getUniqueId());
         if (party == null || !party.leader().equals(leader.getUniqueId())) return false;
         parties.remove(leader.getUniqueId());
-        party.members().forEach(pendingInvites::remove);
+        party.members().forEach(this::clearInvitesFor);
         return true;
     }
 
+    public synchronized boolean hasInvite(Player target) {
+        Invite invite = pendingInvites.get(target.getUniqueId());
+        if (invite == null) return false;
+        if (invite.expiresAt() <= System.currentTimeMillis()) {
+            pendingInvites.remove(target.getUniqueId(), invite);
+            return false;
+        }
+        return parties.containsKey(invite.leader());
+    }
+
     public int size(UUID player) {
-        Party p = partyOf(player);
-        return p == null ? 0 : p.members().size();
+        Party party = partyOf(player);
+        return party == null ? 0 : party.members().size();
     }
 
     public Collection<Player> onlineMembers(UUID player) {
-        Party p = partyOf(player);
-        if (p == null) return List.of();
+        Party party = partyOf(player);
+        if (party == null) return List.of();
         List<Player> online = new ArrayList<>();
-        for (UUID id : p.members()) {
+        for (UUID id : party.members()) {
             Player member = Bukkit.getPlayer(id);
             if (member != null && member.isOnline()) online.add(member);
         }
@@ -102,6 +131,25 @@ public final class PartyManager {
 
     private Party snapshot(UUID leader, Set<UUID> members) {
         return new Party(leader, members);
+    }
+
+    private void clearInvitesFor(UUID uuid) {
+        pendingInvites.remove(uuid);
+        pendingInvites.entrySet().removeIf(entry -> entry.getValue().leader().equals(uuid));
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        UUID id = event.getPlayer().getUniqueId();
+        pendingInvites.remove(id);
+        Party party = partyOf(id);
+        if (party != null) leave(id);
+    }
+
+    public void expireInvites() {
+        long now = System.currentTimeMillis();
+        pendingInvites.entrySet().removeIf(entry ->
+                entry.getValue().expiresAt() <= now || !parties.containsKey(entry.getValue().leader()));
     }
 
     public void shutdown() {
