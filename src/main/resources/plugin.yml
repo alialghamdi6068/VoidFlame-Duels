@@ -23,6 +23,9 @@ commands:
   duels:
     description: Open the duel queue menu.
     usage: /duels
+  spectate:
+    description: Spectate an active duel.
+    usage: /spectate <player>
 
 permissions:
   voidflame.duels.admin:
