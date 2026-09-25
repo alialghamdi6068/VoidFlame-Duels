@@ -31,7 +31,8 @@ public final class ArenaManager {
         for (MapEntry ignored : configured) { /* reserved for future compact list format */ }
         var list = plugin.getConfig().getMapList("arenas.list");
         for (var map : list) {
-            String name = String.valueOf(map.getOrDefault("name", "Arena-" + arenas.size()));
+            Object rawName = map.get("name");
+            String name = String.valueOf(rawName == null ? "Arena-" + arenas.size() : rawName);
             World world = Bukkit.getWorld(String.valueOf(map.get("world")));
             if (world == null) continue;
             Location a = location(world, map, "spawn-a");
