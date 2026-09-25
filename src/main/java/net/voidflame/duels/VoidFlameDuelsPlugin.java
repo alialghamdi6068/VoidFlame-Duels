@@ -1,11 +1,18 @@
 package net.voidflame.duels;
 
+import org.bukkit.ChatColor;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class VoidFlameDuelsPlugin extends JavaPlugin {
     private CoreServices coreServices;
     private QueueManager queueManager;
     private MatchManager matchManager;
+    private ArenaManager arenaManager;
+    private KitManager kitManager;
+    private DuelRequestManager requests;
+    private RematchManager rematches;
+    private DuelMenu menu;
 
     @Override
     public void onEnable() {
@@ -13,32 +20,69 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
 
         coreServices = CoreServices.connect(getServer().getServicesManager());
         if (coreServices == null) {
-            getLogger().severe("VoidFlame-Core is installed but its service registry is unavailable.");
+            getLogger().severe("VoidFlame-Core service registry is unavailable.");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
+        arenaManager = new ArenaManager(this);
+        kitManager = new KitManager(this);
+        requests = new DuelRequestManager(this);
+        rematches = new RematchManager(this);
         queueManager = new QueueManager(this);
-        matchManager = new MatchManager(this, queueManager);
+        matchManager = new MatchManager(this, queueManager, arenaManager, kitManager);
+        menu = new DuelMenu(this);
 
         coreServices.register(QueueManager.class, queueManager);
         coreServices.register(MatchManager.class, matchManager);
+        coreServices.register(ArenaManager.class, arenaManager);
+        coreServices.register(KitManager.class, kitManager);
 
         getServer().getPluginManager().registerEvents(queueManager, this);
         getServer().getPluginManager().registerEvents(matchManager, this);
-        getLogger().info("VoidFlame-Duels enabled.");
+        getServer().getPluginManager().registerEvents(menu, this);
+
+        DuelCommand command = new DuelCommand(this);
+        register("duel", command);
+        register("queue", command);
+        register("rematch", command);
+        register("rejoin", command);
+        register("duels", command);
+
+        getLogger().info("VoidFlame-Duels enabled with 7 ladders.");
+    }
+
+    private void register(String name, DuelCommand executor) {
+        PluginCommand command = getCommand(name);
+        if (command != null) {
+            command.setExecutor(executor);
+            command.setTabCompleter(executor);
+        }
     }
 
     @Override
     public void onDisable() {
+        if (matchManager != null) matchManager.shutdown();
+        if (queueManager != null) queueManager.shutdown();
         if (coreServices != null) {
             coreServices.unregister(QueueManager.class);
             coreServices.unregister(MatchManager.class);
+            coreServices.unregister(ArenaManager.class);
+            coreServices.unregister(KitManager.class);
         }
-        if (matchManager != null) matchManager.shutdown();
-        if (queueManager != null) queueManager.shutdown();
+    }
+
+    public String message(String key) {
+        String raw = getConfig().getString("messages." + key, "&cMessage not configured.");
+        return ChatColor.translateAlternateColorCodes('&',
+                getConfig().getString("messages.prefix", "") + raw);
     }
 
     public QueueManager queueManager() { return queueManager; }
     public MatchManager matchManager() { return matchManager; }
+    public ArenaManager arenaManager() { return arenaManager; }
+    public KitManager kitManager() { return kitManager; }
+    public DuelRequestManager requests() { return requests; }
+    public RematchManager rematches() { return rematches; }
+    public DuelMenu menu() { return menu; }
 }
