@@ -18,29 +18,30 @@ public final class DuelRequestManager {
         if (sender.equals(target)) return false;
         if (plugin.matchManager().isInMatch(sender.getUniqueId()) || plugin.matchManager().isInMatch(target.getUniqueId())) return false;
         if (plugin.queueManager().isQueued(sender.getUniqueId()) || plugin.queueManager().isQueued(target.getUniqueId())) return false;
+        if (plugin.partyManager().partyOf(sender.getUniqueId()) != null || plugin.partyManager().partyOf(target.getUniqueId()) != null) return false;
         long ttl = Math.max(1, plugin.getConfig().getLong("settings.request-expiry-seconds", 60));
         incoming.put(target.getUniqueId(), new Request(sender.getUniqueId(), target.getUniqueId(), kit, System.currentTimeMillis() + ttl * 1000L));
         return true;
     }
 
     public Request get(Player target) {
-        Request r = incoming.get(target.getUniqueId());
-        if (r == null) return null;
-        if (r.expiresAt() <= System.currentTimeMillis()) {
-            incoming.remove(target.getUniqueId(), r);
+        Request request = incoming.get(target.getUniqueId());
+        if (request == null) return null;
+        if (request.expiresAt() <= System.currentTimeMillis()) {
+            incoming.remove(target.getUniqueId(), request);
             return null;
         }
-        Player sender = plugin.getServer().getPlayer(r.sender());
+        Player sender = plugin.getServer().getPlayer(request.sender());
         if (sender == null || !sender.isOnline()) {
-            incoming.remove(target.getUniqueId(), r);
+            incoming.remove(target.getUniqueId(), request);
             return null;
         }
-        return r;
+        return request;
     }
 
     public Request getFrom(Player target, Player sender) {
-        Request r = get(target);
-        return r != null && r.sender().equals(sender.getUniqueId()) ? r : null;
+        Request request = get(target);
+        return request != null && request.sender().equals(sender.getUniqueId()) ? request : null;
     }
 
     public void remove(Player target) { incoming.remove(target.getUniqueId()); }
