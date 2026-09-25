@@ -38,6 +38,7 @@ public final class KitManager {
         }
         Material offhand = material(root.getString("offhand", "AIR"));
         inv.setItemInOffHand(new ItemStack(offhand == null ? Material.AIR : offhand));
+        plugin.kitEditorManager().applySavedLayout(player, kit);
         player.updateInventory();
         return true;
     }
@@ -63,10 +64,17 @@ public final class KitManager {
         String normalized = value.toUpperCase(Locale.ROOT).replace('-', '_');
         boolean upgraded = normalized.endsWith("_2") || normalized.endsWith("_II");
         normalized = normalized.replace("_2", "").replace("_II", "");
-        if (normalized.equals("FIRE_RESISTANCE")) normalized = "FIRE_RESISTANCE";
         try {
-            meta.setBasePotionType(PotionType.valueOf(normalized));
-            if (upgraded) meta.setBasePotionType(PotionType.valueOf(normalized));
+            PotionType type = PotionType.valueOf(normalized);
+            meta.setBasePotionType(type);
+            if (upgraded) {
+                meta.setBasePotionType(type);
+                try {
+                    meta.setBasePotionType(PotionType.valueOf(normalized + "_STRONG"));
+                } catch (IllegalArgumentException ignored) {
+                    // Some Paper versions encode upgraded potion variants differently.
+                }
+            }
             stack.setItemMeta(meta);
         } catch (IllegalArgumentException ignored) {
             // Invalid configured potion leaves the item as a normal potion.
