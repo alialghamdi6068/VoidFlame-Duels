@@ -40,7 +40,8 @@ public final class KitManager {
                 new Material[]{Material.NETHERITE_HELMET, Material.NETHERITE_CHESTPLATE, Material.NETHERITE_LEGGINGS, Material.NETHERITE_BOOTS};
         for (int i = 0; i < armor.length; i++) {
             ItemStack stack = new ItemStack(armor[i]);
-            stack.addEnchantment(Enchantment.PROTECTION, preset.contains("PROT4") ? 4 : 2);
+            int protection = preset.contains("PROT4") ? 4 : preset.contains("PROT3") ? 3 : 2;
+            stack.addEnchantment(Enchantment.PROTECTION, protection);
             stack.addEnchantment(Enchantment.UNBREAKING, 3);
             inv.setArmorContents(new ItemStack[]{inv.getBoots(), inv.getLeggings(), inv.getChestplate(), inv.getHelmet()});
             if (i == 0) inv.setHelmet(stack);
