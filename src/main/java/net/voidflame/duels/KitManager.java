@@ -23,10 +23,13 @@ public final class KitManager {
         if (root == null) return;
         applyArmor(inv, root.getString("armor", "NETHERITE_SET_PROT4"));
         for (Map<?, ?> item : root.getMapList("items")) {
-            int slot = ((Number) item.getOrDefault("slot", 0)).intValue();
+            Object rawSlot = item.get("slot");
+            int slot = rawSlot instanceof Number n ? n.intValue() : 0;
             Material material = material(item.get("material"));
             if (material == null) continue;
-            ItemStack stack = new ItemStack(material, Math.max(1, ((Number) item.getOrDefault("amount", 1)).intValue()));
+            Object rawAmount = item.get("amount");
+            int amount = rawAmount instanceof Number n ? n.intValue() : 1;
+            ItemStack stack = new ItemStack(material, Math.max(1, amount));
             enchant(stack, item.get("enchantments"));
             inv.setItem(slot, stack);
         }
