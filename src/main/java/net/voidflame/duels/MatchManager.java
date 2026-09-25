@@ -129,6 +129,7 @@ public final class MatchManager implements Listener {
         Player b = Bukkit.getPlayer(match.second());
         arenas.release(match.arena());
         plugin.spectatorManager().stopWatching(match);
+        recordExternalMatchResult(match, winner);
 
         if (winner == null) {
             if (a != null) a.sendMessage(plugin.message("match-draw"));
@@ -148,6 +149,35 @@ public final class MatchManager implements Listener {
             plugin.rematches().remember(match.second(), match.first(), match.kit());
         }
         plugin.scoreboardManager().updateAll();
+    }
+
+
+    private void recordExternalMatchResult(Match match, UUID winner) {
+        try {
+            Class<?> statsType = Class.forName("net.voidflame.stats.StatsService");
+            var registration = Bukkit.getServicesManager().getRegistration(statsType);
+            if (registration != null) {
+                Object service = registration.getProvider();
+                var method = statsType.getMethod("recordMatch", UUID.class, UUID.class);
+                UUID loser = winner == null ? null : match.opponent(winner);
+                method.invoke(service, winner, loser);
+            }
+        } catch (ReflectiveOperationException ignored) {
+            // Stats is optional at runtime.
+        }
+        try {
+            Class<?> logsType = Class.forName("net.voidflame.logs.VoidFlameLogsPlugin$LogService");
+            var registration = Bukkit.getServicesManager().getRegistration(logsType);
+            if (registration != null) {
+                Object service = registration.getProvider();
+                String result = winner == null ? "DRAW" : "WINNER=" + winner;
+                logsType.getMethod("log", String.class, String.class)
+                        .invoke(service, "DUEL_FINISH",
+                                match.first() + "|" + match.second() + "|" + match.kit() + "|" + result);
+            }
+        } catch (ReflectiveOperationException ignored) {
+            // Logs is optional at runtime.
+        }
     }
 
     private void restoreOrDefer(UUID id, PlayerSnapshot snapshot) {
