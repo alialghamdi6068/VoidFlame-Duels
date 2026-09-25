@@ -2,63 +2,99 @@ package net.voidflame.duels;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.RegisteredServiceProvider;
 
-import java.util.ArrayList;
+import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Objects;
+import java.util.Optional;
 
 public final class ArenaManager {
+    private static final String PROVIDER_CLASS = "net.voidflame.arenas.ArenaManager";
+
     private final VoidFlameDuelsPlugin plugin;
-    private final List<Arena> arenas = new ArrayList<>();
-    private final Set<String> reserved = ConcurrentHashMap.newKeySet();
+    private Object provider;
+    private Method acquireAvailable;
+    private Method release;
 
     public ArenaManager(VoidFlameDuelsPlugin plugin) {
-        this.plugin = plugin;
-        load();
+        this.plugin = Objects.requireNonNull(plugin);
+        connect();
     }
 
-    public void load() {
-        arenas.clear();
-        ConfigurationSection section = plugin.getConfig().getConfigurationSection("arenas");
-        if (section == null) return;
-        List<MapEntry> configured = new ArrayList<>();
-        for (String key : section.getStringList("list")) {
-            if (key != null) configured.add(new MapEntry(key));
-        }
-        for (MapEntry ignored : configured) { /* reserved for future compact list format */ }
-        var list = plugin.getConfig().getMapList("arenas.list");
-        for (var map : list) {
-            Object rawName = map.get("name");
-            String name = String.valueOf(rawName == null ? "Arena-" + arenas.size() : rawName);
-            World world = Bukkit.getWorld(String.valueOf(map.get("world")));
-            if (world == null) continue;
-            Location a = location(world, map, "spawn-a");
-            Location b = location(world, map, "spawn-b");
-            if (a != null && b != null) arenas.add(new Arena(name, a, b));
+    public synchronized void connect() {
+        try {
+            Class<?> providerType = Class.forName(PROVIDER_CLASS, false, plugin.getClass().getClassLoader());
+            RegisteredServiceProvider<?> registration =
+                    Bukkit.getServicesManager().getRegistration(providerType);
+            if (registration == null || registration.getProvider() == null) {
+                throw new IllegalStateException("VoidFlame-Arenas service is not registered.");
+            }
+            provider = registration.getProvider();
+            acquireAvailable = providerType.getMethod("acquireAvailable");
+            release = providerType.getMethod("release", providerType.getDeclaredClasses().length == -1 ? Object.class : providerType.getDeclaredClasses()[0]);
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException("Unable to connect to VoidFlame-Arenas.", ex);
         }
     }
-
-    private Location location(World world, java.util.Map<?, ?> map, String key) {
-        Object raw = map.get(key);
-        if (!(raw instanceof java.util.Map<?, ?> m)) return null;
-        return new Location(world,
-                number(m.get("x")), number(m.get("y")), number(m.get("z")),
-                (float) number(m.get("yaw")), (float) number(m.get("pitch")));
-    }
-
-    private double number(Object value) { return value instanceof Number n ? n.doubleValue() : 0.0; }
 
     public synchronized Arena acquire() {
-        for (Arena arena : arenas) if (reserved.add(arena.name())) return arena;
-        return null;
+        ensureConnected();
+        try {
+            Object result = acquireAvailable.invoke(provider);
+            if (!(result instanceof Optional<?> optional) || optional.isEmpty()) return null;
+
+            Object arena = optional.get();
+            Method name = arena.getClass().getMethod("name");
+            Method spawnA = arena.getClass().getMethod("spawnA");
+            Method spawnB = arena.getClass().getMethod("spawnB");
+            return new Arena(
+                    arena,
+                    String.valueOf(name.invoke(arena)),
+                    (Location) spawnA.invoke(arena),
+                    (Location) spawnB.invoke(arena)
+            );
+        } catch (ReflectiveOperationException ex) {
+            plugin.getLogger().severe("Failed to acquire arena: " + ex.getMessage());
+            return null;
+        }
     }
 
-    public void release(Arena arena) { if (arena != null) reserved.remove(arena.name()); }
-    public int available() { return Math.max(0, arenas.size() - reserved.size()); }
-    public List<Arena> all() { return List.copyOf(arenas); }
+    public synchronized void release(Arena arena) {
+        if (arena == null) return;
+        ensureConnected();
+        try {
+            release.invoke(provider, arena.providerArena());
+        } catch (ReflectiveOperationException ex) {
+            plugin.getLogger().severe("Failed to release arena '" + arena.name() + "': " + ex.getMessage());
+        }
+    }
 
-    private record MapEntry(String key) {}
+    public int available() {
+        ensureConnected();
+        try {
+            Method method = provider.getClass().getMethod("availableCount");
+            return ((Number) method.invoke(provider)).intValue();
+        } catch (ReflectiveOperationException ex) {
+            return 0;
+        }
+    }
+
+    public List<String> allNames() {
+        ensureConnected();
+        try {
+            Method all = provider.getClass().getMethod("all");
+            Object value = all.invoke(provider);
+            if (!(value instanceof Iterable<?> iterable)) return List.of();
+            return java.util.stream.StreamSupport.stream(iterable.spliterator(), false)
+                    .map(Object::toString)
+                    .toList();
+        } catch (ReflectiveOperationException ex) {
+            return List.of();
+        }
+    }
+
+    private void ensureConnected() {
+        if (provider == null) connect();
+    }
 }
