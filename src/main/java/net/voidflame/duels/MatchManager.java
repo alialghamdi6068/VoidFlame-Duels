@@ -22,6 +22,7 @@ public final class MatchManager implements Listener {
     private final Map<UUID, Match> matches = new ConcurrentHashMap<>();
     private final Map<UUID, Match> disconnected = new ConcurrentHashMap<>();
     private final Map<UUID, PlayerSnapshot> pendingRestores = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> disconnectTokens = new ConcurrentHashMap<>();
 
     public MatchManager(VoidFlameDuelsPlugin plugin, QueueManager queues, ArenaManager arenas, KitManager kits) {
         this.plugin = plugin;
@@ -53,13 +54,17 @@ public final class MatchManager implements Listener {
     public boolean startDirect(Player a, Player b, KitType kit) {
         if (a.equals(b) || !a.isOnline() || !b.isOnline()
                 || isInMatch(a.getUniqueId()) || isInMatch(b.getUniqueId())
-                || queues.isQueued(a.getUniqueId()) || queues.isQueued(b.getUniqueId())) return false;
+                || queues.isQueued(a.getUniqueId()) || queues.isQueued(b.getUniqueId())
+                || plugin.spectatorManager().isSpectating(a.getUniqueId())
+                || plugin.spectatorManager().isSpectating(b.getUniqueId())) return false;
+
         Arena arena = arenas.acquire();
         if (arena == null) {
             a.sendMessage(plugin.message("no-arena"));
             b.sendMessage(plugin.message("no-arena"));
             return false;
         }
+
         Match match = new Match(plugin, this, a.getUniqueId(), b.getUniqueId(), kit, arena,
                 PlayerSnapshot.capture(a), PlayerSnapshot.capture(b));
         matches.put(a.getUniqueId(), match);
@@ -73,8 +78,8 @@ public final class MatchManager implements Listener {
     public Match get(UUID id) { return matches.get(id); }
 
     public KitType lastKit(UUID id) {
-        Match m = disconnected.get(id);
-        return m == null ? KitType.SWORD : m.kit();
+        Match match = disconnected.get(id);
+        return match == null ? KitType.SWORD : match.kit();
     }
 
     public int playersInMatches(KitType kit) {
@@ -93,6 +98,8 @@ public final class MatchManager implements Listener {
         matches.remove(match.second(), match);
         disconnected.remove(match.first(), match);
         disconnected.remove(match.second(), match);
+        disconnectTokens.remove(match.first());
+        disconnectTokens.remove(match.second());
 
         restoreOrDefer(match.first(), firstSnapshot);
         restoreOrDefer(match.second(), secondSnapshot);
@@ -108,6 +115,7 @@ public final class MatchManager implements Listener {
         } else {
             Player w = Bukkit.getPlayer(winner);
             String winnerName = w == null ? String.valueOf(Bukkit.getOfflinePlayer(winner).getName()) : w.getName();
+            if (winnerName == null) winnerName = "Unknown";
             String message = plugin.message("match-ended").replace("<winner>", winnerName).replace("<kit>", pretty(match.kit()));
             if (a != null) a.sendMessage(message);
             if (b != null) b.sendMessage(message);
@@ -127,25 +135,38 @@ public final class MatchManager implements Listener {
         if (match.state() == MatchState.FINISHED) return;
         matches.remove(player, match);
         disconnected.put(player, match);
+        long token = System.nanoTime();
+        disconnectTokens.put(player, token);
+
         Player opponent = Bukkit.getPlayer(match.opponent(player));
-        if (opponent != null) opponent.sendMessage(plugin.message("rejoin-available")
-                .replace("<seconds>", String.valueOf(graceSeconds()))
-                .replace("<opponent>", Bukkit.getOfflinePlayer(player).getName()));
+        if (opponent != null) {
+            opponent.sendMessage(plugin.message("rejoin-available")
+                    .replace("<seconds>", String.valueOf(graceSeconds()))
+                    .replace("<opponent>", name(player)));
+        }
+
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (disconnected.remove(player, match)) match.finish(match.opponent(player));
+            if (!Long.valueOf(token).equals(disconnectTokens.get(player))) return;
+            if (disconnected.remove(player, match)) {
+                disconnectTokens.remove(player, token);
+                match.finish(match.opponent(player));
+            }
         }, graceSeconds() * 20L);
+        plugin.scoreboardManager().updateAll();
     }
 
     public boolean rejoin(Player player) {
-        Match match = disconnected.remove(player.getUniqueId());
+        UUID id = player.getUniqueId();
+        Match match = disconnected.remove(id);
         if (match == null || match.state() == MatchState.FINISHED) return false;
-        matches.put(player.getUniqueId(), match);
+        disconnectTokens.remove(id);
+        matches.put(id, match);
         player.setGameMode(GameMode.SURVIVAL);
         player.setInvulnerable(match.state() == MatchState.COUNTDOWN);
-        player.teleport(match.spawnFor(player.getUniqueId()));
+        player.teleport(match.spawnFor(id));
         kits.apply(player, match.kit());
         player.sendMessage(plugin.message("rejoined"));
-        plugin.scoreboardManager().update(player);
+        plugin.scoreboardManager().updateAll();
         return true;
     }
 
@@ -157,13 +178,16 @@ public final class MatchManager implements Listener {
         event.setKeepInventory(true);
         event.getDrops().clear();
         event.setDeathMessage(null);
-        match.finish(match.opponent(loser));
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (match.state() != MatchState.FINISHED) match.finish(match.opponent(loser));
+        });
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         UUID id = event.getPlayer().getUniqueId();
         queues.leave(id);
+        plugin.partyManager().leave(id);
         Match match = matches.get(id);
         if (match != null && match.state() != MatchState.FINISHED) markDisconnected(match, id);
     }
@@ -176,6 +200,11 @@ public final class MatchManager implements Listener {
         plugin.getServer().getScheduler().runTask(plugin, () -> plugin.scoreboardManager().update(event.getPlayer()));
     }
 
+    private String name(UUID id) {
+        String name = Bukkit.getOfflinePlayer(id).getName();
+        return name == null ? "Unknown" : name;
+    }
+
     private long graceSeconds() {
         return Math.max(1, plugin.getConfig().getLong("settings.disconnect-grace-seconds", 30));
     }
@@ -184,6 +213,7 @@ public final class MatchManager implements Listener {
         matches.values().stream().distinct().toList().forEach(m -> m.finish(null));
         matches.clear();
         disconnected.clear();
+        disconnectTokens.clear();
         for (Map.Entry<UUID, PlayerSnapshot> entry : pendingRestores.entrySet()) {
             Player p = Bukkit.getPlayer(entry.getKey());
             if (p != null) entry.getValue().restore(p);
