@@ -43,15 +43,18 @@ public final class KitEditorManager implements Listener {
         UUID id = player.getUniqueId();
         if (plugin.matchManager().isInMatch(id) || plugin.matchManager().isDisconnected(id)) return false;
         if (sessions.containsKey(id)) return false;
+
+        PlayerSnapshot snapshot = PlayerSnapshot.capture(player);
         if (!plugin.kitManager().applyBase(player, kit)) return false;
 
         tagBaseItems(player);
+        plugin.kitEditorManager().applySavedLayout(player, kit);
         Inventory editor = Bukkit.createInventory(null, EDITOR_SIZE,
                 color("&8Kit Editor &7• &b" + pretty(kit)));
         copyPlayerContents(editor, player);
         fillLockedRows(editor);
 
-        sessions.put(id, new Session(kit, PlayerSnapshot.capture(player), editor));
+        sessions.put(id, new Session(kit, snapshot, editor));
         player.openInventory(editor);
         player.sendMessage(plugin.message("kit-editor-opened").replace("<kit>", pretty(kit)));
         return true;
