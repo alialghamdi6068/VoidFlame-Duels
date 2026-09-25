@@ -24,7 +24,10 @@ public final class ArenaManager {
 
     public synchronized void connect() {
         try {
-            Class<?> providerType = Class.forName(PROVIDER_CLASS, false, plugin.getClass().getClassLoader());
+            Class<?> providerType = Bukkit.getServicesManager().getKnownServices().stream()
+                    .filter(type -> type.getName().equals(PROVIDER_CLASS))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("VoidFlame-Arenas service type is unavailable."));
             RegisteredServiceProvider<?> registration =
                     Bukkit.getServicesManager().getRegistration(providerType);
             if (registration == null || registration.getProvider() == null) {
