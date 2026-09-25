@@ -1,0 +1,68 @@
+settings:
+  language: en
+  queue-timeout-seconds: 300
+  countdown-seconds: 5
+  match-time-limit-seconds: 1800
+  prevent-duel-during-match: true
+
+gui:
+  title: "&8⚔ Join Queue"
+  rows: 6
+  filler-item: GRAY_STAINED_GLASS_PANE
+  kits:
+    sword:
+      slot: 11
+      display-name: "&aSword"
+      icon: DIAMOND_SWORD
+    axe:
+      slot: 13
+      display-name: "&aAxe"
+      icon: DIAMOND_AXE
+    uhc:
+      slot: 15
+      display-name: "&aUHC"
+      icon: GOLDEN_APPLE
+    mace:
+      slot: 29
+      display-name: "&aMace"
+      icon: MACE
+    spear_mace:
+      slot: 31
+      display-name: "&aSpear & Mace"
+      icon: SPEAR
+    crystal:
+      slot: 33
+      display-name: "&aCrystal"
+      icon: END_CRYSTAL
+    netherite_op:
+      enabled: true
+      slot: 35
+      display-name: "&aNetherite OP"
+      icon: NETHERITE_HELMET
+
+scoreboard:
+  spawn:
+    enabled: true
+    title: "&b&lVOIDFLAME"
+    lines:
+      - "&7&m------------------"
+      - "&fOnline: &a%server_online%"
+      - "&fIn Match: &e%practice_in_match%"
+      - "&fIn Queue: &b%practice_in_queue%"
+      - " "
+      - "&fPing: &a%player_ping% ms"
+      - "&7&m------------------"
+      - "&eplay.VoidFlame.net"
+  match:
+    enabled: true
+    title: "&b&lDUEL MATCH"
+    lines:
+      - "&7&m------------------"
+      - "&fOpponent: &c%opponent_name%"
+      - "&fKit: &e%kit_name%"
+      - "&fPing: &a%player_ping% ms"
+      - " "
+      - "&fDuration: &b%match_duration%"
+      - "&fArena: &d%arena_name%"
+      - "&7&m------------------"
+      - "&eplay.VoidFlame.net"
