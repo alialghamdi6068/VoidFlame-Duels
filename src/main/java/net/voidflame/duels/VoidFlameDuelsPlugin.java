@@ -29,7 +29,14 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
             return;
         }
 
-        arenaManager = new ArenaManager(this);
+        try {
+            arenaManager = new ArenaManager(this);
+        } catch (IllegalStateException ex) {
+            getLogger().severe(ex.getMessage());
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
         kitManager = new KitManager(this);
         requests = new DuelRequestManager(this);
         rematches = new RematchManager(this);
@@ -43,7 +50,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
 
         coreServices.register(QueueManager.class, queueManager);
         coreServices.register(MatchManager.class, matchManager);
-        coreServices.register(ArenaManager.class, arenaManager);
         coreServices.register(KitManager.class, kitManager);
         coreServices.register(PartyManager.class, partyManager);
         coreServices.register(KitEditorManager.class, kitEditorManager);
@@ -71,7 +77,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         PartyCommand partyCommand = new PartyCommand(this);
         registerParty("party", partyCommand);
 
-        getLogger().info("VoidFlame-Duels enabled with 7 ladders.");
+        getLogger().info("VoidFlame-Duels enabled with 7 ladders and external arena service.");
     }
 
     private void register(String name, DuelCommand executor) {
@@ -102,7 +108,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         if (coreServices != null) {
             coreServices.unregister(QueueManager.class);
             coreServices.unregister(MatchManager.class);
-            coreServices.unregister(ArenaManager.class);
             coreServices.unregister(KitManager.class);
             coreServices.unregister(PartyManager.class);
             coreServices.unregister(KitEditorManager.class);
