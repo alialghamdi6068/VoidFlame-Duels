@@ -85,18 +85,18 @@ public final class MatchManager implements Listener {
     }
 
     void finish(Match match, UUID winner) {
+        PlayerSnapshot firstSnapshot = match.snapshot(match.first());
+        PlayerSnapshot secondSnapshot = match.snapshot(match.second());
+
         matches.remove(match.first(), match);
         matches.remove(match.second(), match);
         disconnected.remove(match.first(), match);
         disconnected.remove(match.second(), match);
 
-        Player w = winner == null ? null : Bukkit.getPlayer(winner);
-        Player l = winner == null ? null : Bukkit.getPlayer(match.opponent(winner));
-
         Player a = Bukkit.getPlayer(match.first());
         Player b = Bukkit.getPlayer(match.second());
-        restoreOrDefer(a, match.first());
-        restoreOrDefer(b, match.second());
+        restoreOrDefer(a, match.first(), firstSnapshot);
+        restoreOrDefer(b, match.second(), secondSnapshot);
 
         arenas.release(match.arena());
         plugin.spectatorManager().stopWatching(match);
@@ -105,7 +105,8 @@ public final class MatchManager implements Listener {
             if (a != null) a.sendMessage(plugin.message("match-draw"));
             if (b != null) b.sendMessage(plugin.message("match-draw"));
         } else {
-            String winnerName = w == null ? Bukkit.getOfflinePlayer(winner).getName() : w.getName();
+            Player w = Bukkit.getPlayer(winner);
+            String winnerName = w == null ? String.valueOf(Bukkit.getOfflinePlayer(winner).getName()) : w.getName();
             if (a != null) a.sendMessage(plugin.message("match-ended").replace("<winner>", winnerName).replace("<kit>", pretty(match.kit())));
             if (b != null) b.sendMessage(plugin.message("match-ended").replace("<winner>", winnerName).replace("<kit>", pretty(match.kit())));
             plugin.rematches().remember(match.first(), match.second(), match.kit());
@@ -114,51 +115,81 @@ public final class MatchManager implements Listener {
         plugin.scoreboardManager().updateAll();
     }
 
-    private void restoreOrDefer(Player player, UUID id) {
-        if (player != null && player.isOnline()) matchForRestore(id).restore(player);
-        else {
-            Match m = findMatch(id);
-            if (m != null) pendingRestores.put(id, snapshotFor(m, id));
-        }
-    }
-
-    private PlayerSnapshot snapshotFor(Match m, UUID id) {
-        return id.equals(m.first()) ? getSnapshot(m, true) : getSnapshot(m, false);
-    }
-
-    private PlayerSnapshot getSnapshot(Match m, boolean first) {
-        try {
-            var field = Match.class.getDeclaredField(first ? "firstSnapshot" : "secondSnapshot");
-            field.setAccessible(true);
-            return (PlayerSnapshot) field.get(m);
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Unable to access match snapshot", e);
-        }
-    }
-
-    private Match findMatch(UUID id) {
-        for (Match m : disconnected.values()) if (m.first().equals(id) || m.second().equals(id)) return m;
-        return null;
-    }
-
-    private MatchRestore matchForRestore(UUID id) {
-        Match m = matches.get(id);
-        if (m != null) return new MatchRestore(m, id);
-        PlayerSnapshot snapshot = pendingRestores.remove(id);
-        if (snapshot != null) return new MatchRestore(snapshot);
-        throw new IllegalStateException("Missing restore snapshot for " + id);
-    }
-
-    private record MatchRestore(Match match, UUID id, PlayerSnapshot snapshot) {
-        MatchRestore(Match match, UUID id) { this(match, id, null); }
-        MatchRestore(PlayerSnapshot snapshot) { this(null, null, snapshot); }
-        void restore(Player player) {
-            if (snapshot != null) snapshot.restore(player);
-            else match.restore(player);
-        }
+    private void restoreOrDefer(Player player, UUID id, PlayerSnapshot snapshot) {
+        if (player != null && player.isOnline()) snapshot.restore(player);
+        else pendingRestores.put(id, snapshot);
     }
 
     void markDisconnected(Match match, UUID player) {
+        if (match.state() == MatchState.FINISHED) return;
+        matches.remove(player, match);
+        disconnected.put(player, match);
+        Player opponent = Bukkit.getPlayer(match.opponent(player));
+        if (opponent != null) opponent.sendMessage(plugin.message("rejoin-available")
+                .replace("<seconds>", String.valueOf(graceSeconds()))
+                .replace("<opponent>", Bukkit.getOfflinePlayer(player).getName()));
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (disconnected.remove(player, match)) match.finish(match.opponent(player));
+        }, graceSeconds() * 20L);
+    }
+
+    public boolean rejoin(Player player) {
+        Match match = disconnected.remove(player.getUniqueId());
+        if (match == null || match.state() == MatchState.FINISHED) return false;
+        matches.put(player.getUniqueId(), match);
+        player.setGameMode(org.bukkit.GameMode.SURVIVAL);
+        player.setInvulnerable(match.state() == MatchState.COUNTDOWN);
+        player.teleport(match.spawnFor(player.getUniqueId()));
+        kits.apply(player, match.kit());
+        player.sendMessage(plugin.message("rejoined"));
+        plugin.scoreboardManager().update(player);
+        return true;
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onDeath(PlayerDeathEvent event) {
+        UUID loser = event.getEntity().getUniqueId();
+        Match match = matches.get(loser);
+        if (match == null || match.state() != MatchState.FIGHTING) return;
+        event.setKeepInventory(true);
+        event.getDrops().clear();
+        event.setDeathMessage(null);
+        match.finish(match.opponent(loser));
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        UUID id = event.getPlayer().getUniqueId();
+        queues.leave(id);
+        Match match = matches.get(id);
+        if (match != null && match.state() != MatchState.FINISHED) markDisconnected(match, id);
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        UUID id = event.getPlayer().getUniqueId();
+        PlayerSnapshot snapshot = pendingRestores.remove(id);
+        if (snapshot != null) {
+            plugin.getServer().getScheduler().runTask(plugin, () -> snapshot.restore(event.getPlayer()));
+        }
+        plugin.getServer().getScheduler().runTask(plugin, () -> plugin.scoreboardManager().update(event.getPlayer()));
+    }
+
+    private long graceSeconds() { return Math.max(1, plugin.getConfig().getLong("settings.disconnect-grace-seconds", 30)); }
+
+    public void shutdown() {
+        matches.values().stream().distinct().forEach(m -> m.finish(null));
+        matches.clear();
+        disconnected.clear();
+        for (Map.Entry<UUID, PlayerSnapshot> entry : pendingRestores.entrySet()) {
+            Player p = Bukkit.getPlayer(entry.getKey());
+            if (p != null) entry.getValue().restore(p);
+        }
+        pendingRestores.clear();
+    }
+
+    private String pretty(KitType k) { return k == KitType.SPEAR_MACE ? "Spear & Mace" : k.name().replace('_', ' '); }
+}    void markDisconnected(Match match, UUID player) {
         if (match.state() == MatchState.FINISHED) return;
         matches.remove(player, match);
         disconnected.put(player, match);
