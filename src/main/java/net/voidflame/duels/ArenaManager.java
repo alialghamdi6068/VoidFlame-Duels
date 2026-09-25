@@ -48,6 +48,7 @@ public final class ArenaManager {
             Method name = arena.getClass().getMethod("name");
             Method spawnA = arena.getClass().getMethod("spawnA");
             Method spawnB = arena.getClass().getMethod("spawnB");
+            release = provider.getClass().getMethod("release", arena.getClass());
             return new Arena(
                     arena,
                     String.valueOf(name.invoke(arena)),
