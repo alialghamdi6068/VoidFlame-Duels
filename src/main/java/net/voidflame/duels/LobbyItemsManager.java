@@ -62,7 +62,7 @@ public final class LobbyItemsManager implements Listener {
                 case AXE -> Material.NETHERITE_AXE;
                 case UHC -> Material.GOLDEN_APPLE;
                 case MACE -> Material.MACE;
-                case SPEAR_MACE -> Material.SPEAR;
+                case SPEAR_MACE -> Material.TRIDENT;
                 case CRYSTAL -> Material.END_CRYSTAL;
                 case NETHERITE_POT -> Material.NETHERITE_CHESTPLATE;
             };
