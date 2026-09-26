@@ -97,7 +97,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         PartyCommand partyCommand = new PartyCommand(this);
         registerParty("party", partyCommand);
 
-        getLogger().info("VoidFlame-Duels enabled with 7 ladders and external arena service.");
+        getLogger().info("VoidFlame-Duels enabled with 8 ladders and external arena service.");
     }
 
     private void registerPublicServices() {
