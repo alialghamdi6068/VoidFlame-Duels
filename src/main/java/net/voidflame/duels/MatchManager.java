@@ -40,6 +40,7 @@ public final class MatchManager implements Listener {
 
     private void matchmake() {
         for (KitType kit : KitType.values()) {
+            if (!plugin.getConfig().getBoolean("settings.individual-matchmaking-enabled", true)) continue;
             while (queues.queued(kit) >= 2) {
                 UUID first = queues.poll(kit);
                 UUID second = queues.poll(kit);
@@ -96,6 +97,7 @@ public final class MatchManager implements Listener {
         if (party == null || !party.leader().equals(leader)) return false;
         LobbyItemsManager.PartyMode mode = plugin.partyManager().modeOf(leader);
         if (mode == null) return false;
+        if (!plugin.getConfig().getBoolean("settings.party-matchmaking-enabled", true)) return false;
         List<Player> participants = plugin.partyManager().onlineMembers(leader).stream()
                 .filter(p -> !isInMatch(p.getUniqueId()))
                 .filter(p -> !plugin.spectatorManager().isSpectating(p.getUniqueId()))
@@ -110,7 +112,10 @@ public final class MatchManager implements Listener {
         if (participants.size() > plugin.getConfig().getInt("settings.party-max-size", 8)) return false;
         Arena arena = arenas.acquire();
         if (arena == null) return false;
-        PartyMatch match = new PartyMatch(plugin, this, arena, mode, KitType.SWORD, participants);
+        KitType partyKit;
+        try { partyKit = KitType.fromConfig(plugin.getConfig().getString("settings.party-default-kit", "sword")); }
+        catch (RuntimeException ex) { partyKit = KitType.SWORD; }
+        PartyMatch match = new PartyMatch(plugin, this, arena, mode, partyKit, participants);
         for (Player player : participants) partyMatches.put(player.getUniqueId(), match);
         match.start();
         plugin.scoreboardManager().updateAll();
