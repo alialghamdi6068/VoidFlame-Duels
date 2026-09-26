@@ -21,6 +21,7 @@ public final class PartyManager implements Listener {
     private final VoidFlameDuelsPlugin plugin;
     private final Map<UUID, LinkedHashSet<UUID>> parties = new ConcurrentHashMap<>();
     private final Map<UUID, Invite> pendingInvites = new ConcurrentHashMap<>();
+    private final Map<UUID, LobbyItemsManager.PartyMode> partyModes = new ConcurrentHashMap<>();
 
     public PartyManager(VoidFlameDuelsPlugin plugin) {
         this.plugin = plugin;
@@ -82,6 +83,8 @@ public final class PartyManager implements Listener {
             UUID newLeader = members.iterator().next();
             parties.remove(party.leader());
             parties.put(newLeader, members);
+            LobbyItemsManager.PartyMode mode = partyModes.remove(party.leader());
+            if (mode != null) partyModes.put(newLeader, mode);
         }
         return true;
     }
@@ -111,6 +114,22 @@ public final class PartyManager implements Listener {
             return false;
         }
         return parties.containsKey(invite.leader());
+    }
+
+    public boolean isLeader(UUID player) {
+        Party party = partyOf(player);
+        return party != null && party.leader().equals(player);
+    }
+
+    public boolean setMode(UUID leader, LobbyItemsManager.PartyMode mode) {
+        if (!isLeader(leader) || mode == null) return false;
+        partyModes.put(leader, mode);
+        return true;
+    }
+
+    public LobbyItemsManager.PartyMode modeOf(UUID player) {
+        Party party = partyOf(player);
+        return party == null ? null : partyModes.get(party.leader());
     }
 
     public int size(UUID player) {
