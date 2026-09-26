@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.StreamSupport;
 
 public final class ArenaManager {
@@ -18,6 +19,7 @@ public final class ArenaManager {
     private Method acquireAvailable;
     private Method availableCount;
     private Method all;
+    private Method reset;
 
     public ArenaManager(VoidFlameDuelsPlugin plugin) {
         this.plugin = Objects.requireNonNull(plugin);
@@ -36,6 +38,7 @@ public final class ArenaManager {
             acquireAvailable = providerType.getMethod("acquireAvailable");
             availableCount = providerType.getMethod("availableCount");
             all = providerType.getMethod("all");
+            reset = providerType.getMethod("reset", Class.forName("net.voidflame.arenas.Arena"));
         } catch (ClassNotFoundException | NoSuchMethodException ex) {
             throw new IllegalStateException("Unable to connect to VoidFlame-Arenas service.", ex);
         }
@@ -59,22 +62,26 @@ public final class ArenaManager {
                 return null;
             }
 
-            return new Arena(
-                    arena,
-                    String.valueOf(name.invoke(arena)),
-                    first,
-                    second
-            );
+            return new Arena(arena, String.valueOf(name.invoke(arena)), first, second);
         } catch (ReflectiveOperationException ex) {
             plugin.getLogger().severe("Failed to acquire arena: " + ex.getMessage());
             return null;
         }
     }
 
-    public synchronized void release(Arena arena) {
-        if (arena == null) return;
+    public synchronized CompletableFuture<Boolean> reset(Arena arena) {
+        if (arena == null) return CompletableFuture.completedFuture(false);
         ensureConnected();
-        releaseProviderArena(arena.providerArena());
+        try {
+            Object result = reset.invoke(provider, arena.providerArena());
+            if (result instanceof CompletableFuture<?> future) {
+                return future.thenApply(Boolean.class::cast);
+            }
+            return CompletableFuture.completedFuture(Boolean.TRUE.equals(result));
+        } catch (ReflectiveOperationException ex) {
+            plugin.getLogger().severe("Failed to reset arena: " + ex.getMessage());
+            return CompletableFuture.completedFuture(false);
+        }
     }
 
     private void releaseProviderArena(Object arena) {
