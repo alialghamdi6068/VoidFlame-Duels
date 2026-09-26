@@ -20,6 +20,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     private KitEditorManager kitEditorManager;
     private AdvancedFeatures advancedFeatures;
     private LobbyItemsManager lobbyItemsManager;
+    private PlayerSettings playerSettings;
 
     @Override
     public void onEnable() {
@@ -33,6 +34,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         }
 
         try {
+            playerSettings = new PlayerSettings();
             arenaManager = new ArenaManager(this);
         } catch (IllegalStateException ex) {
             getLogger().severe(ex.getMessage());
@@ -69,6 +71,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(kitEditorManager, this);
         getServer().getPluginManager().registerEvents(advancedFeatures, this);
         getServer().getPluginManager().registerEvents(lobbyItemsManager, this);
+        getServer().getPluginManager().registerEvents(new PlayerSettingsListener(this), this);
 
         getServer().getScheduler().runTaskTimer(this, scoreboardManager::updateAll, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, partyManager::expireInvites, 20L, 20L);
@@ -177,4 +180,5 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     public KitEditorManager kitEditorManager() { return kitEditorManager; }
     public AdvancedFeatures advancedFeatures() { return advancedFeatures; }
     public LobbyItemsManager lobbyItemsManager() { return lobbyItemsManager; }
+    public PlayerSettings playerSettings() { return playerSettings; }
 }
