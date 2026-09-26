@@ -1,6 +1,7 @@
 package net.voidflame.duels;
 
 import org.bukkit.Bukkit;
+import net.voidflame.core.storage.StorageService;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
@@ -41,6 +42,7 @@ public final class AdvancedFeatures implements Listener {
     private static final String REPLAY_MODULE = "duels.replays";
 
     private final VoidFlameDuelsPlugin plugin;
+    private final StorageService storage;
     private final Map<UUID, Long> reportCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Long> chatCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> coins = new ConcurrentHashMap<>();
@@ -52,6 +54,11 @@ public final class AdvancedFeatures implements Listener {
 
     public AdvancedFeatures(VoidFlameDuelsPlugin plugin) {
         this.plugin = plugin;
+        var registration = Bukkit.getServicesManager().getRegistration(StorageService.class);
+        if (registration == null || registration.getProvider() == null) {
+            throw new IllegalStateException("VoidFlame-Core StorageService is unavailable.");
+        }
+        this.storage = registration.getProvider();
         loadAnnouncements();
         long period = Math.max(20L, plugin.getConfig().getLong("announcements.interval-seconds", 90L) * 20L);
         if (plugin.getConfig().getBoolean("announcements.enabled", true)) {
@@ -60,44 +67,12 @@ public final class AdvancedFeatures implements Listener {
         }
     }
 
-    private Object storage() {
-        try {
-            Class<?> type = Class.forName("net.voidflame.core.storage.StorageService");
-            var registration = Bukkit.getServicesManager().getRegistration(type);
-            return registration == null ? null : registration.getProvider();
-        } catch (ReflectiveOperationException | LinkageError ignored) {
-            return null;
-        }
-    }
-
     private void storagePut(String module, String key, String value) {
-        Object service = storage();
-        if (service == null) return;
-        try {
-            service.getClass().getMethod("put", String.class, String.class, String.class)
-                    .invoke(service, module, key, value);
-        } catch (ReflectiveOperationException ignored) {
-            plugin.getLogger().warning("Could not persist Duels data.");
-        }
+        storage.put(module, key, value);
     }
 
     private void storageGet(String module, String key, java.util.function.Consumer<String> consumer) {
-        Object service = storage();
-        if (service == null) {
-            consumer.accept(null);
-            return;
-        }
-        try {
-            Object result = service.getClass().getMethod("get", String.class, String.class)
-                    .invoke(service, module, key);
-            if (result instanceof java.util.concurrent.CompletableFuture<?> future) {
-                future.thenAccept(value -> consumer.accept(value == null ? null : String.valueOf(value)));
-            } else {
-                consumer.accept(null);
-            }
-        } catch (ReflectiveOperationException ignored) {
-            consumer.accept(null);
-        }
+        storage.get(module, key).thenAccept(consumer);
     }
 
     private void loadAnnouncements() {
