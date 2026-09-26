@@ -132,6 +132,16 @@ public final class PartyManager implements Listener {
         return party == null ? null : partyModes.get(party.leader());
     }
 
+    public synchronized void clearMode(Collection<UUID> members) {
+        if (members == null || members.isEmpty()) return;
+        Set<UUID> leaders = new HashSet<>();
+        for (UUID id : members) {
+            Party party = partyOf(id);
+            if (party != null) leaders.add(party.leader());
+        }
+        leaders.forEach(partyModes::remove);
+    }
+
     public int size(UUID player) {
         Party party = partyOf(player);
         return party == null ? 0 : party.members().size();
