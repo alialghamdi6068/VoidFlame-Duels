@@ -43,6 +43,7 @@ public final class PartyManager implements Listener {
     }
 
     public synchronized boolean invite(Player leader, Player target) {
+        if (!plugin.playerSettings().partyInvites(target)) return false;
         Party party = partyOf(leader.getUniqueId());
         if (party == null || !party.leader().equals(leader.getUniqueId()) || target.equals(leader)) return false;
         if (party.members().contains(target.getUniqueId()) || partyOf(target.getUniqueId()) != null) return false;
