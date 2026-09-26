@@ -178,11 +178,20 @@ public final class LobbyItemsManager implements Listener {
             return;
         }
         plugin.partyManager().setMode(player.getUniqueId(), mode);
-        if (!plugin.matchManager().startParty(player.getUniqueId())) {
-            player.sendMessage(ChatColor.RED + "لا يمكن بدء طور البارتي الآن. تأكد من عدد الأعضاء وتوفر Arena.");
+        if (!plugin.getConfig().getBoolean("settings.party-auto-start", true)) {
+            player.sendMessage(plugin.message("party-started").replace("<mode>", mode.displayName));
+            player.closeInventory();
             return;
         }
-        player.sendMessage(ChatColor.GREEN + "Party mode: " + mode.displayName + " §7بدأ.");
+        if (!plugin.matchManager().startParty(player.getUniqueId())) {
+            int size = plugin.partyManager().size(player.getUniqueId());
+            boolean sizeOk = mode == PartyMode.FFA
+                    ? size >= plugin.getConfig().getInt("settings.party-min-ffa-size", 2)
+                    : (mode == PartyMode.ONE_V_ONE ? size == 2 : size == 4);
+            player.sendMessage(sizeOk ? plugin.message("party-no-arena") : plugin.message("party-invalid-size"));
+            return;
+        }
+        player.sendMessage(plugin.message("party-started").replace("<mode>", mode.displayName));
         player.closeInventory();
     }
 
