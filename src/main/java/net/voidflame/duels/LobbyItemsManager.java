@@ -178,7 +178,11 @@ public final class LobbyItemsManager implements Listener {
             return;
         }
         plugin.partyManager().setMode(player.getUniqueId(), mode);
-        player.sendMessage(ChatColor.GREEN + "Party mode: " + mode.displayName + " §7تم اختياره.");
+        if (!plugin.matchManager().startParty(player.getUniqueId())) {
+            player.sendMessage(ChatColor.RED + "لا يمكن بدء طور البارتي الآن. تأكد من عدد الأعضاء وتوفر Arena.");
+            return;
+        }
+        player.sendMessage(ChatColor.GREEN + "Party mode: " + mode.displayName + " §7بدأ.");
         player.closeInventory();
     }
 
