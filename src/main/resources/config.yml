@@ -345,3 +345,12 @@ features:
     enabled: true
   goldenhard:
     enabled: true
+
+combat:
+  command-blocking-enabled: true
+  allowed-commands:
+    - msg
+    - tell
+    - r
+    - reply
+  blocked-message: "&cCommands are disabled while fighting."
