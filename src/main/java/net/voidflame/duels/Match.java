@@ -9,6 +9,7 @@ import java.util.UUID;
 public final class Match {
     private final VoidFlameDuelsPlugin plugin;
     private final MatchManager manager;
+    private final UUID matchId = UUID.randomUUID();
     private final UUID first;
     private final UUID second;
     private final KitType kit;
@@ -123,6 +124,7 @@ public final class Match {
     }
 
     private String color(String s) { return org.bukkit.ChatColor.translateAlternateColorCodes('&', s); }
+    public UUID matchId() { return matchId; }
     public UUID opponent(UUID player) { return player.equals(first) ? second : first; }
     public Location spawnFor(UUID player) { return player.equals(first) ? arena.spawnA() : arena.spawnB(); }
     public UUID first() { return first; }
