@@ -1,6 +1,5 @@
 package net.voidflame.duels;
 
-import net.voidflame.core.storage.StorageService;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -22,7 +21,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
@@ -62,10 +60,44 @@ public final class AdvancedFeatures implements Listener {
         }
     }
 
-    private StorageService storage() {
-        RegisteredServiceProvider<StorageService> registration =
-                Bukkit.getServicesManager().getRegistration(StorageService.class);
-        return registration == null ? null : registration.getProvider();
+    private Object storage() {
+        try {
+            Class<?> type = Class.forName("net.voidflame.core.storage.StorageService");
+            var registration = Bukkit.getServicesManager().getRegistration(type);
+            return registration == null ? null : registration.getProvider();
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+            return null;
+        }
+    }
+
+    private void storagePut(String module, String key, String value) {
+        Object service = storage();
+        if (service == null) return;
+        try {
+            service.getClass().getMethod("put", String.class, String.class, String.class)
+                    .invoke(service, module, key, value);
+        } catch (ReflectiveOperationException ignored) {
+            plugin.getLogger().warning("Could not persist Duels data.");
+        }
+    }
+
+    private void storageGet(String module, String key, java.util.function.Consumer<String> consumer) {
+        Object service = storage();
+        if (service == null) {
+            consumer.accept(null);
+            return;
+        }
+        try {
+            Object result = service.getClass().getMethod("get", String.class, String.class)
+                    .invoke(service, module, key);
+            if (result instanceof java.util.concurrent.CompletableFuture<?> future) {
+                future.thenAccept(value -> consumer.accept(value == null ? null : String.valueOf(value)));
+            } else {
+                consumer.accept(null);
+            }
+        } catch (ReflectiveOperationException ignored) {
+            consumer.accept(null);
+        }
     }
 
     private void loadAnnouncements() {
@@ -159,13 +191,10 @@ public final class AdvancedFeatures implements Listener {
             reportCooldown.put(reporter.getUniqueId(), previous);
             return false;
         }
-        StorageService storage = storage();
-        if (storage != null) {
-            String key = now + "-" + reporter.getUniqueId();
-            String value = reporter.getUniqueId() + "|" + reporter.getName() + "|" +
-                    target.getUniqueId() + "|" + target.getName() + "|" + sanitize(reason);
-            storage.put(REPORT_MODULE, key, value);
-        }
+        String key = now + "-" + reporter.getUniqueId();
+        String value = reporter.getUniqueId() + "|" + reporter.getName() + "|" +
+                target.getUniqueId() + "|" + target.getName() + "|" + sanitize(reason);
+        storagePut(REPORT_MODULE, key, value);
         String staffMessage = color(plugin.getConfig().getString("report.staff-message",
                 "&c[Report] &f<reporter> &7reported &e<target> &7for: &f<reason>"));
         String output = staffMessage.replace("<reporter>", reporter.getName())
@@ -179,12 +208,8 @@ public final class AdvancedFeatures implements Listener {
     public int coinBalance(UUID player) { return coins.getOrDefault(player, 0); }
 
     private void loadCoins(Player player) {
-        StorageService storage = storage();
-        if (storage == null) {
-            coins.putIfAbsent(player.getUniqueId(), 0);
-            return;
-        }
-        storage.get(COIN_MODULE, player.getUniqueId().toString()).thenAccept(raw -> {
+        coins.putIfAbsent(player.getUniqueId(), 0);
+        storageGet(COIN_MODULE, player.getUniqueId().toString(), raw -> {
             int value = 0;
             if (raw != null) {
                 try { value = Math.max(0, Integer.parseInt(raw)); }
@@ -198,8 +223,7 @@ public final class AdvancedFeatures implements Listener {
         if (amount == 0) return;
         int next = Math.max(0, coins.getOrDefault(player, 0) + amount);
         coins.put(player, next);
-        StorageService storage = storage();
-        if (storage != null) storage.put(COIN_MODULE, player.toString(), String.valueOf(next));
+        storagePut(COIN_MODULE, player.toString(), String.valueOf(next));
     }
 
     public boolean takeCoins(UUID player, int amount) {
@@ -208,8 +232,7 @@ public final class AdvancedFeatures implements Listener {
         if (current < amount) return false;
         int next = current - amount;
         coins.put(player, next);
-        StorageService storage = storage();
-        if (storage != null) storage.put(COIN_MODULE, player.toString(), String.valueOf(next));
+        storagePut(COIN_MODULE, player.toString(), String.valueOf(next));
         return true;
     }
 
@@ -244,8 +267,7 @@ public final class AdvancedFeatures implements Listener {
             player.sendMessage(color("&cYou do not have enough coins."));
             return;
         }
-        StorageService storage = storage();
-        if (storage != null) storage.put(TAG_MODULE, player.getUniqueId().toString(), tag);
+        storagePut(TAG_MODULE, player.getUniqueId().toString(), tag);
         player.sendMessage(color("&aUnlocked tag &f" + tag + "&a."));
         player.closeInventory();
     }
