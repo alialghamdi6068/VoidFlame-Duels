@@ -4,7 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.configuration.file.YamlConfiguration;
+import net.voidflame.core.storage.StorageService;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -17,8 +17,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,14 +26,17 @@ public final class KitEditorManager implements Listener {
 
     private final VoidFlameDuelsPlugin plugin;
     private final Map<UUID, Session> sessions = new ConcurrentHashMap<>();
-    private final File file;
-    private final YamlConfiguration data;
+    private final StorageService storage;
+    private final Map<String, List<Integer>> layoutCache = new ConcurrentHashMap<>();
     private final NamespacedKey sourceSlotKey;
 
     public KitEditorManager(VoidFlameDuelsPlugin plugin) {
         this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), "kit-layouts.yml");
-        this.data = YamlConfiguration.loadConfiguration(file);
+        var registration = plugin.getServer().getServicesManager().getRegistration(StorageService.class);
+        if (registration == null || registration.getProvider() == null) {
+            throw new IllegalStateException("VoidFlame-Core storage service is unavailable.");
+        }
+        this.storage = registration.getProvider();
         this.sourceSlotKey = new NamespacedKey(plugin, "kit-source-slot");
     }
 
@@ -48,15 +49,27 @@ public final class KitEditorManager implements Listener {
         if (!plugin.kitManager().applyBase(player, kit)) return false;
 
         tagBaseItems(player);
-        plugin.kitEditorManager().applySavedLayout(player, kit);
-        Inventory editor = Bukkit.createInventory(null, EDITOR_SIZE,
-                color("&8Kit Editor &7• &b" + pretty(kit)));
-        copyPlayerContents(editor, player);
-        fillLockedRows(editor);
-
-        sessions.put(id, new Session(kit, snapshot, editor));
-        player.openInventory(editor);
-        player.sendMessage(plugin.message("kit-editor-opened").replace("<kit>", pretty(kit)));
+        storage.get("kit-layouts", path(kit, id)).thenAccept(raw -> Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!player.isOnline()) return;
+            List<Integer> layout = decode(raw);
+            if (layout != null) layoutCache.put(path(kit, id), layout);
+            if (layout != null && validLayout(layout, player.getInventory().getContents())) {
+                applyLayout(player, layout);
+            }
+            Inventory editor = Bukkit.createInventory(null, EDITOR_SIZE,
+                    color("&8Kit Editor &7• &b" + pretty(kit)));
+            copyPlayerContents(editor, player);
+            fillLockedRows(editor);
+            sessions.put(id, new Session(kit, snapshot, editor));
+            player.openInventory(editor);
+            player.sendMessage(plugin.message("kit-editor-opened").replace("<kit>", pretty(kit)));
+        })).exceptionally(error -> {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                snapshot.restore(player);
+                player.sendMessage(plugin.message("kit-editor-failed"));
+            });
+            return null;
+        });
         return true;
     }
 
@@ -113,12 +126,16 @@ public final class KitEditorManager implements Listener {
     }
 
     public boolean applySavedLayout(Player player, KitType kit) {
-        List<Integer> layout = load(kit, player.getUniqueId());
+        List<Integer> layout = layoutCache.get(path(kit, player.getUniqueId()));
         if (layout == null) return false;
-
         ItemStack[] base = player.getInventory().getContents().clone();
         if (!validLayout(layout, base)) return false;
+        applyLayout(player, layout);
+        return true;
+    }
 
+    private void applyLayout(Player player, List<Integer> layout) {
+        ItemStack[] base = player.getInventory().getContents().clone();
         ItemStack[] arranged = new ItemStack[PLAYER_SLOTS];
         for (int destination = 0; destination < PLAYER_SLOTS; destination++) {
             int source = layout.get(destination);
@@ -126,7 +143,6 @@ public final class KitEditorManager implements Listener {
         }
         player.getInventory().setContents(arranged);
         player.updateInventory();
-        return true;
     }
 
     public boolean isEditing(UUID player) {
@@ -185,28 +201,28 @@ public final class KitEditorManager implements Listener {
         return true;
     }
 
-    private List<Integer> load(KitType kit, UUID player) {
-        List<?> raw = data.getList(path(kit, player));
-        if (raw == null || raw.size() != PLAYER_SLOTS) return null;
+    private List<Integer> decode(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String[] values = raw.split(",", -1);
+        if (values.length != PLAYER_SLOTS) return null;
         List<Integer> result = new ArrayList<>(PLAYER_SLOTS);
-        for (Object value : raw) {
-            if (!(value instanceof Number number)) return null;
-            result.add(number.intValue());
+        try {
+            for (String value : values) result.add(Integer.parseInt(value));
+            return result;
+        } catch (NumberFormatException ignored) {
+            return null;
         }
-        return result;
     }
 
     private void save(KitType kit, UUID player, List<Integer> layout) {
-        data.set(path(kit, player), new ArrayList<>(layout));
-        try {
-            if (!plugin.getDataFolder().exists() && !plugin.getDataFolder().mkdirs()) {
-                plugin.getLogger().warning("Could not create plugin data folder.");
-                return;
-            }
-            data.save(file);
-        } catch (IOException e) {
-            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Could not save kit layouts.", e);
-        }
+        String key = path(kit, player);
+        List<Integer> copy = List.copyOf(layout);
+        layoutCache.put(key, copy);
+        storage.put("kit-layouts", key, copy.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",")))
+                .exceptionally(error -> {
+                    plugin.getLogger().warning("Could not save kit layout: " + error.getMessage());
+                    return null;
+                });
     }
 
     private String path(KitType kit, UUID player) {
