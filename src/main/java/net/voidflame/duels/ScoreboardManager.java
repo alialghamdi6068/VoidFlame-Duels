@@ -1,7 +1,7 @@
 package net.voidflame.duels;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -87,11 +87,11 @@ public final class ScoreboardManager {
                 .replace("%state%", state)
                 .replace("%server_online%", String.valueOf(Bukkit.getOnlinePlayers().size()));
 
+        LegacyComponentSerializer legacy = LegacyComponentSerializer.legacySection();
         player.sendPlayerListHeaderAndFooter(
-                Component.text(ChatColor.stripColor(header)).color(NamedTextColor.DARK_PURPLE),
-                Component.text(ChatColor.stripColor(footer)).color(NamedTextColor.GRAY));
-        player.playerListName(Component.text(ChatColor.stripColor(player.getDisplayName()))
-                .color(NamedTextColor.WHITE));
+                legacy.deserialize(header),
+                legacy.deserialize(footer));
+        player.playerListName(legacy.deserialize(color(player.getDisplayName())));
     }
 
     private String render(String line, Player player, Match match) {
