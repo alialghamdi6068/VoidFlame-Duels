@@ -215,6 +215,15 @@ public final class MatchManager implements Listener {
                 match.arena().name(),
                 match.durationSeconds() * 1000L
         ));
+        var logs = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.AuditLogService.class);
+        if (logs != null && logs.getProvider() != null) {
+            logs.getProvider().log(
+                    winner == null ? "SYSTEM" : winner.toString(),
+                    "DUEL_FINISH",
+                    match.opponent(winner == null ? match.first() : winner).toString(),
+                    "kit=" + match.kit() + "|arena=" + match.arena().name() + "|duration_ms=" + (match.durationSeconds() * 1000L)
+            );
+        }
     }
 
     private void restoreOrDefer(UUID id, PlayerSnapshot snapshot) {
