@@ -52,6 +52,7 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean duel(Player p, String[] args) {
+        if (!plugin.playerSettings().duelRequests(p)) { p.sendMessage(plugin.message("duel-unavailable")); return true; }
         if (args.length >= 2 && args[0].equalsIgnoreCase("accept")) {
             Player sender = Bukkit.getPlayerExact(args[1]);
             if (sender == null) { p.sendMessage(plugin.message("player-not-found")); return true; }
@@ -67,6 +68,7 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
         }
         if (args.length < 1) { p.sendMessage(ChatColor.YELLOW + "/duel <player> [kit]"); return true; }
         Player target = Bukkit.getPlayerExact(args[0]);
+        if (target != null && !plugin.playerSettings().duelRequests(target)) { p.sendMessage(plugin.message("duel-unavailable")); return true; }
         if (target == null) { p.sendMessage(plugin.message("player-not-found")); return true; }
         KitType kit = args.length >= 2 ? parseKit(args[1]) : KitType.SWORD;
         if (kit == null) { p.sendMessage(plugin.message("unknown-kit")); return true; }
