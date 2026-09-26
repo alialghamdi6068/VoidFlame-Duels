@@ -31,7 +31,7 @@ public final class ArenaManager {
     public synchronized Arena acquire() {
         ensureConnected();
         if (provider == null) return null;
-        Optional<ArenaService.ArenaHandle> result = provider.acquireAvailable();
+        Optional<ArenaService.ArenaHandle> result = provider.acquireHandle();
         if (result.isEmpty()) return null;
         ArenaService.ArenaHandle handle = result.get();
         if (handle.spawnA() == null || handle.spawnB() == null) return null;
