@@ -60,6 +60,7 @@ public final class LobbyItemsManager implements Listener {
             Material icon = switch (kit) {
                 case SWORD -> Material.IRON_SWORD;
                 case AXE -> Material.NETHERITE_AXE;
+                case SMP -> Material.NETHERITE_SWORD;
                 case UHC -> Material.GOLDEN_APPLE;
                 case MACE -> Material.MACE;
                 case SPEAR_MACE -> Material.TRIDENT;
