@@ -120,6 +120,16 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
+    smp:
+      slot: 35
+      display-name: "&aSMP"
+      icon: NETHERITE_SWORD
+      lore:
+        - "&7Survival combat practice."
+        - "&fQueued: &a<queued_players>"
+        - "&fIn Match: &e<in_match_players>"
+        - "&eClick to join."
+
     crystal:
       slot: 33
       display-name: "&aCrystal"
