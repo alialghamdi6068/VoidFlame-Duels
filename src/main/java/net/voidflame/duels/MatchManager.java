@@ -316,6 +316,24 @@ public final class MatchManager implements Listener {
     }
 
     @EventHandler
+    public void onCombatCommand(PlayerCommandPreprocessEvent event) {
+        UUID id = event.getPlayer().getUniqueId();
+        Match match = matches.get(id);
+        if (match == null || match.state() != MatchState.FIGHTING) return;
+        if (!plugin.getConfig().getBoolean("combat.command-blocking-enabled", true)) return;
+        String raw = event.getMessage();
+        String command = raw.startsWith("/") ? raw.substring(1).split("\\s+")[0].toLowerCase(java.util.Locale.ROOT) : "";
+        boolean allowed = plugin.getConfig().getStringList("combat.allowed-commands").stream()
+                .map(value -> value.toLowerCase(java.util.Locale.ROOT).replace("/", ""))
+                .anyMatch(command::equals);
+        if (!allowed) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(plugin.getConfig().getString("combat.blocked-message", "&cCommands are disabled while fighting.")
+                    .replace("&", "§"));
+        }
+    }
+
+    @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         UUID id = event.getPlayer().getUniqueId();
         queues.leave(id);
