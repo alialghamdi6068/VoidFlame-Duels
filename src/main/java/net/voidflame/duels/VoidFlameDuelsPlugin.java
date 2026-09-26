@@ -19,6 +19,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     private PartyManager partyManager;
     private KitEditorManager kitEditorManager;
     private AdvancedFeatures advancedFeatures;
+    private LobbyItemsManager lobbyItemsManager;
 
     @Override
     public void onEnable() {
@@ -50,6 +51,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         partyManager = new PartyManager(this);
         kitEditorManager = new KitEditorManager(this);
         advancedFeatures = new AdvancedFeatures(this);
+        lobbyItemsManager = new LobbyItemsManager(this);
 
         coreServices.register(QueueManager.class, queueManager);
         coreServices.register(MatchManager.class, matchManager);
@@ -66,6 +68,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(partyManager, this);
         getServer().getPluginManager().registerEvents(kitEditorManager, this);
         getServer().getPluginManager().registerEvents(advancedFeatures, this);
+        getServer().getPluginManager().registerEvents(lobbyItemsManager, this);
 
         getServer().getScheduler().runTaskTimer(this, scoreboardManager::updateAll, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, partyManager::expireInvites, 20L, 20L);
@@ -173,4 +176,5 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     public PartyManager partyManager() { return partyManager; }
     public KitEditorManager kitEditorManager() { return kitEditorManager; }
     public AdvancedFeatures advancedFeatures() { return advancedFeatures; }
+    public LobbyItemsManager lobbyItemsManager() { return lobbyItemsManager; }
 }
