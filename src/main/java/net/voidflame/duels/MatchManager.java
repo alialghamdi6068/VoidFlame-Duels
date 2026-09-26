@@ -22,6 +22,7 @@ public final class MatchManager implements Listener {
     private final ArenaManager arenas;
     private final KitManager kits;
     private final Map<UUID, Match> matches = new ConcurrentHashMap<>();
+    private final Map<UUID, PartyMatch> partyMatches = new ConcurrentHashMap<>();
     private final Map<UUID, Match> disconnected = new ConcurrentHashMap<>();
     private final Map<UUID, PlayerSnapshot> pendingRestores = new ConcurrentHashMap<>();
     private final Map<UUID, Long> disconnectTokens = new ConcurrentHashMap<>();
@@ -85,7 +86,41 @@ public final class MatchManager implements Listener {
     }
 
     public boolean isInMatch(UUID id) {
-        return matches.containsKey(id);
+        return matches.containsKey(id) || partyMatches.containsKey(id);
+    }
+
+    public boolean startParty(UUID leader) {
+        PartyManager.Party party = plugin.partyManager().partyOf(leader);
+        if (party == null || !party.leader().equals(leader)) return false;
+        LobbyItemsManager.PartyMode mode = plugin.partyManager().modeOf(leader);
+        if (mode == null) return false;
+        List<Player> participants = plugin.partyManager().onlineMembers(leader).stream()
+                .filter(p -> !isInMatch(p.getUniqueId()))
+                .filter(p -> !plugin.spectatorManager().isSpectating(p.getUniqueId()))
+                .toList();
+        int required = switch (mode) {
+            case ONE_V_ONE -> 2;
+            case TWO_V_TWO -> 4;
+            case FFA -> participants.size();
+        };
+        if (mode != LobbyItemsManager.PartyMode.FFA && participants.size() != required) return false;
+        if (participants.size() < 2) return false;
+        if (participants.size() > plugin.getConfig().getInt("settings.party-max-size", 8)) return false;
+        Arena arena = arenas.acquire();
+        if (arena == null) return false;
+        PartyMatch match = new PartyMatch(plugin, this, arena, mode, KitType.SWORD, participants);
+        for (Player player : participants) partyMatches.put(player.getUniqueId(), match);
+        match.start();
+        plugin.scoreboardManager().updateAll();
+        return true;
+    }
+
+    void finishParty(PartyMatch match) {
+        for (UUID id : match.players()) partyMatches.remove(id, match);
+        plugin.scoreboardManager().updateAll();
+        plugin.partyManager().clearMode(match.players());
+        arenas.reset(match.arena()).thenAccept(success ->
+                plugin.getServer().getScheduler().runTask(plugin, plugin.scoreboardManager()::updateAll));
     }
 
     public boolean isDisconnected(UUID id) {
@@ -243,6 +278,11 @@ public final class MatchManager implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onDeath(PlayerDeathEvent event) {
         UUID loser = event.getEntity().getUniqueId();
+        PartyMatch partyMatch = partyMatches.get(loser);
+        if (partyMatch != null && !partyMatch.finished()) {
+            partyMatch.handleDeath(event);
+            return;
+        }
         Match match = matches.get(loser);
         if (match == null || match.state() != MatchState.FIGHTING) return;
 
@@ -275,6 +315,9 @@ public final class MatchManager implements Listener {
         queues.leave(id);
         plugin.partyManager().leave(id);
 
+        PartyMatch partyMatch = partyMatches.get(id);
+        if (partyMatch != null && !partyMatch.finished()) partyMatch.handleQuit(id);
+
         Match match = matches.get(id);
         if (match != null && match.state() != MatchState.FINISHED) {
             markDisconnected(match, id);
@@ -302,6 +345,7 @@ public final class MatchManager implements Listener {
 
     public void shutdown() {
         matches.values().stream().distinct().toList().forEach(m -> m.finish(null));
+        partyMatches.values().stream().distinct().toList().forEach(m -> m.finish(null));
         matches.clear();
         disconnected.clear();
         disconnectTokens.clear();
@@ -312,6 +356,8 @@ public final class MatchManager implements Listener {
         }
         pendingRestores.clear();
     }
+
+    void clearPartyModes(Collection<UUID> ids) { plugin.partyManager().clearMode(ids); }
 
     private String pretty(KitType k) {
         return k == KitType.SPEAR_MACE ? "Spear & Mace" : k.name().replace('_', ' ');
