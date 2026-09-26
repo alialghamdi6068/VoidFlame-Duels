@@ -141,7 +141,7 @@ gui:
         - "&eClick to join."
     netherite_pot:
       slot: 35
-      display-name: "&aNetherite OP"
+      display-name: "&aNetherite Pot"
       icon: NETHERITE_HELMET
       lore:
         - "&7High-power Netherite practice."
