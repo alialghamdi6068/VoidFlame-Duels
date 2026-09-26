@@ -205,7 +205,7 @@ public final class MatchManager implements Listener {
         if (registration == null || registration.getProvider() == null) return;
         UUID loser = winner == null ? null : match.opponent(winner);
         registration.getProvider().record(new net.voidflame.core.api.MatchResultService.MatchResult(
-                UUID.randomUUID(),
+                match.matchId(),
                 match.first(),
                 match.second(),
                 winner,
