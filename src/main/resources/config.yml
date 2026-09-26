@@ -291,8 +291,6 @@ features:
   rounds:
     enabled: true
     default-rounds: 1
-  crystal-room:
-    enabled: true
   offhand:
     enabled: true
   replay:
