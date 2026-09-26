@@ -34,8 +34,33 @@ commands:
   party:
     description: Manage your party.
     usage: /party <create|invite|accept|leave|kick|disband|info>
+  report:
+    description: Report a player to online staff.
+    usage: /report <player> <reason>
+  coinshop:
+    description: Open the practice CoinShop.
+    usage: /coinshop
+  coins:
+    description: Manage player practice coins.
+    usage: /coins <player> <amount>
+    permission: voidflame.duels.coins.admin
+  practice:
+    description: Open the TotalPractice training menu.
+    usage: /practice
+  totalpractice:
+    description: Open the TotalPractice training menu.
+    usage: /totalpractice
+  goldenhard:
+    description: Toggle GoldenHard practice mode.
+    usage: /goldenhard
 
 permissions:
   voidflame.duels.admin:
     description: Administrative access to VoidFlame Duels.
+    default: op
+  voidflame.duels.report.staff:
+    description: Receive player reports.
+    default: op
+  voidflame.duels.coins.admin:
+    description: Manage practice coins.
     default: op
