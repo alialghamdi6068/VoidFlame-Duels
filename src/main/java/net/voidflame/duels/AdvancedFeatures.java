@@ -45,6 +45,7 @@ public final class AdvancedFeatures implements Listener {
     private final VoidFlameDuelsPlugin plugin;
     private final Map<UUID, Long> reportCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Long> chatCooldown = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> coins = new ConcurrentHashMap<>();
     private final Set<UUID> goldenHard = ConcurrentHashMap.newKeySet();
     private final Map<UUID, List<String>> recentCombat = new ConcurrentHashMap<>();
     private final List<String> announcements = new ArrayList<>();
@@ -86,6 +87,7 @@ public final class AdvancedFeatures implements Listener {
     public void shutdown() {
         if (announcementTask != -1) plugin.getServer().getScheduler().cancelTask(announcementTask);
         recentCombat.clear();
+        coins.clear();
         reportCooldown.clear();
         chatCooldown.clear();
         goldenHard.clear();
@@ -104,11 +106,13 @@ public final class AdvancedFeatures implements Listener {
                     color(subtitle.replace("<player>", player.getName())), 10, 50, 10));
         }
         loadGoldenHard(player);
+        loadCoins(player);
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         recentCombat.remove(event.getPlayer().getUniqueId());
+        coins.remove(event.getPlayer().getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -172,30 +176,40 @@ public final class AdvancedFeatures implements Listener {
         return true;
     }
 
-    public CompletableFutureAdapter coinBalance(UUID player) {
+    public int coinBalance(UUID player) { return coins.getOrDefault(player, 0); }
+
+    private void loadCoins(Player player) {
         StorageService storage = storage();
-        if (storage == null) return new CompletableFutureAdapter(0);
-        try {
-            String raw = storage.get(COIN_MODULE, player.toString()).join();
-            return new CompletableFutureAdapter(raw == null ? 0 : Math.max(0, Integer.parseInt(raw)));
-        } catch (RuntimeException ex) {
-            return new CompletableFutureAdapter(0);
+        if (storage == null) {
+            coins.putIfAbsent(player.getUniqueId(), 0);
+            return;
         }
+        storage.get(COIN_MODULE, player.getUniqueId().toString()).thenAccept(raw -> {
+            int value = 0;
+            if (raw != null) {
+                try { value = Math.max(0, Integer.parseInt(raw)); }
+                catch (NumberFormatException ignored) { }
+            }
+            coins.put(player.getUniqueId(), value);
+        });
     }
 
     public void addCoins(UUID player, int amount) {
         if (amount == 0) return;
-        int current = coinBalance(player).value();
+        int next = Math.max(0, coins.getOrDefault(player, 0) + amount);
+        coins.put(player, next);
         StorageService storage = storage();
-        if (storage != null) storage.put(COIN_MODULE, player.toString(), String.valueOf(Math.max(0, current + amount)));
+        if (storage != null) storage.put(COIN_MODULE, player.toString(), String.valueOf(next));
     }
 
     public boolean takeCoins(UUID player, int amount) {
         if (amount < 0) return false;
-        int current = coinBalance(player).value();
+        int current = coins.getOrDefault(player, 0);
         if (current < amount) return false;
+        int next = current - amount;
+        coins.put(player, next);
         StorageService storage = storage();
-        if (storage != null) storage.put(COIN_MODULE, player.toString(), String.valueOf(current - amount));
+        if (storage != null) storage.put(COIN_MODULE, player.toString(), String.valueOf(next));
         return true;
     }
 
@@ -333,5 +347,4 @@ public final class AdvancedFeatures implements Listener {
 
     private String color(String value) { return ChatColor.translateAlternateColorCodes('&', value); }
 
-    public record CompletableFutureAdapter(int value) {}
 }
