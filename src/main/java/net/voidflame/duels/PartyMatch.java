@@ -7,6 +7,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class PartyMatch {
     private final VoidFlameDuelsPlugin plugin;
@@ -27,7 +28,11 @@ public final class PartyMatch {
     public PartyMatch(VoidFlameDuelsPlugin plugin, MatchManager manager, Arena arena,
                       LobbyItemsManager.PartyMode mode, KitType kit, List<Player> participants) {
         this.plugin = plugin; this.manager = manager; this.arena = arena; this.mode = mode; this.kit = kit;
-        this.players = participants.stream().map(Player::getUniqueId).toList();
+        List<UUID> shuffled = new ArrayList<>(participants.stream().map(Player::getUniqueId).toList());
+        if (mode == LobbyItemsManager.PartyMode.TWO_V_TWO) {
+            Collections.shuffle(shuffled, ThreadLocalRandom.current());
+        }
+        this.players = List.copyOf(shuffled);
         for (Player player : participants) { alive.add(player.getUniqueId()); snapshots.put(player.getUniqueId(), PlayerSnapshot.capture(player)); }
         if (mode == LobbyItemsManager.PartyMode.TWO_V_TWO) {
             for (int i = 0; i < players.size(); i++) { if (i < 2) firstTeam.add(players.get(i)); else secondTeam.add(players.get(i)); }
