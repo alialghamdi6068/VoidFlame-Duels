@@ -244,3 +244,61 @@ scoreboard:
       - "&fArena: &d%arena_name%"
       - "&7&m------------------"
       - "&eplay.VoidFlame.net"
+
+# Advanced Duels features
+welcome:
+  title: "&b&lVOIDFLAME"
+  subtitle: "&fWelcome &e<player>&f."
+  join-message: "&bVoidFlame &7» &fWelcome &e<player>&f."
+
+death-messages:
+  default: "&c<victim> was eliminated."
+  player-kill: "&c<victim> &7was defeated by &a<killer>&7."
+
+autogg:
+  enabled: true
+  delay-ticks: 10
+  message: "gg"
+
+report:
+  cooldown-seconds: 20
+  staff-message: "&c[Report] &f<reporter> &7reported &e<target> &7for: &f<reason>"
+
+announcements:
+  enabled: true
+  interval-seconds: 90
+  messages:
+    - "&bVoidFlame &7» &fUse &e/duels &fto find a match."
+    - "&bVoidFlame &7» &fReport suspicious players with &e/report <player> <reason>&f."
+    - "&bVoidFlame &7» &fPractice, improve and compete."
+
+duel-menu:
+  right-click-enabled: true
+
+trim-editor:
+  enabled: true
+
+chat-rate-limit:
+  enabled: true
+  minimum-interval-ms: 750
+
+features:
+  ffa:
+    enabled: true
+    world: ffa
+    max-players: 32
+    reset-interval-minutes: 60
+  rounds:
+    enabled: true
+    default-rounds: 1
+  crystal-room:
+    enabled: true
+  offhand:
+    enabled: true
+  replay:
+    enabled: true
+    max-events-per-match: 2000
+  botduels:
+    enabled: true
+  goldenhard:
+    enabled: true
