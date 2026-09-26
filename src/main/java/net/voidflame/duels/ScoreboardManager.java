@@ -43,6 +43,11 @@ public final class ScoreboardManager {
 
     public void update(Player player) {
         if (bukkit == null) return;
+        if (!plugin.playerSettings().scoreboard(player)) {
+            player.setScoreboard(bukkit.getMainScoreboard());
+            updateTab(player, match);
+            return;
+        }
         if (statsService == null) connectStats();
 
         Scoreboard board = bukkit.getNewScoreboard();
@@ -112,6 +117,7 @@ public final class ScoreboardManager {
                 .replace("%player_elo%", String.valueOf(Math.round(stats.elo)))
                 .replace("%player_kills%", String.valueOf(stats.kills))
                 .replace("%player_deaths%", String.valueOf(stats.deaths))
+                .replace("%player_level%", plugin.playerSettings().personalLevel(player) ? "1" : "—")
                 .replace("%state%", match == null ? "Practice" : "Duel");
         return color(result);
     }
