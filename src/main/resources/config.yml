@@ -9,6 +9,8 @@ settings:
   rematch-expiry-seconds: 120
   party-max-size: 8
   party-invite-expiry-seconds: 60
+  party-auto-start: true
+  party-min-ffa-size: 2
   countdown-title: "&b&l<seconds>"
 
 messages:
@@ -53,6 +55,10 @@ messages:
   party-disbanded: "&aParty disbanded."
   party-action-failed: "&cThat party action could not be completed."
   party-info: "&fLeader: &e<leader> &7| &fMembers: &e<members>"
+  party-started: "&aParty match started: &e<mode>&a."
+  party-invalid-size: "&cThe selected party mode requires a different number of players."
+  party-busy: "&cA party member is already busy."
+  party-no-arena: "&cNo arena is available for the party match."
   party-cannot-queue: "&cLeave your party before joining an individual queue."
   kit-selected: "&aتم اختيار كيت &e<kit>&a."
   kit-editor-opened: "&aEditing &e<kit>&a. Rearrange the items, then close the menu to save."
