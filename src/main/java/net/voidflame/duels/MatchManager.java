@@ -105,8 +105,9 @@ public final class MatchManager implements Listener {
         int required = switch (mode) {
             case ONE_V_ONE -> 2;
             case TWO_V_TWO -> 4;
-            case FFA -> participants.size();
+            case FFA -> Math.max(2, plugin.getConfig().getInt("settings.party-min-ffa-size", 2));
         };
+        if (mode == LobbyItemsManager.PartyMode.FFA && participants.size() < required) return false;
         if (mode != LobbyItemsManager.PartyMode.FFA && participants.size() != required) return false;
         if (participants.size() < 2) return false;
         if (participants.size() > plugin.getConfig().getInt("settings.party-max-size", 8)) return false;
