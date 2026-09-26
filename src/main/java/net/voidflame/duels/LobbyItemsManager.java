@@ -3,28 +3,39 @@ package net.voidflame.duels;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class LobbyItemsManager implements Listener {
     private static final String KIT_MENU = "§8VoidFlame • Choose Kit";
     private static final String PARTY_MENU = "§8VoidFlame • Party";
+
     private final VoidFlameDuelsPlugin plugin;
+    private final NamespacedKey lobbyItemKey;
+    private final Map<UUID, KitType> selectedKits = new ConcurrentHashMap<>();
 
     public LobbyItemsManager(VoidFlameDuelsPlugin plugin) {
         this.plugin = plugin;
+        this.lobbyItemKey = new NamespacedKey(plugin, "lobby-item");
     }
 
     @EventHandler
@@ -32,17 +43,11 @@ public final class LobbyItemsManager implements Listener {
         Bukkit.getScheduler().runTask(plugin, () -> giveLobbyItems(event.getPlayer()));
     }
 
-    @EventHandler
-    public void onQuit(PlayerQuitEvent event) {
-        // Nothing persistent is held here; the items are rebuilt on the next join.
-    }
-
     public void giveLobbyItems(Player player) {
         if (plugin.matchManager().isInMatch(player.getUniqueId())
                 || plugin.matchManager().isDisconnected(player.getUniqueId())
                 || plugin.spectatorManager().isSpectating(player.getUniqueId())) return;
-
-        PlayerInventoryAccess.clearAndPlace(player);
+        PlayerInventoryAccess.clearAndPlace(player, lobbyItemKey);
         player.updateInventory();
     }
 
@@ -51,7 +56,7 @@ public final class LobbyItemsManager implements Listener {
         fill(inv);
         int slot = 10;
         for (KitType kit : KitType.values()) {
-            if (slot >= 35) break;
+            if (slot >= 29) break;
             Material icon = switch (kit) {
                 case SWORD -> Material.IRON_SWORD;
                 case AXE -> Material.NETHERITE_AXE;
@@ -79,51 +84,87 @@ public final class LobbyItemsManager implements Listener {
     }
 
     @EventHandler
-    public void onClick(InventoryClickEvent event) {
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) return;
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        Player player = event.getPlayer();
+        ItemStack item = event.getItem();
+        if (!isLobbyItem(item)) return;
+        event.setCancelled(true);
+
+        String key = item.getItemMeta().getPersistentDataContainer().get(lobbyItemKey, PersistentDataType.STRING);
+        if ("kit".equals(key)) {
+            openKitMenu(player);
+        } else if ("party".equals(key)) {
+            if (plugin.partyManager().partyOf(player.getUniqueId()) == null) {
+                plugin.partyManager().create(player);
+            }
+            openPartyMenu(player);
+        } else if ("editor".equals(key)) {
+            KitType kit = selectedKits.getOrDefault(player.getUniqueId(), KitType.SWORD);
+            if (!plugin.kitEditorManager().open(player, kit)) {
+                player.sendMessage(plugin.message("kit-editor-failed"));
+            }
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         String title = event.getView().getTitle();
-        if (!title.equals(KIT_MENU) && !title.equals(PARTY_MENU)) return;
-        event.setCancelled(true);
-        if (event.getRawSlot() < 0 || event.getRawSlot() >= event.getInventory().getSize()) return;
 
-        if (title.equals(KIT_MENU)) {
-            int slot = event.getRawSlot();
-            int index = slot - 10;
-            if (index >= 0 && index < KitType.values().length && slot < 29) {
-                KitType kit = KitType.values()[index];
-                if (plugin.kitManager().apply(player, kit)) {
-                    player.sendMessage(plugin.message("kit-selected").replace("<kit>", pretty(kit)));
+        if (title.equals(KIT_MENU) || title.equals(PARTY_MENU)) {
+            event.setCancelled(true);
+            if (event.getRawSlot() < 0 || event.getRawSlot() >= event.getInventory().getSize()) return;
+
+            if (title.equals(KIT_MENU)) {
+                int slot = event.getRawSlot();
+                int index = slot - 10;
+                if (index >= 0 && index < KitType.values().length && slot < 29) {
+                    KitType kit = KitType.values()[index];
+                    if (plugin.kitManager().apply(player, kit)) {
+                        selectedKits.put(player.getUniqueId(), kit);
+                        player.sendMessage(plugin.message("kit-selected").replace("<kit>", pretty(kit)));
+                        player.closeInventory();
+                        giveLobbyItems(player);
+                    } else {
+                        player.sendMessage(plugin.message("unknown-kit"));
+                    }
+                } else if (slot == 31) {
                     player.closeInventory();
-                    giveLobbyItems(player);
-                } else {
-                    player.sendMessage(plugin.message("unknown-kit"));
                 }
-            } else if (slot == 31) {
-                player.closeInventory();
+            } else {
+                switch (event.getRawSlot()) {
+                    case 10 -> startPartyMode(player, PartyMode.ONE_V_ONE);
+                    case 13 -> startPartyMode(player, PartyMode.TWO_V_TWO);
+                    case 16 -> startPartyMode(player, PartyMode.FFA);
+                    case 22 -> {
+                        PartyManager.Party party = plugin.partyManager().partyOf(player.getUniqueId());
+                        if (party == null) {
+                            player.sendMessage(plugin.message("party-not-in"));
+                        } else {
+                            player.sendMessage(ChatColor.AQUA + "Party members: " + party.members().stream()
+                                    .map(id -> {
+                                        Player p = Bukkit.getPlayer(id);
+                                        return p == null ? Bukkit.getOfflinePlayer(id).getName() : p.getName();
+                                    })
+                                    .filter(java.util.Objects::nonNull)
+                                    .reduce((a, b) -> a + ", " + b).orElse("-"));
+                        }
+                    }
+                    case 31 -> player.closeInventory();
+                    default -> {}
+                }
             }
             return;
         }
 
-        switch (event.getRawSlot()) {
-            case 10 -> startPartyMode(player, PartyMode.ONE_V_ONE);
-            case 13 -> startPartyMode(player, PartyMode.TWO_V_TWO);
-            case 16 -> startPartyMode(player, PartyMode.FFA);
-            case 22 -> {
-                PartyManager.Party party = plugin.partyManager().partyOf(player.getUniqueId());
-                if (party == null) {
-                    player.sendMessage(plugin.message("party-not-in"));
-                } else {
-                    player.sendMessage(ChatColor.AQUA + "Party members: " + party.members().stream()
-                            .map(id -> {
-                                Player p = Bukkit.getPlayer(id);
-                                return p == null ? Bukkit.getOfflinePlayer(id).getName() : p.getName();
-                            })
-                            .filter(java.util.Objects::nonNull)
-                            .reduce((a,b) -> a + ", " + b).orElse("-"));
-                }
-            }
-            case 31 -> player.closeInventory();
-            default -> {}
+        if (plugin.matchManager().isInMatch(player.getUniqueId())) return;
+        if (event.getRawSlot() >= 0 && event.getRawSlot() < 9 && isLobbyItem(event.getCurrentItem())) {
+            event.setCancelled(true);
+        }
+        if (event.isShiftClick() && isLobbyItem(event.getCurrentItem())) {
+            event.setCancelled(true);
         }
     }
 
@@ -145,6 +186,21 @@ public final class LobbyItemsManager implements Listener {
     public void onDrag(InventoryDragEvent event) {
         String title = event.getView().getTitle();
         if (title.equals(KIT_MENU) || title.equals(PARTY_MENU)) event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onDrop(PlayerDropItemEvent event) {
+        if (isLobbyItem(event.getItemDrop().getItemStack())) event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onDeath(PlayerDeathEvent event) {
+        event.getDrops().removeIf(this::isLobbyItem);
+    }
+
+    private boolean isLobbyItem(ItemStack item) {
+        return item != null && item.hasItemMeta()
+                && item.getItemMeta().getPersistentDataContainer().has(lobbyItemKey, PersistentDataType.STRING);
     }
 
     private void fill(Inventory inv) {
@@ -181,20 +237,21 @@ public final class LobbyItemsManager implements Listener {
     }
 
     private static final class PlayerInventoryAccess {
-        static void clearAndPlace(Player player) {
+        static void clearAndPlace(Player player, NamespacedKey key) {
             var inv = player.getInventory();
             inv.clear();
-            inv.setItem(0, named(Material.IRON_SWORD, "§bKit Selector", "§7Right-click to choose your kit"));
-            inv.setItem(1, named(Material.GOAT_HORN, "§dParty +", "§7Right-click to open party"));
-            inv.setItem(8, named(Material.BOOK, "§6Kit Editor", "§7Right-click to edit your kit"));
+            inv.setItem(0, named(Material.IRON_SWORD, "§bKit Selector", "§7Right-click to choose your kit", key, "kit"));
+            inv.setItem(1, named(Material.GOAT_HORN, "§dParty +", "§7Right-click to open party", key, "party"));
+            inv.setItem(8, named(Material.BOOK, "§6Kit Editor", "§7Right-click to edit your kit", key, "editor"));
         }
 
-        private static ItemStack named(Material material, String name, String lore) {
+        private static ItemStack named(Material material, String name, String lore, NamespacedKey key, String value) {
             ItemStack item = new ItemStack(material);
             ItemMeta meta = item.getItemMeta();
             if (meta != null) {
                 meta.setDisplayName(name);
                 meta.setLore(List.of(lore));
+                meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, value);
                 item.setItemMeta(meta);
             }
             return item;
