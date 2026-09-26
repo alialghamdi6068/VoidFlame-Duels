@@ -11,6 +11,10 @@ settings:
   party-invite-expiry-seconds: 60
   party-auto-start: true
   party-min-ffa-size: 2
+  party-default-kit: sword
+  party-matchmaking-enabled: true
+  individual-matchmaking-enabled: true
+  arena-acquire-retry-ticks: 20
   countdown-title: "&b&l<seconds>"
 
 messages:
