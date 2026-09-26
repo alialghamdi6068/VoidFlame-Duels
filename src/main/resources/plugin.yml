@@ -12,55 +12,118 @@ commands:
   duel:
     description: Send or manage a duel request.
     usage: /duel <player> [kit]
-    aliases: [duels]
+    permission: voidflame.duel
   queue:
     description: Join or leave a duel queue.
     usage: /queue [kit|leave]
+    permission: voidflame.queue
   rematch:
-    description: Request a rematch with your last opponent.
+    description: Request a rematch.
     usage: /rematch [accept <player>]
+    permission: voidflame.duel.rematch
   rejoin:
     description: Rejoin your disconnected duel.
+    permission: voidflame.duel.rejoin
   duels:
     description: Open the duel queue menu.
     usage: /duels
+    permission: voidflame.queue
   spectate:
     description: Spectate an active duel.
     usage: /spectate <player>
+    permission: voidflame.spectate
   kiteditor:
     description: Edit and save your inventory layout for a kit.
     usage: /kiteditor <kit>
     aliases: [kit-editor]
+    permission: voidflame.kits.edit
   party:
     description: Manage your party.
     usage: /party <create|invite|accept|leave|kick|disband|info>
+    permission: voidflame.party
   report:
     description: Report a player to online staff.
     usage: /report <player> <reason>
+    permission: voidflame.report
   coinshop:
     description: Open the practice CoinShop.
     usage: /coinshop
+    permission: voidflame.coinshop
   coins:
     description: Manage player practice coins.
     usage: /coins <player> <amount>
-    permission: voidflame.duels.coins.admin
+    permission: voidflame.coins.admin
   practice:
-    description: Open the TotalPractice training menu.
+    description: Open the practice training menu.
     usage: /practice
+    permission: voidflame.practice
   totalpractice:
-    description: Open the TotalPractice training menu.
+    description: Open the practice training menu.
     usage: /totalpractice
+    permission: voidflame.practice
   goldenhard:
     description: Toggle GoldenHard practice mode.
     usage: /goldenhard
+    permission: voidflame.practice.goldenhard
 
 permissions:
-  voidflame.duels.admin:
-    description: Administrative access to VoidFlame Duels.
+  voidflame.duel:
+    description: Use duel requests.
+    default: true
+  voidflame.duel.rematch:
+    description: Use rematches.
+    default: true
+  voidflame.duel.rejoin:
+    description: Rejoin a disconnected duel.
+    default: true
+  voidflame.queue:
+    description: Use duel queues.
+    default: true
+  voidflame.spectate:
+    description: Spectate active duels.
+    default: true
+  voidflame.kits.edit:
+    description: Edit personal kit layouts.
+    default: true
+  voidflame.party:
+    description: Use party features.
+    default: true
+  voidflame.report:
+    description: Report players.
+    default: true
+  voidflame.coinshop:
+    description: Open the practice coin shop.
+    default: true
+  voidflame.practice:
+    description: Use practice training features.
+    default: true
+  voidflame.practice.goldenhard:
+    description: Use GoldenHard practice mode.
+    default: true
+  voidflame.duel.private:
+    description: Create private duels.
+    default: false
+  voidflame.party.private:
+    description: Create private parties.
+    default: false
+  voidflame.spectate.others:
+    description: Spectate any active duel.
     default: op
-  voidflame.duels.report.staff:
-    description: Receive player reports.
+  voidflame.duel.forceend:
+    description: Force-end active duels.
     default: op
-  voidflame.duels.coins.admin:
+  voidflame.duel.forcematch:
+    description: Force players into matches.
+    default: op
+  voidflame.coins.admin:
     description: Manage practice coins.
+    default: op
+  voidflame.duels.admin:
+    description: Full administrative access to VoidFlame Duels.
+    default: op
+  voidflame.report.view:
+    description: View reports.
+    default: op
+  voidflame.report.handle:
+    description: Handle player reports.
     default: op
