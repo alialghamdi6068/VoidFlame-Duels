@@ -125,7 +125,7 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
-    netherite_op:
+    netherite_pot:
       slot: 35
       display-name: "&aNetherite OP"
       icon: NETHERITE_HELMET
@@ -202,7 +202,7 @@ kits:
       - {slot: 5, material: ENDER_PEARL, amount: 16}
       - {slot: 6, material: TOTEM_OF_UNDYING, amount: 1}
     offhand: TOTEM_OF_UNDYING
-  netherite_op:
+  netherite_pot:
     armor: NETHERITE_SET_PROT4
     items:
       - {slot: 0, material: NETHERITE_SWORD, amount: 1, enchantments: ["SHARPNESS:5", "UNBREAKING:3"]}
