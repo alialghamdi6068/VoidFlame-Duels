@@ -127,9 +127,20 @@ public final class MatchManager implements Listener {
 
         Player a = Bukkit.getPlayer(match.first());
         Player b = Bukkit.getPlayer(match.second());
-        arenas.release(match.arena());
         plugin.spectatorManager().stopWatching(match);
         recordExternalMatchResult(match, winner);
+
+        // The arena remains RESETTING until its template has been restored successfully.
+        // Never make a modified arena available for another match.
+        arenas.reset(match.arena()).thenAccept(success ->
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    if (!success) {
+                        plugin.getLogger().severe("Arena '" + match.arena().name()
+                                + "' was disabled because its reset failed.");
+                    }
+                    plugin.scoreboardManager().updateAll();
+                })
+        );
 
         if (winner == null) {
             if (a != null) a.sendMessage(plugin.message("match-draw"));
