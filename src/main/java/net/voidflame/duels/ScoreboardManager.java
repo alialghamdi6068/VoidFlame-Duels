@@ -43,6 +43,7 @@ public final class ScoreboardManager {
 
     public void update(Player player) {
         if (bukkit == null) return;
+        Match match = plugin.matchManager().get(player.getUniqueId());
         if (!plugin.playerSettings().scoreboard(player)) {
             player.setScoreboard(bukkit.getMainScoreboard());
             updateTab(player, match);
@@ -51,7 +52,6 @@ public final class ScoreboardManager {
         if (statsService == null) connectStats();
 
         Scoreboard board = bukkit.getNewScoreboard();
-        Match match = plugin.matchManager().get(player.getUniqueId());
         String path = match != null ? "scoreboard.match" : "scoreboard.spawn";
 
         if (!plugin.getConfig().getBoolean(path + ".enabled", true)) {
