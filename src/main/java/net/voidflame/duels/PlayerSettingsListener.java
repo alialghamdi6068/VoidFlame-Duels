@@ -15,14 +15,13 @@ public final class PlayerSettingsListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         plugin.playerSettings().load(player);
-        Bukkit.getScheduler().runTask(plugin, () -> {
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (!player.isOnline()) return;
             for (Player other : Bukkit.getOnlinePlayers()) {
                 if (plugin.playerSettings().showPlayers(player)) player.showPlayer(plugin, other);
                 else if (!player.equals(other)) player.hidePlayer(plugin, other);
             }
-            if (!plugin.playerSettings().showPlayers(player)) player.hidePlayer(plugin, player);
-        });
+        }, 20L);
     }
 
     @EventHandler
