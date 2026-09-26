@@ -237,10 +237,33 @@ public final class AdvancedFeatures implements Listener {
     }
 
     public void openCoinShop(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, color("&8CoinShop"));
-        inv.setItem(11, item(Material.NAME_TAG, "&bTag: &f[&bVoid&f]", "&7Cost: &e100 coins"));
-        inv.setItem(13, item(Material.DIAMOND, "&b+250 Coins", "&7Cost: &e0 coins"));
-        inv.setItem(15, item(Material.NETHER_STAR, "&dTag: &f[&dChampion&f]", "&7Cost: &e500 coins"));
+        Inventory inv = Bukkit.createInventory(null, 54, color("&8VoidFlame CoinShop"));
+        String[][] catalog = {
+                {"[Void]", "100", "NAME_TAG", "&b"},
+                {"[Champion]", "500", "NETHER_STAR", "&d"},
+                {"[Duelist]", "750", "DIAMOND_SWORD", "&a"},
+                {"[Combo]", "900", "IRON_SWORD", "&e"},
+                {"[Clutch]", "1200", "TOTEM_OF_UNDYING", "&6"},
+                {"[Warlord]", "1500", "NETHERITE_SWORD", "&c"},
+                {"[Unbreakable]", "1750", "NETHERITE_CHESTPLATE", "&5"},
+                {"[Speedster]", "2000", "FEATHER", "&b"},
+                {"[Striker]", "2250", "ARROW", "&f"},
+                {"[Swordsman]", "2500", "DIAMOND_SWORD", "&3"},
+                {"[AxeMaster]", "2750", "DIAMOND_AXE", "&6"},
+                {"[Crystal]", "3000", "END_CRYSTAL", "&d"},
+                {"[Mace]", "3250", "MACE", "&5"},
+                {"[Spear]", "3500", "SPEAR", "&a"},
+                {"[VoidWalker]", "4000", "ENDER_PEARL", "&8"},
+                {"[Nightmare]", "5000", "WITHER_SKELETON_SKULL", "&8"},
+                {"[Legend]", "7500", "DRAGON_EGG", "&5"},
+                {"[Mythic]", "10000", "DRAGON_HEAD", "&d"}
+        };
+        for (int i = 0; i < catalog.length; i++) {
+            String[] entry = catalog[i];
+            inv.setItem(i, item(Material.matchMaterial(entry[2]) == null ? Material.NAME_TAG : Material.matchMaterial(entry[2]),
+                    entry[3] + entry[0], "&7Cost: &e" + entry[1] + " coins"));
+        }
+        inv.setItem(49, item(Material.GOLD_NUGGET, "&eYour Coins: &f" + coinBalance(player.getUniqueId()), "&7Earn coins by playing."));
         player.openInventory(inv);
     }
 
@@ -258,11 +281,18 @@ public final class AdvancedFeatures implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         if (!event.getView().getTitle().equals(color("&8CoinShop"))) return;
         event.setCancelled(true);
+        String[][] catalog = {
+                {"[Void]", "100"}, {"[Champion]", "500"}, {"[Duelist]", "750"}, {"[Combo]", "900"},
+                {"[Clutch]", "1200"}, {"[Warlord]", "1500"}, {"[Unbreakable]", "1750"}, {"[Speedster]", "2000"},
+                {"[Striker]", "2250"}, {"[Swordsman]", "2500"}, {"[AxeMaster]", "2750"}, {"[Crystal]", "3000"},
+                {"[Mace]", "3250"}, {"[Spear]", "3500"}, {"[VoidWalker]", "4000"}, {"[Nightmare]", "5000"},
+                {"[Legend]", "7500"}, {"[Mythic]", "10000"}
+        };
+        int slot = event.getRawSlot();
+        if (slot < 0 || slot >= catalog.length) return;
+        String tag = catalog[slot][0];
         int cost;
-        String tag;
-        if (event.getRawSlot() == 11) { cost = 100; tag = "[Void]"; }
-        else if (event.getRawSlot() == 15) { cost = 500; tag = "[Champion]"; }
-        else return;
+        try { cost = Integer.parseInt(catalog[slot][1]); } catch (NumberFormatException ex) { return; }
         if (!takeCoins(player.getUniqueId(), cost)) {
             player.sendMessage(color("&cYou do not have enough coins."));
             return;
