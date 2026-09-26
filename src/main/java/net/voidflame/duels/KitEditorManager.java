@@ -118,6 +118,11 @@ public final class KitEditorManager implements Listener {
         List<Integer> layout = captureLayout(event.getInventory());
         if (layout != null) {
             save(session.kit(), player.getUniqueId(), layout);
+            var registration = plugin.getServer().getServicesManager().getRegistration(net.voidflame.core.api.AuditLogService.class);
+            if (registration != null && registration.getProvider() != null) {
+                registration.getProvider().log(player.getUniqueId().toString(), "KIT_LAYOUT_CHANGE",
+                        session.kit().name(), "slots=" + layout.size());
+            }
             player.sendMessage(plugin.message("kit-editor-saved").replace("<kit>", pretty(session.kit())));
         } else {
             player.sendMessage(plugin.message("kit-editor-failed"));
