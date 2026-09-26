@@ -54,7 +54,7 @@ messages:
   party-action-failed: "&cThat party action could not be completed."
   party-info: "&fLeader: &e<leader> &7| &fMembers: &e<members>"
   party-cannot-queue: "&cLeave your party before joining an individual queue."
-  kit-editor-opened: "&aEditing &e<kit>&a. Rearrange the items, then close the menu to save."
+  kit-selected: "&aتم اختيار كيت &e<kit>&a."\n  kit-editor-opened: "&aEditing &e<kit>&a. Rearrange the items, then close the menu to save."
   kit-editor-saved: "&aSaved your &e<kit> &akit layout."
   kit-editor-failed: "&cThe kit editor could not be opened."
 
