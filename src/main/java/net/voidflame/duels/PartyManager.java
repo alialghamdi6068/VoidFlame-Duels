@@ -170,10 +170,7 @@ public final class PartyManager implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        UUID id = event.getPlayer().getUniqueId();
-        pendingInvites.remove(id);
-        Party party = partyOf(id);
-        if (party != null) leave(id);
+        pendingInvites.remove(event.getPlayer().getUniqueId());
     }
 
     public void expireInvites() {
