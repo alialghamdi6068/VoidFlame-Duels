@@ -201,31 +201,20 @@ public final class MatchManager implements Listener {
 
 
     private void recordExternalMatchResult(Match match, UUID winner) {
-        try {
-            Class<?> statsType = Class.forName("net.voidflame.stats.StatsService");
-            var registration = Bukkit.getServicesManager().getRegistration(statsType);
-            if (registration != null) {
-                Object service = registration.getProvider();
-                var method = statsType.getMethod("recordMatch", UUID.class, UUID.class);
-                UUID loser = winner == null ? null : match.opponent(winner);
-                method.invoke(service, winner, loser);
-            }
-        } catch (ReflectiveOperationException ignored) {
-            // Stats is optional at runtime.
-        }
-        try {
-            Class<?> logsType = Class.forName("net.voidflame.logs.VoidFlameLogsPlugin$LogService");
-            var registration = Bukkit.getServicesManager().getRegistration(logsType);
-            if (registration != null) {
-                Object service = registration.getProvider();
-                String result = winner == null ? "DRAW" : "WINNER=" + winner;
-                logsType.getMethod("log", String.class, String.class)
-                        .invoke(service, "DUEL_FINISH",
-                                match.first() + "|" + match.second() + "|" + match.kit() + "|" + result);
-            }
-        } catch (ReflectiveOperationException ignored) {
-            // Logs is optional at runtime.
-        }
+        var registration = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.MatchResultService.class);
+        if (registration == null || registration.getProvider() == null) return;
+        UUID loser = winner == null ? null : match.opponent(winner);
+        registration.getProvider().record(new net.voidflame.core.api.MatchResultService.MatchResult(
+                UUID.randomUUID(),
+                match.first(),
+                match.second(),
+                winner,
+                loser,
+                match.kit().name(),
+                "DUEL",
+                match.arena().name(),
+                match.durationSeconds() * 1000L
+        ));
     }
 
     private void restoreOrDefer(UUID id, PlayerSnapshot snapshot) {
