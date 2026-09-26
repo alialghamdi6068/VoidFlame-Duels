@@ -26,8 +26,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class LobbyItemsManager implements Listener {
-    private static final String KIT_MENU = "§8VoidFlame • Choose Kit";
-    private static final String PARTY_MENU = "§8VoidFlame • Party";
+    private static final String KIT_MENU = "§8⚔・𝗗𝘂𝗲𝗹𝘀";
+    private static final String PARTY_MENU = "§8➕・𝗣𝗮𝗿𝘁𝘆";
 
     private final VoidFlameDuelsPlugin plugin;
     private final NamespacedKey lobbyItemKey;
@@ -68,18 +68,18 @@ public final class LobbyItemsManager implements Listener {
             };
             button(inv, slot++, icon, "§b" + pretty(kit), "§7اضغط لاختيار هذا الكيت");
         }
-        button(inv, 31, Material.ARROW, "§7إغلاق");
+        button(inv, 31, Material.BARRIER, "§c✕・𝗖𝗹𝗼𝘀𝗲", "§7إغلاق القائمة");
         player.openInventory(inv);
     }
 
     public void openPartyMenu(Player player) {
         Inventory inv = Bukkit.createInventory(null, 45, PARTY_MENU);
         fill(inv);
-        button(inv, 10, Material.DIAMOND_SWORD, "§bParty 1v1", "§7مباراة لاعب ضد لاعب من البارتي");
-        button(inv, 13, Material.IRON_SWORD, "§aParty 2v2", "§7مباراة فريقين، لاعبان ضد لاعبين");
-        button(inv, 16, Material.TNT, "§cParty FFA", "§7كل أعضاء البارتي ضد بعضهم");
-        button(inv, 22, Material.PLAYER_HEAD, "§eParty Members", "§7عرض أعضاء البارتي");
-        button(inv, 31, Material.ARROW, "§7إغلاق");
+        button(inv, 10, Material.DIAMOND_SWORD, "§b⚔・𝗣𝗮𝗿𝘁𝘆 𝟭𝘃𝟭", "§7مباراة لاعب ضد لاعب من البارتي");
+        button(inv, 13, Material.IRON_SWORD, "§a⚔・𝗣𝗮𝗿𝘁𝘆 𝟮𝘃𝟮", "§7مباراة فريقين، لاعبان ضد لاعبين");
+        button(inv, 16, Material.TNT, "§c☠・𝗣𝗮𝗿𝘁𝘆 𝗙𝗙𝗔", "§7كل أعضاء البارتي ضد بعضهم");
+        button(inv, 22, Material.PLAYER_HEAD, "§e👥・𝗣𝗮𝗿𝘁𝘆 𝗠𝗲𝗺𝗯𝗲𝗿𝘀", "§7عرض أعضاء البارتي");
+        button(inv, 31, Material.BARRIER, "§c✕・𝗖𝗹𝗼𝘀𝗲", "§7إغلاق القائمة");
         player.openInventory(inv);
     }
 
@@ -240,9 +240,9 @@ public final class LobbyItemsManager implements Listener {
         static void clearAndPlace(Player player, NamespacedKey key) {
             var inv = player.getInventory();
             inv.clear();
-            inv.setItem(0, named(Material.IRON_SWORD, "§bKit Selector", "§7Right-click to choose your kit", key, "kit"));
-            inv.setItem(1, named(Material.GOAT_HORN, "§dParty +", "§7Right-click to open party", key, "party"));
-            inv.setItem(8, named(Material.BOOK, "§6Kit Editor", "§7Right-click to edit your kit", key, "editor"));
+            inv.setItem(0, named(Material.IRON_SWORD, "§b⚔・𝗗𝘂𝗲𝗹𝘀", "§7اضغط بالزر الأيمن لاختيار الـKit", key, "kit"));
+            inv.setItem(1, named(Material.GOAT_HORN, "§d➕・𝗣𝗮𝗿𝘁𝘆", "§7اضغط بالزر الأيمن لفتح نظام البارتي", key, "party"));
+            inv.setItem(8, named(Material.BOOK, "§6✎・𝗞𝗶𝘁 𝗘𝗱𝗶𝘁𝗼𝗿", "§7اضغط بالزر الأيمن لتعديل الكيت", key, "editor"));
         }
 
         private static ItemStack named(Material material, String name, String lore, NamespacedKey key, String value) {
