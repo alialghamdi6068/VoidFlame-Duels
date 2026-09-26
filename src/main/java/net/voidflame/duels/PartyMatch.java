@@ -110,6 +110,15 @@ public final class PartyMatch {
             if (player != null && player.isOnline()) player.sendMessage(winner == null ? plugin.message("match-draw") :
                     plugin.message("match-ended").replace("<winner>", name(winner)).replace("<kit>", pretty(kit)));
         }
+        var logs = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.AuditLogService.class);
+        if (logs != null && logs.getProvider() != null) {
+            logs.getProvider().log(
+                    winner == null ? "SYSTEM" : winner.toString(),
+                    "PARTY_MATCH_FINISH",
+                    arena.name(),
+                    "mode=" + mode + "|kit=" + kit + "|players=" + players.size()
+            );
+        }
         manager.finishParty(this);
     }
 
