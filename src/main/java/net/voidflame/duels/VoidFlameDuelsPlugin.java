@@ -18,6 +18,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     private SpectatorManager spectatorManager;
     private PartyManager partyManager;
     private KitEditorManager kitEditorManager;
+    private AdvancedFeatures advancedFeatures;
 
     @Override
     public void onEnable() {
@@ -48,6 +49,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         spectatorManager = new SpectatorManager(this);
         partyManager = new PartyManager(this);
         kitEditorManager = new KitEditorManager(this);
+        advancedFeatures = new AdvancedFeatures(this);
 
         coreServices.register(QueueManager.class, queueManager);
         coreServices.register(MatchManager.class, matchManager);
@@ -63,6 +65,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(spectatorManager, this);
         getServer().getPluginManager().registerEvents(partyManager, this);
         getServer().getPluginManager().registerEvents(kitEditorManager, this);
+        getServer().getPluginManager().registerEvents(advancedFeatures, this);
 
         getServer().getScheduler().runTaskTimer(this, scoreboardManager::updateAll, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, partyManager::expireInvites, 20L, 20L);
@@ -76,6 +79,14 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         register("duels", duelCommand);
         register("spectate", duelCommand);
         register("kiteditor", duelCommand);
+
+        AdvancedCommand advancedCommand = new AdvancedCommand(this);
+        registerAdvanced("report", advancedCommand);
+        registerAdvanced("coinshop", advancedCommand);
+        registerAdvanced("coins", advancedCommand);
+        registerAdvanced("practice", advancedCommand);
+        registerAdvanced("totalpractice", advancedCommand);
+        registerAdvanced("goldenhard", advancedCommand);
 
         PartyCommand partyCommand = new PartyCommand(this);
         registerParty("party", partyCommand);
@@ -107,6 +118,14 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         }
     }
 
+    private void registerAdvanced(String name, AdvancedCommand executor) {
+        PluginCommand command = getCommand(name);
+        if (command != null) {
+            command.setExecutor(executor);
+            command.setTabCompleter(executor);
+        }
+    }
+
     private void registerParty(String name, PartyCommand executor) {
         PluginCommand command = getCommand(name);
         if (command != null) {
@@ -117,6 +136,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (advancedFeatures != null) advancedFeatures.shutdown();
         if (kitEditorManager != null) kitEditorManager.shutdown();
         if (matchManager != null) matchManager.shutdown();
         if (spectatorManager != null) spectatorManager.shutdown();
@@ -152,4 +172,5 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     public SpectatorManager spectatorManager() { return spectatorManager; }
     public PartyManager partyManager() { return partyManager; }
     public KitEditorManager kitEditorManager() { return kitEditorManager; }
+    public AdvancedFeatures advancedFeatures() { return advancedFeatures; }
 }
