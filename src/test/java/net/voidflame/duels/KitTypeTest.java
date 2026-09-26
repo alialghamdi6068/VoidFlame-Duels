@@ -8,7 +8,7 @@ class KitTypeTest {
     @Test
     void parsesHumanReadableKitNames() {
         assertEquals(KitType.SPEAR_MACE, KitType.fromConfig("Spear & Mace"));
-        assertEquals(KitType.NETHERITE_OP, KitType.fromConfig("netherite-op"));
+        assertEquals(KitType.NETHERITE_POT, KitType.fromConfig("netherite-pot"));
         assertEquals(KitType.SWORD, KitType.fromConfig(" Sword "));
     }
 }
