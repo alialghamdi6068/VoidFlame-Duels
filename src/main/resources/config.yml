@@ -379,6 +379,14 @@ features:
 combat-tag:
   enabled: true
   duration-seconds: 15
+  cleanup-interval-ticks: 20
+  quit-counts-as-loss: true
+  allowed-commands:
+    - msg
+    - tell
+    - r
+    - reply
+  blocked-message: "&cYou cannot use that command while combat tagged."
 
 combat:
   command-blocking-enabled: true
