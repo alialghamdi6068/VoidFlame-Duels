@@ -207,6 +207,26 @@ public final class AdvancedFeatures implements Listener {
         return Math.max(0L, (until - System.currentTimeMillis() + 999L) / 1000L);
     }
 
+    public void saveReplay(Match match) {
+        if (!plugin.getConfig().getBoolean("features.replay.enabled", true) || match == null) return;
+        int max = Math.max(1, plugin.getConfig().getInt("features.replay.max-events-per-match", 2000));
+        List<String> events = new ArrayList<>();
+        List<String> first = recentCombat.getOrDefault(match.first(), List.of());
+        List<String> second = recentCombat.getOrDefault(match.second(), List.of());
+        events.addAll(first);
+        events.addAll(second);
+        events.sort(String::compareTo);
+        if (events.size() > max) events = new ArrayList<>(events.subList(events.size() - max, events.size()));
+        String value = "kit=" + match.kit() + "|arena=" + match.arena().name()
+                + "|duration=" + match.durationSeconds() + "|events=" + String.join(";", events);
+        storagePut(REPLAY_MODULE, match.first() + ":" + match.matchId(), value);
+        storagePut(REPLAY_MODULE, match.second() + ":" + match.matchId(), value);
+    }
+
+    public void loadReplay(UUID player, UUID matchId, java.util.function.Consumer<String> consumer) {
+        storageGet(REPLAY_MODULE, player + ":" + matchId, consumer);
+    }
+
     public int coinBalance(UUID player) { return coins.getOrDefault(player, 0); }
 
     private void loadCoins(Player player) {
