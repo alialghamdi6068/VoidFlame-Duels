@@ -125,7 +125,10 @@ public final class MatchManager implements Listener {
     }
 
     void finishParty(PartyMatch match) {
-        for (UUID id : match.players()) partyMatches.remove(id, match);
+        for (UUID id : match.players()) {
+            partyMatches.remove(id, match);
+            plugin.combatTagManager().clear(id);
+        }
         plugin.scoreboardManager().updateAll();
         plugin.partyManager().clearMode(match.players());
         arenas.reset(match.arena()).thenAccept(success ->
