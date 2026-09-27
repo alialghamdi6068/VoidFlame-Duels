@@ -46,6 +46,7 @@ public final class AdvancedFeatures implements Listener {
     private final Map<UUID, Long> reportCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Long> chatCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> coins = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> combatTags = new ConcurrentHashMap<>();
     private final Set<UUID> goldenHard = ConcurrentHashMap.newKeySet();
     private final Map<UUID, List<String>> recentCombat = new ConcurrentHashMap<>();
     private final List<String> announcements = new ArrayList<>();
@@ -97,6 +98,7 @@ public final class AdvancedFeatures implements Listener {
         coins.clear();
         reportCooldown.clear();
         chatCooldown.clear();
+        combatTags.clear();
         goldenHard.clear();
     }
 
@@ -119,6 +121,7 @@ public final class AdvancedFeatures implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         recentCombat.remove(event.getPlayer().getUniqueId());
+        combatTags.remove(event.getPlayer().getUniqueId());
         coins.remove(event.getPlayer().getUniqueId());
     }
 
@@ -145,10 +148,20 @@ public final class AdvancedFeatures implements Listener {
         if (!(event.getEntity() instanceof Player victim)) return;
         Player attacker = resolvePlayer(event.getDamager());
         if (attacker == null || attacker.equals(victim)) return;
+        long until = System.currentTimeMillis()
+                + Math.max(1L, plugin.getConfig().getLong("combat-tag.duration-seconds", 15L)) * 1000L;
+        combatTags.put(victim.getUniqueId(), until);
+        combatTags.put(attacker.getUniqueId(), until);
         recentCombat.computeIfAbsent(victim.getUniqueId(), ignored -> Collections.synchronizedList(new ArrayList<>()))
                 .add(System.currentTimeMillis() + "|" + attacker.getUniqueId() + "|" + event.getFinalDamage());
         List<String> entries = recentCombat.get(victim.getUniqueId());
-        while (entries.size() > 200) entries.remove(0);
+        while (entries.size() > Math.max(1, plugin.getConfig().getInt("features.replay.max-events-per-match", 2000))) entries.remove(0);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            long current = combatTags.getOrDefault(victim.getUniqueId(), 0L);
+            if (current <= System.currentTimeMillis()) combatTags.remove(victim.getUniqueId(), current);
+            current = combatTags.getOrDefault(attacker.getUniqueId(), 0L);
+            if (current <= System.currentTimeMillis()) combatTags.remove(attacker.getUniqueId(), current);
+        }, Math.max(1L, plugin.getConfig().getLong("combat-tag.duration-seconds", 15L)) * 20L);
     }
 
     private Player resolvePlayer(Entity entity) {
@@ -178,6 +191,19 @@ public final class AdvancedFeatures implements Listener {
             if (online.hasPermission("voidflame.duels.report.staff") || online.isOp()) online.sendMessage(output);
         }
         return true;
+    }
+
+    public boolean isCombatTagged(UUID player) {
+        Long until = combatTags.get(player);
+        if (until == null) return false;
+        if (until <= System.currentTimeMillis()) { combatTags.remove(player, until); return false; }
+        return true;
+    }
+
+    public long combatTagRemainingSeconds(UUID player) {
+        Long until = combatTags.get(player);
+        if (until == null) return 0L;
+        return Math.max(0L, (until - System.currentTimeMillis() + 999L) / 1000L);
     }
 
     public int coinBalance(UUID player) { return coins.getOrDefault(player, 0); }
