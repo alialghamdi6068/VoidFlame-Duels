@@ -242,6 +242,7 @@ public final class LobbyItemsManager implements Listener {
 
         private final String displayName;
         PartyMode(String displayName) { this.displayName = displayName; }
+        public String displayName() { return displayName; }
     }
 
     private static final class PlayerInventoryAccess {
