@@ -179,17 +179,12 @@ public final class LobbyItemsManager implements Listener {
             return;
         }
         plugin.partyManager().setMode(player.getUniqueId(), mode);
-        if (!plugin.getConfig().getBoolean("settings.party-auto-start", true)) {
-            player.sendMessage(plugin.message("party-started").replace("<mode>", mode.displayName));
+        if (!plugin.getConfig().getBoolean("settings.party-auto-start", true)
+                || !plugin.matchManager().startParty(player.getUniqueId())) {
+            plugin.partyManager().queue(player.getUniqueId(), mode);
+            player.sendMessage(plugin.getConfig().getString("messages.party-queued",
+                    "&eParty queued for <mode>.").replace("<mode>", mode.displayName).replace("&", "§"));
             player.closeInventory();
-            return;
-        }
-        if (!plugin.matchManager().startParty(player.getUniqueId())) {
-            int size = plugin.partyManager().size(player.getUniqueId());
-            boolean sizeOk = mode == PartyMode.FFA
-                    ? size >= plugin.getConfig().getInt("settings.party-min-ffa-size", 2)
-                    : (mode == PartyMode.ONE_V_ONE ? size == 2 : size == 4);
-            player.sendMessage(sizeOk ? plugin.message("party-no-arena") : plugin.message("party-invalid-size"));
             return;
         }
         player.sendMessage(plugin.message("party-started").replace("<mode>", mode.displayName));
