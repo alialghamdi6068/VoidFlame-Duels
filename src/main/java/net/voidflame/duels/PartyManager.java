@@ -22,6 +22,7 @@ public final class PartyManager implements Listener {
     private final Map<UUID, LinkedHashSet<UUID>> parties = new ConcurrentHashMap<>();
     private final Map<UUID, Invite> pendingInvites = new ConcurrentHashMap<>();
     private final Map<UUID, LobbyItemsManager.PartyMode> partyModes = new ConcurrentHashMap<>();
+    private final Map<UUID, LobbyItemsManager.PartyMode> queuedParties = new ConcurrentHashMap<>();
 
     public PartyManager(VoidFlameDuelsPlugin plugin) {
         this.plugin = plugin;
@@ -79,9 +80,11 @@ public final class PartyManager implements Listener {
         clearInvitesFor(playerId);
 
         if (members.isEmpty()) {
+            queuedParties.remove(party.leader());
             parties.remove(party.leader());
         } else if (party.leader().equals(playerId)) {
             UUID newLeader = members.iterator().next();
+            queuedParties.remove(party.leader());
             parties.remove(party.leader());
             parties.put(newLeader, members);
             LobbyItemsManager.PartyMode mode = partyModes.remove(party.leader());
@@ -102,6 +105,7 @@ public final class PartyManager implements Listener {
     public synchronized boolean disband(Player leader) {
         Party party = partyOf(leader.getUniqueId());
         if (party == null || !party.leader().equals(leader.getUniqueId())) return false;
+        queuedParties.remove(leader.getUniqueId());
         parties.remove(leader.getUniqueId());
         party.members().forEach(this::clearInvitesFor);
         return true;
@@ -131,6 +135,29 @@ public final class PartyManager implements Listener {
     public LobbyItemsManager.PartyMode modeOf(UUID player) {
         Party party = partyOf(player);
         return party == null ? null : partyModes.get(party.leader());
+    }
+
+    public synchronized boolean queue(UUID leader, LobbyItemsManager.PartyMode mode) {
+        if (!isLeader(leader) || mode == null || plugin.matchManager().isInMatch(leader)) return false;
+        queuedParties.put(leader, mode);
+        partyModes.put(leader, mode);
+        return true;
+    }
+
+    public synchronized boolean dequeue(UUID leader) {
+        return queuedParties.remove(leader) != null;
+    }
+
+    public LobbyItemsManager.PartyMode queuedMode(UUID leader) {
+        return queuedParties.get(leader);
+    }
+
+    public List<UUID> queuedLeaders() {
+        return List.copyOf(queuedParties.keySet());
+    }
+
+    public synchronized void clearQueue(UUID leader) {
+        queuedParties.remove(leader);
     }
 
     public synchronized void clearMode(Collection<UUID> members) {
@@ -182,5 +209,6 @@ public final class PartyManager implements Listener {
     public void shutdown() {
         parties.clear();
         pendingInvites.clear();
+        queuedParties.clear();
     }
 }
