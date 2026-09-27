@@ -4,6 +4,7 @@ import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.Map;
@@ -14,6 +15,7 @@ public final class SpectatorManager implements Listener {
     private final VoidFlameDuelsPlugin plugin;
     private final Map<UUID, PlayerSnapshot> snapshots = new ConcurrentHashMap<>();
     private final Map<UUID, Match> watching = new ConcurrentHashMap<>();
+    private final Map<UUID, PlayerSnapshot> pendingRestores = new ConcurrentHashMap<>();
 
     public SpectatorManager(VoidFlameDuelsPlugin plugin) {
         this.plugin = plugin;
@@ -48,8 +50,19 @@ public final class SpectatorManager implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        snapshots.remove(event.getPlayer().getUniqueId());
-        watching.remove(event.getPlayer().getUniqueId());
+        UUID id = event.getPlayer().getUniqueId();
+        PlayerSnapshot snapshot = snapshots.remove(id);
+        if (snapshot != null) pendingRestores.put(id, snapshot);
+        watching.remove(id);
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        UUID id = event.getPlayer().getUniqueId();
+        PlayerSnapshot snapshot = pendingRestores.remove(id);
+        if (snapshot != null) {
+            org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> snapshot.restore(event.getPlayer()));
+        }
     }
 
     public void stopWatching(Match match) {
@@ -69,7 +82,13 @@ public final class SpectatorManager implements Listener {
             Player player = plugin.getServer().getPlayer(uuid);
             if (player != null) leave(player);
         }
+        for (UUID uuid : pendingRestores.keySet()) {
+            Player player = plugin.getServer().getPlayer(uuid);
+            PlayerSnapshot snapshot = pendingRestores.remove(uuid);
+            if (player != null && snapshot != null) snapshot.restore(player);
+        }
         snapshots.clear();
         watching.clear();
+        pendingRestores.clear();
     }
 }
