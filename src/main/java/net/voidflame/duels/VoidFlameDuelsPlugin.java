@@ -90,6 +90,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         registerAdvanced("report", advancedCommand);
         registerAdvanced("coinshop", advancedCommand);
         registerAdvanced("coins", advancedCommand);
+        registerAdvanced("replay", advancedCommand);
         registerAdvanced("practice", advancedCommand);
         registerAdvanced("totalpractice", advancedCommand);
         registerAdvanced("goldenhard", advancedCommand);
