@@ -309,6 +309,34 @@ report:
   cooldown-seconds: 20
   staff-message: "&c[Report] &f<reporter> &7reported &e<target> &7for: &f<reason>"
 
+rewards:
+  duel:
+    win:
+      enabled: true
+      coins: 50
+      message: "&a+<coins> coins for winning the duel."
+    loss:
+      enabled: true
+      coins: 10
+      message: "&7+<coins> coins for completing the duel."
+    draw:
+      enabled: true
+      coins: 20
+      message: "&e+<coins> coins for the draw."
+  party:
+    win:
+      enabled: true
+      coins: 75
+      message: "&a+<coins> coins for winning the party match."
+    loss:
+      enabled: true
+      coins: 15
+      message: "&7+<coins> coins for completing the party match."
+    draw:
+      enabled: true
+      coins: 25
+      message: "&e+<coins> coins for the party draw."
+
 announcements:
   enabled: true
   interval-seconds: 90
