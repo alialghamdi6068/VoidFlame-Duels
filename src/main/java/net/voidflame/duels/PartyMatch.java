@@ -121,6 +121,17 @@ public final class PartyMatch {
             ));
         }
 
+        if (winner == null) {
+            for (UUID id : players) plugin.advancedFeatures().rewardMatch(id, "draw", true);
+        } else if (mode == LobbyItemsManager.PartyMode.TWO_V_TWO) {
+            Set<UUID> winningTeam = firstTeam.contains(winner) ? firstTeam : secondTeam;
+            for (UUID id : players) plugin.advancedFeatures().rewardMatch(id, winningTeam.contains(id) ? "win" : "loss", true);
+        } else if (mode == LobbyItemsManager.PartyMode.FFA) {
+            for (UUID id : players) plugin.advancedFeatures().rewardMatch(id, id.equals(winner) ? "win" : "loss", true);
+        } else {
+            for (UUID id : players) plugin.advancedFeatures().rewardMatch(id, id.equals(winner) ? "win" : "loss", true);
+        }
+
         var logs = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.AuditLogService.class);
         if (logs != null && logs.getProvider() != null) {
             logs.getProvider().log(
