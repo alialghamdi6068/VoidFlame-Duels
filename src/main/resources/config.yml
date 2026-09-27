@@ -399,3 +399,13 @@ combat:
     - r
     - reply
   blocked-message: "&cCommands are disabled while fighting."
+
+
+features:
+  exploit-prevention:
+    enabled: true
+    inventory-clicks: true
+    inventory-drags: true
+    item-drop: true
+    item-pickup: true
+    hand-swap: false
