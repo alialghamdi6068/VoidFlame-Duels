@@ -254,6 +254,10 @@ public final class MatchManager implements Listener {
 
     void markDisconnected(Match match, UUID player) {
         if (match.state() == MatchState.FINISHED) return;
+        if (!plugin.getConfig().getBoolean("settings.reconnect-enabled", true)) {
+            match.finish(match.opponent(player));
+            return;
+        }
 
         matches.remove(player, match);
         disconnected.put(player, match);
@@ -280,6 +284,7 @@ public final class MatchManager implements Listener {
     }
 
     public boolean rejoin(Player player) {
+        if (!plugin.getConfig().getBoolean("settings.reconnect-enabled", true)) return false;
         UUID id = player.getUniqueId();
         Match match = disconnected.remove(id);
         if (match == null || match.state() == MatchState.FINISHED) return false;
