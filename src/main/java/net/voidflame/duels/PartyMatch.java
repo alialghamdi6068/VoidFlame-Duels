@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class PartyMatch {
+    private final UUID matchId = UUID.randomUUID();
     private final VoidFlameDuelsPlugin plugin;
     private final MatchManager manager;
     private final Arena arena;
@@ -110,6 +111,16 @@ public final class PartyMatch {
             if (player != null && player.isOnline()) player.sendMessage(winner == null ? plugin.message("match-draw") :
                     plugin.message("match-ended").replace("<winner>", name(winner)).replace("<kit>", pretty(kit)));
         }
+        var partyResults = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.PartyMatchResultService.class);
+        if (partyResults != null && partyResults.getProvider() != null
+                && plugin.getConfig().getBoolean("features.party-stats.enabled", true)) {
+            List<UUID> winners = winningPlayers(winner);
+            partyResults.getProvider().record(new net.voidflame.core.api.PartyMatchResultService.PartyMatchResult(
+                    matchId, players, winners, kit.name(), mode.name(), arena.name(),
+                    startedAt == 0L ? 0L : Math.max(0L, System.currentTimeMillis() - startedAt)
+            ));
+        }
+
         var logs = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.AuditLogService.class);
         if (logs != null && logs.getProvider() != null) {
             logs.getProvider().log(
@@ -120,6 +131,15 @@ public final class PartyMatch {
             );
         }
         manager.finishParty(this);
+    }
+
+    private List<UUID> winningPlayers(UUID winner) {
+        if (winner == null) return List.of();
+        if (mode == LobbyItemsManager.PartyMode.TWO_V_TWO) {
+            if (firstTeam.contains(winner)) return firstTeam.stream().toList();
+            if (secondTeam.contains(winner)) return secondTeam.stream().toList();
+        }
+        return List.of(winner);
     }
 
     private void startLimitTimer() {
