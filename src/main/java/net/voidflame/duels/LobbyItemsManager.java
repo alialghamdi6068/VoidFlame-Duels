@@ -182,8 +182,7 @@ public final class LobbyItemsManager implements Listener {
         if (!plugin.getConfig().getBoolean("settings.party-auto-start", true)
                 || !plugin.matchManager().startParty(player.getUniqueId())) {
             plugin.partyManager().queue(player.getUniqueId(), mode);
-            player.sendMessage(plugin.getConfig().getString("messages.party-queued",
-                    "&eParty queued for <mode>.").replace("<mode>", mode.displayName).replace("&", "§"));
+            player.sendMessage(plugin.message("party-queued").replace("<mode>", mode.displayName));
             player.closeInventory();
             return;
         }
