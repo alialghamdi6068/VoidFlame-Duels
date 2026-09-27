@@ -148,6 +148,7 @@ public final class AdvancedFeatures implements Listener {
         if (!(event.getEntity() instanceof Player victim)) return;
         Player attacker = resolvePlayer(event.getDamager());
         if (attacker == null || attacker.equals(victim)) return;
+        if (!plugin.getConfig().getBoolean("combat-tag.enabled", true)) return;
         long until = System.currentTimeMillis()
                 + Math.max(1L, plugin.getConfig().getLong("combat-tag.duration-seconds", 15L)) * 1000L;
         combatTags.put(victim.getUniqueId(), until);
