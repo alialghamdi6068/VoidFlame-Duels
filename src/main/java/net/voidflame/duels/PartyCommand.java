@@ -84,6 +84,28 @@ public final class PartyCommand implements CommandExecutor, TabCompleter {
                         ? plugin.message("party-kicked").replace("<player>", target.getName())
                         : plugin.message("party-action-failed"));
             }
+            case "queue" -> {
+                if (args.length < 2) {
+                    player.sendMessage(ChatColor.YELLOW + "/party queue <1v1|2v2|ffa>");
+                    return true;
+                }
+                LobbyItemsManager.PartyMode mode = switch (args[1].toLowerCase(Locale.ROOT)) {
+                    case "1v1", "one_v_one" -> LobbyItemsManager.PartyMode.ONE_V_ONE;
+                    case "2v2", "two_v_two" -> LobbyItemsManager.PartyMode.TWO_V_TWO;
+                    case "ffa" -> LobbyItemsManager.PartyMode.FFA;
+                    default -> null;
+                };
+                if (mode == null || !plugin.partyManager().queue(player.getUniqueId(), mode)) {
+                    player.sendMessage(plugin.message("party-action-failed"));
+                    return true;
+                }
+                player.sendMessage(plugin.message("party-queued").replace("<mode>", mode.displayName));
+            }
+            case "unqueue" -> {
+                player.sendMessage(plugin.partyManager().dequeue(player.getUniqueId())
+                        ? plugin.message("party-left")
+                        : plugin.message("party-not-in"));
+            }
             case "disband" -> {
                 player.sendMessage(plugin.partyManager().disband(player)
                         ? plugin.message("party-disbanded")
@@ -119,6 +141,8 @@ public final class PartyCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(ChatColor.YELLOW + "/party leave");
         player.sendMessage(ChatColor.YELLOW + "/party kick <player>");
         player.sendMessage(ChatColor.YELLOW + "/party disband");
+        player.sendMessage(ChatColor.YELLOW + "/party queue <1v1|2v2|ffa>");
+        player.sendMessage(ChatColor.YELLOW + "/party unqueue");
         player.sendMessage(ChatColor.YELLOW + "/party info");
     }
 
@@ -132,7 +156,7 @@ public final class PartyCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> result = new ArrayList<>();
         if (args.length == 1) {
-            result.addAll(List.of("create", "invite", "accept", "leave", "kick", "disband", "info"));
+            result.addAll(List.of("create", "invite", "accept", "leave", "kick", "disband", "queue", "unqueue", "info"));
         } else if (args.length == 2 && (args[0].equalsIgnoreCase("invite") || args[0].equalsIgnoreCase("kick"))) {
             Bukkit.getOnlinePlayers().stream()
                     .map(Player::getName)
