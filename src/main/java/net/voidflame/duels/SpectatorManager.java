@@ -72,7 +72,8 @@ public final class SpectatorManager implements Listener {
             if (player != null) leave(player);
             else {
                 watching.remove(entry.getKey(), match);
-                snapshots.remove(entry.getKey());
+                PlayerSnapshot snapshot = snapshots.remove(entry.getKey());
+                if (snapshot != null) pendingRestores.put(entry.getKey(), snapshot);
             }
         }
     }
