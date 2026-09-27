@@ -4,6 +4,9 @@ settings:
   countdown-seconds: 5
   match-time-limit-seconds: 1800
   disconnect-grace-seconds: 30
+  reconnect-enabled: true
+  party-reconnect-enabled: true
+  party-reconnect-grace-seconds: 30
   request-expiry-seconds: 60
   prevent-duel-during-match: true
   rematch-expiry-seconds: 120
