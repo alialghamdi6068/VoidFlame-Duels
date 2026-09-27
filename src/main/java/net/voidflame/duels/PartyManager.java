@@ -200,6 +200,22 @@ public final class PartyManager implements Listener {
         pendingInvites.remove(event.getPlayer().getUniqueId());
     }
 
+    public void processQueue() {
+        if (!plugin.getConfig().getBoolean("settings.party-queue-enabled", true)) return;
+        for (UUID leader : queuedLeaders()) {
+            LobbyItemsManager.PartyMode mode = queuedMode(leader);
+            Party party = partyOf(leader);
+            if (mode == null || party == null || plugin.matchManager().isInMatch(leader)) {
+                queuedParties.remove(leader);
+                continue;
+            }
+            if (!Bukkit.getOnlinePlayers().stream().anyMatch(p -> p.getUniqueId().equals(leader))) continue;
+            if (plugin.matchManager().startParty(leader)) {
+                queuedParties.remove(leader);
+            }
+        }
+    }
+
     public void expireInvites() {
         long now = System.currentTimeMillis();
         pendingInvites.entrySet().removeIf(entry ->
