@@ -30,8 +30,47 @@ public final class AdvancedCommand implements CommandExecutor, TabCompleter {
             case "practice", "totalpractice" -> { plugin.advancedFeatures().openPractice(player); yield true; }
             case "goldenhard" -> { plugin.advancedFeatures().toggleGoldenHard(player); yield true; }
             case "coins" -> coins(sender, args);
+            case "replay" -> replay(player, args);
             default -> true;
         };
+    }
+
+    private boolean replay(Player player, String[] args) {
+        if (!plugin.getConfig().getBoolean("features.replay.enabled", true)) {
+            player.sendMessage(color("&cReplay system is disabled."));
+            return true;
+        }
+        if (args.length != 1) {
+            player.sendMessage(ChatColor.YELLOW + "/replay <match-id>");
+            return true;
+        }
+        java.util.UUID matchId;
+        try { matchId = java.util.UUID.fromString(args[0]); }
+        catch (IllegalArgumentException ex) {
+            player.sendMessage(color("&cInvalid match ID."));
+            return true;
+        }
+        plugin.advancedFeatures().loadReplay(player.getUniqueId(), matchId, raw -> Bukkit.getScheduler().runTask(plugin, () -> {
+            if (raw == null) {
+                player.sendMessage(color("&cReplay not found or you do not have access."));
+                return;
+            }
+            String summary = raw;
+            int max = Math.max(1, plugin.getConfig().getInt("features.replay.max-events-per-match", 2000));
+            String[] parts = raw.split("\\|", -1);
+            player.sendMessage(color("&8&m--------------------"));
+            player.sendMessage(color("&bVoidFlame &fReplay &7" + matchId));
+            for (String part : parts) {
+                if (part.startsWith("kit=") || part.startsWith("arena=") || part.startsWith("duration=")) {
+                    player.sendMessage(color("&7" + part));
+                } else if (part.startsWith("events=")) {
+                    int count = part.length() <= 7 || part.substring(7).isBlank() ? 0 : part.substring(7).split(";", -1).length;
+                    player.sendMessage(color("&7Events: &f" + Math.min(count, max)));
+                }
+            }
+            player.sendMessage(color("&8&m--------------------"));
+        }));
+        return true;
     }
 
     private boolean report(Player reporter, String[] args) {
