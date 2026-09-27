@@ -21,6 +21,8 @@ public final class PartyMatch {
     private final Set<UUID> firstTeam = ConcurrentHashMap.newKeySet();
     private final Set<UUID> secondTeam = ConcurrentHashMap.newKeySet();
     private final Map<UUID, PlayerSnapshot> snapshots = new HashMap<>();
+    private final Map<UUID, Long> disconnectedUntil = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> disconnectTokens = new ConcurrentHashMap<>();
     private int countdownTask = -1;
     private int limitTask = -1;
     private boolean finished;
@@ -51,7 +53,7 @@ public final class PartyMatch {
             int left = seconds;
             public void run() {
                 if (finished) { cancel(); return; }
-                if (onlinePlayers().size() != players.size()) { cancel(); finish(null); return; }
+                if (left > 0 && onlinePlayers().size() != players.size()) return;
                 if (left <= 0) {
                     startedAt = System.currentTimeMillis();
                     for (Player player : onlinePlayers()) player.setInvulnerable(false);
@@ -93,7 +95,50 @@ public final class PartyMatch {
         Bukkit.getScheduler().runTask(plugin, this::checkWinner);
     }
 
-    public void handleQuit(UUID id) { if (players.contains(id) && !finished) { alive.remove(id); checkWinner(); } }
+    public void handleQuit(UUID id) {
+        if (!players.contains(id) || finished) return;
+        long grace = Math.max(1L, plugin.getConfig().getLong("settings.disconnect-grace-seconds", 30L));
+        long token = System.nanoTime();
+        disconnectedUntil.put(id, System.currentTimeMillis() + grace * 1000L);
+        disconnectTokens.put(id, token);
+        Player opponent = Bukkit.getPlayer(opponentOf(id));
+        if (opponent != null) {
+            opponent.sendMessage(plugin.message("rejoin-available")
+                    .replace("<seconds>", String.valueOf(grace))
+                    .replace("<opponent>", name(id)));
+        }
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (finished) return;
+            if (!Long.valueOf(token).equals(disconnectTokens.get(id))) return;
+            disconnectedUntil.remove(id);
+            disconnectTokens.remove(id, token);
+            alive.remove(id);
+            checkWinner();
+        }, grace * 20L);
+    }
+
+    public boolean rejoin(Player player) {
+        UUID id = player.getUniqueId();
+        if (finished || !players.contains(id)) return false;
+        Long until = disconnectedUntil.get(id);
+        if (until == null || until <= System.currentTimeMillis()) return false;
+        disconnectedUntil.remove(id);
+        disconnectTokens.remove(id);
+        player.closeInventory();
+        prepare(player, spawnFor(players.indexOf(id)));
+        player.setInvulnerable(startedAt == 0L);
+        if (startedAt > 0L) player.setInvulnerable(false);
+        player.sendMessage(plugin.message("rejoined"));
+        return true;
+    }
+
+    private UUID opponentOf(UUID id) {
+        if (mode == LobbyItemsManager.PartyMode.TWO_V_TWO) {
+            if (firstTeam.contains(id)) return secondTeam.stream().filter(alive::contains).findFirst().orElse(secondTeam.stream().findFirst().orElse(id));
+            return firstTeam.stream().filter(alive::contains).findFirst().orElse(firstTeam.stream().findFirst().orElse(id));
+        }
+        return players.stream().filter(other -> !other.equals(id) && alive.contains(other)).findFirst().orElse(id);
+    }
 
     private void checkWinner() {
         if (mode == LobbyItemsManager.PartyMode.FFA) { if (alive.size() <= 1) finish(alive.stream().findFirst().orElse(null)); return; }
@@ -163,6 +208,7 @@ public final class PartyMatch {
     private String pretty(KitType k) { return k == KitType.SPEAR_MACE ? "Spear & Mace" : k.name().replace('_',' '); }
     private String color(String s) { return org.bukkit.ChatColor.translateAlternateColorCodes('&', s); }
     public boolean contains(UUID id) { return players.contains(id); }
+    public boolean disconnected(UUID id) { return disconnectedUntil.containsKey(id); }
     public boolean finished() { return finished; }
     public List<UUID> players() { return players; }
     public Arena arena() { return arena; }
