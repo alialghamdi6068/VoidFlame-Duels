@@ -97,7 +97,8 @@ public final class PartyMatch {
 
     public void handleQuit(UUID id) {
         if (!players.contains(id) || finished) return;
-        long grace = Math.max(1L, plugin.getConfig().getLong("settings.disconnect-grace-seconds", 30L));
+        if (!plugin.getConfig().getBoolean("settings.party-reconnect-enabled", true)) { alive.remove(id); checkWinner(); return; }
+        long grace = Math.max(1L, plugin.getConfig().getLong("settings.party-reconnect-grace-seconds", plugin.getConfig().getLong("settings.disconnect-grace-seconds", 30L)));
         long token = System.nanoTime();
         disconnectedUntil.put(id, System.currentTimeMillis() + grace * 1000L);
         disconnectTokens.put(id, token);
@@ -119,7 +120,7 @@ public final class PartyMatch {
 
     public boolean rejoin(Player player) {
         UUID id = player.getUniqueId();
-        if (finished || !players.contains(id)) return false;
+        if (!plugin.getConfig().getBoolean("settings.party-reconnect-enabled", true) || finished || !players.contains(id)) return false;
         Long until = disconnectedUntil.get(id);
         if (until == null || until <= System.currentTimeMillis()) return false;
         disconnectedUntil.remove(id);
