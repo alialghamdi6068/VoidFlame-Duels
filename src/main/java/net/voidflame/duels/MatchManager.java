@@ -346,10 +346,13 @@ public final class MatchManager implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         UUID id = event.getPlayer().getUniqueId();
         queues.leave(id);
-        plugin.partyManager().leave(id);
 
         PartyMatch partyMatch = partyMatches.get(id);
-        if (partyMatch != null && !partyMatch.finished()) partyMatch.handleQuit(id);
+        if (partyMatch != null && !partyMatch.finished()) {
+            partyMatch.handleQuit(id);
+        } else {
+            plugin.partyManager().leave(id);
+        }
 
         Match match = matches.get(id);
         if (match != null && match.state() != MatchState.FINISHED) {
@@ -364,7 +367,14 @@ public final class MatchManager implements Listener {
         if (snapshot != null) {
             plugin.getServer().getScheduler().runTask(plugin, () -> snapshot.restore(event.getPlayer()));
         }
-        plugin.getServer().getScheduler().runTask(plugin, () -> plugin.scoreboardManager().update(event.getPlayer()));
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            PartyMatch partyMatch = partyMatches.get(id);
+            if (partyMatch != null && partyMatch.rejoin(event.getPlayer())) {
+                plugin.scoreboardManager().update(event.getPlayer());
+                return;
+            }
+            plugin.scoreboardManager().update(event.getPlayer());
+        });
     }
 
     private String name(UUID id) {
