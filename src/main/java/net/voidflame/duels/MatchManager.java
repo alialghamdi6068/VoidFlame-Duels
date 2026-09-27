@@ -172,6 +172,7 @@ public final class MatchManager implements Listener {
         Player a = Bukkit.getPlayer(match.first());
         Player b = Bukkit.getPlayer(match.second());
         plugin.spectatorManager().stopWatching(match);
+        plugin.advancedFeatures().saveReplay(match);
         recordExternalMatchResult(match, winner);
 
         // The arena remains RESETTING until its template has been restored successfully.
