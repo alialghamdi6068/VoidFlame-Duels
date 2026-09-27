@@ -99,7 +99,7 @@ public final class PartyCommand implements CommandExecutor, TabCompleter {
                     player.sendMessage(plugin.message("party-action-failed"));
                     return true;
                 }
-                player.sendMessage(plugin.message("party-queued").replace("<mode>", mode.displayName));
+                player.sendMessage(plugin.message("party-queued").replace("<mode>", mode.displayName()));
             }
             case "unqueue" -> {
                 player.sendMessage(plugin.partyManager().dequeue(player.getUniqueId())
