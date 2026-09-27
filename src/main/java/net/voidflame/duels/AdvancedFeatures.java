@@ -248,6 +248,19 @@ public final class AdvancedFeatures implements Listener {
         storagePut(COIN_MODULE, player.toString(), String.valueOf(next));
     }
 
+    public void rewardMatch(UUID player, String outcome, boolean party) {
+        if (player == null) return;
+        String key = "rewards." + (party ? "party." : "duel.") + outcome.toLowerCase(Locale.ROOT);
+        if (!plugin.getConfig().getBoolean(key + ".enabled", true)) return;
+        int amount = Math.max(0, plugin.getConfig().getInt(key + ".coins", 0));
+        if (amount > 0) addCoins(player, amount);
+        String message = plugin.getConfig().getString(key + ".message", "");
+        if (!message.isBlank()) {
+            Player p = Bukkit.getPlayer(player);
+            if (p != null && p.isOnline()) p.sendMessage(color(message.replace("<coins>", String.valueOf(amount)).replace("<outcome>", outcome)));
+        }
+    }
+
     public boolean takeCoins(UUID player, int amount) {
         if (amount < 0) return false;
         int current = coins.getOrDefault(player, 0);
@@ -301,7 +314,7 @@ public final class AdvancedFeatures implements Listener {
     @EventHandler
     public void onShopClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!event.getView().getTitle().equals(color("&8CoinShop"))) return;
+        if (!event.getView().getTitle().equals(color("&8VoidFlame CoinShop"))) return;
         event.setCancelled(true);
         String[][] catalog = {
                 {"[Void]", "100"}, {"[Champion]", "500"}, {"[Duelist]", "750"}, {"[Combo]", "900"},
