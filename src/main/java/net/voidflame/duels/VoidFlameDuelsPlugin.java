@@ -81,6 +81,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
 
         getServer().getScheduler().runTaskTimer(this, scoreboardManager::updateAll, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, partyManager::expireInvites, 20L, 20L);
+        getServer().getScheduler().runTaskTimer(this, partyManager::processQueue, 20L, 20L);
         getServer().getScheduler().runTask(this, scoreboardManager::updateAll);
 
         DuelCommand duelCommand = new DuelCommand(this);
