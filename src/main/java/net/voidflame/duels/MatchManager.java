@@ -165,6 +165,8 @@ public final class MatchManager implements Listener {
         disconnected.remove(match.second(), match);
         disconnectTokens.remove(match.first());
         disconnectTokens.remove(match.second());
+        plugin.combatTagManager().clear(match.first());
+        plugin.combatTagManager().clear(match.second());
 
         restoreOrDefer(match.first(), firstSnapshot);
         restoreOrDefer(match.second(), secondSnapshot);
