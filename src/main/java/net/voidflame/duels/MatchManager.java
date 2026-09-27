@@ -174,6 +174,13 @@ public final class MatchManager implements Listener {
         plugin.spectatorManager().stopWatching(match);
         plugin.advancedFeatures().saveReplay(match);
         recordExternalMatchResult(match, winner);
+        if (winner == null) {
+            plugin.advancedFeatures().rewardMatch(match.first(), "draw", false);
+            plugin.advancedFeatures().rewardMatch(match.second(), "draw", false);
+        } else {
+            plugin.advancedFeatures().rewardMatch(winner, "win", false);
+            plugin.advancedFeatures().rewardMatch(match.opponent(winner), "loss", false);
+        }
 
         // The arena remains RESETTING until its template has been restored successfully.
         // Never make a modified arena available for another match.
