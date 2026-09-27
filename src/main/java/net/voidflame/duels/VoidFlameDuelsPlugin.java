@@ -22,6 +22,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     private LobbyItemsManager lobbyItemsManager;
     private PlayerSettings playerSettings;
     private CombatTagManager combatTagManager;
+    private MatchExploitGuard matchExploitGuard;
 
     @Override
     public void onEnable() {
@@ -56,6 +57,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         advancedFeatures = new AdvancedFeatures(this);
         lobbyItemsManager = new LobbyItemsManager(this);
         combatTagManager = new CombatTagManager(this);
+        matchExploitGuard = new MatchExploitGuard(this);
 
         coreServices.register(QueueManager.class, queueManager);
         coreServices.register(MatchManager.class, matchManager);
@@ -74,6 +76,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(advancedFeatures, this);
         getServer().getPluginManager().registerEvents(lobbyItemsManager, this);
         getServer().getPluginManager().registerEvents(combatTagManager, this);
+        getServer().getPluginManager().registerEvents(matchExploitGuard, this);
         getServer().getPluginManager().registerEvents(new PlayerSettingsListener(this), this);
 
         getServer().getScheduler().runTaskTimer(this, scoreboardManager::updateAll, 20L, 20L);
