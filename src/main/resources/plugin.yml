@@ -49,6 +49,10 @@ commands:
     description: Open the practice CoinShop.
     usage: /coinshop
     permission: voidflame.coinshop
+  replay:
+    description: View a stored duel replay summary.
+    usage: /replay <match-id>
+    permission: voidflame.replay
   coins:
     description: Manage player practice coins.
     usage: /coins <player> <amount>
@@ -90,6 +94,9 @@ permissions:
     default: true
   voidflame.report:
     description: Report players.
+    default: true
+  voidflame.replay:
+    description: View your stored duel replays.
     default: true
   voidflame.coinshop:
     description: Open the practice coin shop.
