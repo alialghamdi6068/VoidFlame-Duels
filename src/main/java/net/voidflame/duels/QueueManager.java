@@ -49,7 +49,19 @@ public final class QueueManager implements Listener {
 
     private void loadElo(UUID id, String name) {
         if (profiles == null) return;
-        profiles.load(id, name).thenAccept(profile -> eloCache.put(id, profile.elo()));
+        profiles.load(id, name).thenAccept(profile -> {
+            double elo = profile.elo();
+            eloCache.put(id, elo);
+            synchronized (this) {
+                QueueEntry current = playerQueues.get(id);
+                if (current != null) {
+                    QueueEntry refreshed = new QueueEntry(current.player(), current.kit(), current.ranked(), current.joinedAt(), elo);
+                    LinkedHashMap<UUID, QueueEntry> queue = queues.get(current.kit());
+                    if (queue != null && queue.containsKey(id)) queue.put(id, refreshed);
+                    playerQueues.put(id, refreshed);
+                }
+            }
+        });
     }
 
     public synchronized boolean leave(Player player) {
@@ -166,9 +178,16 @@ public final class QueueManager implements Listener {
     public int totalQueued() { return playerQueues.size(); }
 
     public void expireStale() {
-        for (UUID id : new ArrayList<>(playerQueues.keySet())) {
-            Player p = plugin.getServer().getPlayer(id);
-            if (p == null || !p.isOnline()) leave(id);
+        long now = System.currentTimeMillis();
+        long timeout = Math.max(1L, plugin.getConfig().getLong("settings.queue-timeout-seconds", 300L)) * 1000L;
+        for (QueueEntry entry : new ArrayList<>(playerQueues.values())) {
+            Player p = plugin.getServer().getPlayer(entry.player());
+            if (p == null || !p.isOnline() || now - entry.joinedAt() >= timeout) {
+                if (leave(entry.player()) && p != null && p.isOnline()) {
+                    p.sendMessage(plugin.message("queue-expired"));
+                    plugin.scoreboardManager().update(p);
+                }
+            }
         }
     }
 
