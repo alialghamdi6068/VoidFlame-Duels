@@ -195,8 +195,7 @@ public final class MatchManager implements Listener {
         Player a = Bukkit.getPlayer(match.first());
         Player b = Bukkit.getPlayer(match.second());
         plugin.spectatorManager().stopWatching(match);
-        plugin.advancedFeatures().saveReplay(match);
-        recordExternalMatchResult(match, winner);
+        match.transition(MatchState.RESULT);
         if (winner == null) {
             plugin.advancedFeatures().rewardMatch(match.first(), "draw", false);
             plugin.advancedFeatures().rewardMatch(match.second(), "draw", false);
@@ -204,6 +203,16 @@ public final class MatchManager implements Listener {
             plugin.advancedFeatures().rewardMatch(winner, "win", false);
             plugin.advancedFeatures().rewardMatch(match.opponent(winner), "loss", false);
         }
+
+        match.transition(MatchState.REWARDS);
+        // Stats/ELO persistence is owned by the Core service.
+        match.transition(MatchState.STATS);
+        recordExternalMatchResult(match, winner);
+        match.transition(MatchState.REPLAY);
+        plugin.advancedFeatures().saveReplay(match);
+        match.transition(MatchState.LOG);
+        // recordExternalMatchResult also emits the authoritative duel audit event.
+        match.transition(MatchState.RESET);
 
         // The arena remains RESETTING until its template has been restored successfully.
         // Never make a modified arena available for another match.
@@ -213,6 +222,7 @@ public final class MatchManager implements Listener {
                         plugin.getLogger().severe("Arena '" + match.arena().name()
                                 + "' was disabled because its reset failed.");
                     }
+                    match.transition(MatchState.FINISHED);
                     plugin.scoreboardManager().updateAll();
                 })
         );
@@ -327,7 +337,7 @@ public final class MatchManager implements Listener {
             return;
         }
         Match match = matches.get(loser);
-        if (match == null || match.state() != MatchState.FIGHTING) return;
+        if (match == null || match.state() != MatchState.ACTIVE) return;
 
         event.setKeepInventory(true);
         event.getDrops().clear();
