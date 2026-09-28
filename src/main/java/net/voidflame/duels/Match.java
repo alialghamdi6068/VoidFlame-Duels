@@ -16,7 +16,7 @@ public final class Match {
     private final Arena arena;
     private final PlayerSnapshot firstSnapshot;
     private final PlayerSnapshot secondSnapshot;
-    private MatchState state = MatchState.COUNTDOWN;
+    private MatchState state = MatchState.PREPARING;
     private long startedAt;
     private int countdownTask = -1;
     private int limitTask = -1;
@@ -41,6 +41,7 @@ public final class Match {
         }
         prepare(a, arena.spawnA());
         prepare(b, arena.spawnB());
+        transition(MatchState.COUNTDOWN);
         int seconds = Math.max(1, plugin.getConfig().getInt("settings.countdown-seconds", 5));
         countdownTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new Runnable() {
             int left = seconds;
@@ -53,7 +54,7 @@ public final class Match {
                     return;
                 }
                 if (left <= 0) {
-                    state = MatchState.FIGHTING;
+                    transition(MatchState.ACTIVE);
                     startedAt = System.currentTimeMillis();
                     x.setWalkSpeed(0.2f);
                     y.setWalkSpeed(0.2f);
@@ -92,18 +93,19 @@ public final class Match {
         long limit = plugin.getConfig().getLong("settings.match-time-limit-seconds", 1800);
         if (limit <= 0) return;
         limitTask = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (state == MatchState.FIGHTING) finish(null);
+            if (state == MatchState.ACTIVE) finish(null);
         }, limit * 20L).getTaskId();
     }
 
     public void finish(UUID winner) {
-        if (state == MatchState.FINISHED || state == MatchState.ENDING) return;
-        state = MatchState.ENDING;
+        if (state == MatchState.FINISHED || state == MatchState.ENDING || state == MatchState.RESULT
+                || state == MatchState.REWARDS || state == MatchState.STATS || state == MatchState.REPLAY
+                || state == MatchState.LOG || state == MatchState.RESET) return;
+        transition(MatchState.ENDING);
         cancelTasks();
         Player a = Bukkit.getPlayer(first), b = Bukkit.getPlayer(second);
         if (a != null) a.setInvulnerable(false);
         if (b != null) b.setInvulnerable(false);
-        state = MatchState.FINISHED;
         manager.finish(this, winner);
     }
 
@@ -116,6 +118,8 @@ public final class Match {
         if (player.equals(second)) return secondSnapshot;
         throw new IllegalArgumentException("Player is not part of this match");
     }
+
+    void transition(MatchState next) { state = next; }
 
     private void cancelTasks() {
         if (countdownTask != -1) plugin.getServer().getScheduler().cancelTask(countdownTask);
