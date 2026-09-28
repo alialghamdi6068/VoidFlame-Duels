@@ -42,23 +42,41 @@ public final class MatchManager implements Listener {
     private void matchmake() {
         for (KitType kit : KitType.values()) {
             if (!plugin.getConfig().getBoolean("settings.individual-matchmaking-enabled", true)) continue;
-            while (queues.queued(kit) >= 2) {
-                UUID first = queues.poll(kit);
-                UUID second = queues.poll(kit);
-                if (first == null || second == null) break;
-                Player a = Bukkit.getPlayer(first);
-                Player b = Bukkit.getPlayer(second);
+
+            while (true) {
+                boolean rankedStarted = false;
+                if (plugin.getConfig().getBoolean("queue.ranked.enabled", true)) {
+                    UUID[] pair = queues.pollRankedPair(kit);
+                    if (pair != null) {
+                        Player a = Bukkit.getPlayer(pair[0]);
+                        Player b = Bukkit.getPlayer(pair[1]);
+                        if (a != null && b != null && a.isOnline() && b.isOnline() && startDirect(a, b, kit)) {
+                            rankedStarted = true;
+                        } else {
+                            if (a != null && a.isOnline()) queues.requeue(pair[0], kit);
+                            if (b != null && b.isOnline()) queues.requeue(pair[1], kit);
+                        }
+                    }
+                }
+
+                UUID[] pair = queues.pollUnrankedPair(kit);
+                if (pair == null) {
+                    if (!rankedStarted) break;
+                    continue;
+                }
+                Player a = Bukkit.getPlayer(pair[0]);
+                Player b = Bukkit.getPlayer(pair[1]);
                 if (a == null || !a.isOnline()) {
-                    queues.requeue(second, kit);
+                    if (b != null && b.isOnline()) queues.requeue(pair[1], kit);
                     continue;
                 }
                 if (b == null || !b.isOnline()) {
-                    queues.requeue(first, kit);
+                    queues.requeue(pair[0], kit);
                     continue;
                 }
                 if (!startDirect(a, b, kit)) {
-                    queues.requeue(first, kit);
-                    queues.requeue(second, kit);
+                    queues.requeue(pair[0], kit);
+                    queues.requeue(pair[1], kit);
                     break;
                 }
             }
