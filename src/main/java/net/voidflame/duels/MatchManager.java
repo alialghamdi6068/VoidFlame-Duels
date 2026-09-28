@@ -67,11 +67,11 @@ public final class MatchManager implements Listener {
                 Player a = Bukkit.getPlayer(pair[0]);
                 Player b = Bukkit.getPlayer(pair[1]);
                 if (a == null || !a.isOnline()) {
-                    if (b != null && b.isOnline()) queues.requeue(pair[1], kit);
+                    if (b != null && b.isOnline()) queues.requeue(pair[1], kit, false);
                     continue;
                 }
                 if (b == null || !b.isOnline()) {
-                    queues.requeue(pair[0], kit);
+                    queues.requeue(pair[0], kit, false);
                     continue;
                 }
                 if (!startDirect(a, b, kit)) {
