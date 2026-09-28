@@ -64,6 +64,8 @@ public final class LobbyItemsManager implements Listener {
                 case MACE -> Material.MACE;
                 case SPEAR_MACE -> Material.TRIDENT;
                 case CRYSTAL -> Material.END_CRYSTAL;
+                case NETHERITE_POT -> Material.NETHERITE_HELMET;
+                case SMP -> Material.CHEST;
             };
             button(inv, slot++, icon, "§b" + pretty(kit), "§7اضغط لاختيار هذا الكيت");
         }
