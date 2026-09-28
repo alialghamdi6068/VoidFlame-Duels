@@ -410,6 +410,13 @@ public final class MatchManager implements Listener {
         pendingRestores.clear();
     }
 
+    void restorePartySnapshot(UUID id, PlayerSnapshot snapshot) {
+        if (id == null || snapshot == null) return;
+        Player player = Bukkit.getPlayer(id);
+        if (player != null && player.isOnline()) snapshot.restore(player);
+        else pendingRestores.put(id, snapshot);
+    }
+
     void clearPartyModes(Collection<UUID> ids) { plugin.partyManager().clearMode(ids); }
 
     private String pretty(KitType k) {
