@@ -75,8 +75,8 @@ public final class MatchManager implements Listener {
                     continue;
                 }
                 if (!startDirect(a, b, kit)) {
-                    queues.requeue(pair[0], kit);
-                    queues.requeue(pair[1], kit);
+                    queues.requeue(pair[0], kit, false);
+                    queues.requeue(pair[1], kit, false);
                     break;
                 }
             }
