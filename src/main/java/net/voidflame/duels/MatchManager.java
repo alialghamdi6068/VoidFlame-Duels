@@ -366,7 +366,7 @@ public final class MatchManager implements Listener {
     public void onCombatCommand(PlayerCommandPreprocessEvent event) {
         UUID id = event.getPlayer().getUniqueId();
         Match match = matches.get(id);
-        if (match == null || match.state() != MatchState.FIGHTING) return;
+        if (match == null || match.state() != MatchState.ACTIVE) return;
         if (!plugin.getConfig().getBoolean("combat.command-blocking-enabled", true)) return;
         String raw = event.getMessage();
         String command = raw.startsWith("/") ? raw.substring(1).split("\\s+")[0].toLowerCase(java.util.Locale.ROOT) : "";
