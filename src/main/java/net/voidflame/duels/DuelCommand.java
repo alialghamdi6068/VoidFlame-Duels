@@ -39,14 +39,23 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
             plugin.scoreboardManager().update(p);
             return true;
         }
-        KitType kit = parseKit(args[0]);
+        boolean ranked = false;
+        String kitArg = args[0];
+        if (args.length >= 2 && (args[0].equalsIgnoreCase("ranked") || args[0].equalsIgnoreCase("unranked"))) {
+            ranked = args[0].equalsIgnoreCase("ranked");
+            kitArg = args[1];
+        }
+        KitType kit = parseKit(kitArg);
         if (kit == null) { p.sendMessage(plugin.message("unknown-kit")); return true; }
         if (plugin.partyManager().partyOf(p.getUniqueId()) != null) {
             p.sendMessage(plugin.message("party-cannot-queue"));
             return true;
         }
-        boolean ok = plugin.queueManager().join(p, kit);
-        p.sendMessage(ok ? plugin.message("joined-queue").replace("<kit>", pretty(kit)) : plugin.message("already-queued"));
+        boolean ok = plugin.queueManager().join(p, kit, ranked);
+        String queueType = ranked ? "Ranked" : "Unranked";
+        p.sendMessage(ok
+                ? plugin.message("joined-queue").replace("<kit>", pretty(kit)).replace("<type>", queueType)
+                : plugin.message("already-queued"));
         plugin.scoreboardManager().update(p);
         return true;
     }
@@ -132,7 +141,11 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> out = new ArrayList<>();
         String name = command.getName().toLowerCase(Locale.ROOT);
-        if ((name.equals("queue") || name.equals("duel") || name.equals("kiteditor")) && args.length == 1) {
+        if (name.equals("queue") && args.length == 1) {
+            out.add("ranked");
+            out.add("unranked");
+            for (KitType k : KitType.values()) out.add(pretty(k).toLowerCase(Locale.ROOT));
+        } else if ((name.equals("queue") || name.equals("duel") || name.equals("kiteditor")) && args.length == 1) {
             if (name.equals("duel")) out.add("accept");
             for (KitType k : KitType.values()) out.add(pretty(k).toLowerCase(Locale.ROOT));
             if (name.equals("duel")) Bukkit.getOnlinePlayers().stream().map(Player::getName)
