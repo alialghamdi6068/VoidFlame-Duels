@@ -127,14 +127,13 @@ public final class QueueManager implements Listener {
         return new UUID[]{first.player(), second.player()};
     }
 
-    public synchronized void requeue(UUID id, KitType kit) {
-        if (id == null || kit == null || playerQueues.containsKey(id)) return;
-        Player p = plugin.getServer().getPlayer(id);
-        if (p == null || !p.isOnline() || plugin.matchManager().isInMatch(id)) return;
-        double elo = eloCache.getOrDefault(id, plugin.getConfig().getDouble("queue.ranked.default-elo", 1000.0));
-        QueueEntry entry = new QueueEntry(id, kit, false, System.currentTimeMillis(), elo);
-        queues.get(kit).put(id, entry);
-        playerQueues.put(id, entry);
+    public synchronized void requeue(QueueEntry entry) {
+        if (entry == null || playerQueues.containsKey(entry.player())) return;
+        Player p = plugin.getServer().getPlayer(entry.player());
+        if (p == null || !p.isOnline() || plugin.matchManager().isInMatch(entry.player())) return;
+        queues.get(entry.kit()).put(entry.player(), entry);
+        playerQueues.put(entry.player(), entry);
+        eloCache.put(entry.player(), entry.elo());
     }
 
     private void requeueEntry(QueueEntry entry) {
