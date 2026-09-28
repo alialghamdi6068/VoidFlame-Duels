@@ -1,5 +1,15 @@
 package net.voidflame.duels;
 
 public enum MatchState {
-    COUNTDOWN, FIGHTING, ENDING, FINISHED
+    PREPARING,
+    COUNTDOWN,
+    ACTIVE,
+    ENDING,
+    RESULT,
+    REWARDS,
+    STATS,
+    REPLAY,
+    LOG,
+    RESET,
+    FINISHED
 }
