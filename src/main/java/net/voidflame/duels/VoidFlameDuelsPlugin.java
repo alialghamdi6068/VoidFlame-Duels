@@ -201,4 +201,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     public LobbyItemsManager lobbyItemsManager() { return lobbyItemsManager; }
     public PlayerSettings playerSettings() { return playerSettings; }
     public CombatTagManager combatTagManager() { return combatTagManager; }
+    public FfaManager ffaManager() { return ffaManager; }
+    public BotDuelManager botDuelManager() { return botDuelManager; }
 }
