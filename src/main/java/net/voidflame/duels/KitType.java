@@ -3,7 +3,7 @@ package net.voidflame.duels;
 import java.util.Locale;
 
 public enum KitType {
-    SWORD, AXE, UHC, MACE, SPEAR_MACE, CRYSTAL;
+    SWORD, AXE, UHC, MACE, CRYSTAL, NETHERITE_POT, SMP, SPEAR_MACE;
 
     public static KitType fromConfig(String value) {
         String normalized = value.trim()
