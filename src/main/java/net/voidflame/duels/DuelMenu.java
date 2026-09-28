@@ -36,6 +36,8 @@ public final class DuelMenu implements Listener {
             meta.setDisplayName(color(sec.getString("display-name", kit.name())));
             java.util.List<String> lore = sec.getStringList("lore").stream()
                     .map(s -> color(s.replace("<queued_players>", String.valueOf(plugin.queueManager().queued(kit)))
+                            .replace("<ranked_players>", String.valueOf(plugin.queueManager().queued(kit, true)))
+                            .replace("<unranked_players>", String.valueOf(plugin.queueManager().queued(kit, false)))
                             .replace("<in_match_players>", String.valueOf(plugin.matchManager().playersInMatches(kit)))))
                     .toList();
             meta.setLore(lore);
@@ -55,7 +57,9 @@ public final class DuelMenu implements Listener {
             String key = kit.name().toLowerCase(Locale.ROOT);
             var sec = plugin.getConfig().getConfigurationSection("gui.kits." + key);
             if (sec != null && sec.getInt("slot", -1) == e.getRawSlot()) {
-                if (plugin.queueManager().join(p, kit)) p.sendMessage(plugin.message("joined-queue").replace("<kit>", pretty(kit)));
+                boolean ranked = e.isRightClick();
+                if (plugin.queueManager().join(p, kit, ranked)) p.sendMessage(plugin.message("joined-queue")
+                        .replace("<kit>", pretty(kit)).replace("<type>", ranked ? "Ranked" : "Unranked"));
                 else p.sendMessage(plugin.message("already-queued"));
                 p.closeInventory();
                 return;
