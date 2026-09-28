@@ -418,3 +418,11 @@ combat:
     - r
     - reply
   blocked-message: "&cCommands are disabled while fighting."
+
+
+queue:
+  ranked:
+    enabled: true
+    default-elo: 1000.0
+    initial-elo-range: 100.0
+    elo-range-growth-per-second: 10.0
