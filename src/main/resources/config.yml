@@ -30,6 +30,16 @@ messages:
   joined-queue: "&aJoined the &e<kit> &aqueue."
   left-queue: "&aYou left the queue."
   already-in-match: "&cYou are already in a match."
+  ffa-disabled: "&cFFA is currently disabled."
+  ffa-world-missing: "&cThe configured FFA world is not loaded."
+  ffa-full: "&cFFA is full right now."
+  ffa-joined: "&bFFA &7» &fJoined with kit &e<kit>&f."
+  ffa-left: "&bFFA &7» &fYou left FFA."
+  ffa-kill: "&a+1 &7» &fYou eliminated &e<player>&f."
+  bot-disabled: "&cBotDuels are currently disabled."
+  bot-started: "&bBotDuels &7» &fStarted with kit &e<kit>&f."
+  bot-win: "&aBot defeated. &fMatch complete."
+  bot-loss: "&cBot duel lost. &fYour state has been restored."
   unknown-kit: "&cUnknown kit."
   duel-unavailable: "&cThat duel cannot be sent right now."
   duel-start-failed: "&cThe duel could not be started."
@@ -408,18 +418,3 @@ combat:
     - r
     - reply
   blocked-message: "&cCommands are disabled while fighting."
-
-
-# Additional mode messages
-messages:
-  ffa-disabled: "&cFFA is currently disabled."
-  ffa-world-missing: "&cThe configured FFA world is not loaded."
-  ffa-full: "&cFFA is full right now."
-  ffa-joined: "&bFFA &7» &fJoined with kit &e<kit>&f."
-  ffa-left: "&bFFA &7» &fYou left FFA."
-  ffa-kill: "&a+1 &7» &fYou eliminated &e<player>&f."
-  bot-disabled: "&cBotDuels are currently disabled."
-  bot-started: "&bBotDuels &7» &fStarted with kit &e<kit>&f."
-  bot-win: "&aBot defeated. &fMatch complete."
-  bot-loss: "&cBot duel lost. &fYour state has been restored."
-  already-in-match: "&cYou are already in a match or another practice mode."
