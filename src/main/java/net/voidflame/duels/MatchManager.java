@@ -53,8 +53,8 @@ public final class MatchManager implements Listener {
                         if (a != null && b != null && a.isOnline() && b.isOnline() && startDirect(a, b, kit)) {
                             rankedStarted = true;
                         } else {
-                            if (a != null && a.isOnline()) queues.requeue(new QueueManager.QueueEntry(pair[0], kit, true, System.currentTimeMillis(), 1000.0));
-                            if (b != null && b.isOnline()) queues.requeue(new QueueManager.QueueEntry(pair[1], kit, true, System.currentTimeMillis(), 1000.0));
+                            if (a != null && a.isOnline()) queues.requeue(pair[0], kit, true);
+                            if (b != null && b.isOnline()) queues.requeue(pair[1], kit, true);
                         }
                     }
                 }
