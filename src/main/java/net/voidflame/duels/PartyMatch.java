@@ -152,8 +152,8 @@ public final class PartyMatch {
         if (countdownTask != -1) Bukkit.getScheduler().cancelTask(countdownTask);
         if (limitTask != -1) Bukkit.getScheduler().cancelTask(limitTask);
         for (UUID id : players) {
-            PlayerSnapshot snapshot = snapshots.get(id); Player player = Bukkit.getPlayer(id);
-            if (snapshot != null && player != null && player.isOnline()) snapshot.restore(player);
+            PlayerSnapshot snapshot = snapshots.get(id);
+            if (snapshot != null) manager.restorePartySnapshot(id, snapshot);
             if (player != null && player.isOnline()) player.sendMessage(winner == null ? plugin.message("match-draw") :
                     plugin.message("match-ended").replace("<winner>", name(winner)).replace("<kit>", pretty(kit)));
         }
