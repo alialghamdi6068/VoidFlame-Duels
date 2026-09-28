@@ -154,6 +154,7 @@ public final class PartyMatch {
         for (UUID id : players) {
             PlayerSnapshot snapshot = snapshots.get(id);
             if (snapshot != null) manager.restorePartySnapshot(id, snapshot);
+            Player player = Bukkit.getPlayer(id);
             if (player != null && player.isOnline()) player.sendMessage(winner == null ? plugin.message("match-draw") :
                     plugin.message("match-ended").replace("<winner>", name(winner)).replace("<kit>", pretty(kit)));
         }
