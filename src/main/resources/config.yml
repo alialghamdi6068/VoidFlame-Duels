@@ -94,7 +94,7 @@ gui:
         - "&7Classic sword practice."
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
-        - "&eClick to join."
+        - "&eLeft-click: Unranked  &7|  &dRight-click: Ranked."
     axe:
       slot: 13
       display-name: "&aAxe"
@@ -133,7 +133,7 @@ gui:
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
     smp:
-      slot: 35
+      slot: 27
       display-name: "&aSMP"
       icon: NETHERITE_SWORD
       lore:
