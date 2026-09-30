@@ -15,7 +15,7 @@ commands:
     permission: voidflame.duel
   queue:
     description: Join or leave a duel queue.
-    usage: /queue [kit|leave]
+    usage: /queue [ranked|unranked] <kit> | leave
     permission: voidflame.queue
   rematch:
     description: Request a rematch.
