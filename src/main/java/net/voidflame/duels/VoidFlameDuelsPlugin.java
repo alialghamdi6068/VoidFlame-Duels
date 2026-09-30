@@ -24,7 +24,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     private CombatTagManager combatTagManager;
     private MatchExploitGuard matchExploitGuard;
     private FfaManager ffaManager;
-    private BotDuelManager botDuelManager;
 
     @Override
     public void onEnable() {
@@ -61,7 +60,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         combatTagManager = new CombatTagManager(this);
         matchExploitGuard = new MatchExploitGuard(this);
         ffaManager = new FfaManager(this);
-        botDuelManager = new BotDuelManager(this);
 
         coreServices.register(QueueManager.class, queueManager);
         coreServices.register(MatchManager.class, matchManager);
@@ -82,7 +80,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(combatTagManager, this);
         getServer().getPluginManager().registerEvents(matchExploitGuard, this);
         getServer().getPluginManager().registerEvents(ffaManager, this);
-        getServer().getPluginManager().registerEvents(botDuelManager, this);
         getServer().getPluginManager().registerEvents(new PlayerSettingsListener(this), this);
 
         getServer().getScheduler().runTaskTimer(this, scoreboardManager::updateAll, 20L, 20L);
@@ -108,7 +105,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         registerAdvanced("totalpractice", advancedCommand);
         registerAdvanced("goldenhard", advancedCommand);
         registerAdvanced("ffa", advancedCommand);
-        registerAdvanced("botduel", advancedCommand);
 
         PartyCommand partyCommand = new PartyCommand(this);
         registerParty("party", partyCommand);
@@ -168,7 +164,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         if (queueManager != null) queueManager.shutdown();
         if (combatTagManager != null) combatTagManager.clearAll();
         if (ffaManager != null) ffaManager.shutdown();
-        if (botDuelManager != null) botDuelManager.shutdown();
         unregisterPublicServices();
 
         if (coreServices != null) {
@@ -202,5 +197,4 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     public PlayerSettings playerSettings() { return playerSettings; }
     public CombatTagManager combatTagManager() { return combatTagManager; }
     public FfaManager ffaManager() { return ffaManager; }
-    public BotDuelManager botDuelManager() { return botDuelManager; }
 }
