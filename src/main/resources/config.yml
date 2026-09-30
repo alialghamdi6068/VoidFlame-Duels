@@ -76,7 +76,7 @@ messages:
   party-busy: "&cA party member is already busy."
   party-no-arena: "&cNo arena is available for the party match."
   party-cannot-queue: "&cLeave your party before joining an individual queue."
-  kit-selected: "&aتم اختيار كيت &e<kit>&a."
+  kit-selected: "&aSelected kit &e<kit>&a."
   kit-editor-opened: "&aEditing &e<kit>&a. Rearrange the items, then close the menu to save."
   kit-editor-saved: "&aSaved your &e<kit> &akit layout."
   kit-editor-failed: "&cThe kit editor could not be opened."
