@@ -37,10 +37,6 @@ messages:
   ffa-joined: "&bFFA &7» &fJoined with kit &e<kit>&f."
   ffa-left: "&bFFA &7» &fYou left FFA."
   ffa-kill: "&a+1 &7» &fYou eliminated &e<player>&f."
-  bot-disabled: "&cBotDuels are currently disabled."
-  bot-started: "&bBotDuels &7» &fStarted with kit &e<kit>&f."
-  bot-win: "&aBot defeated. &fMatch complete."
-  bot-loss: "&cBot duel lost. &fYour state has been restored."
   unknown-kit: "&cUnknown kit."
   duel-unavailable: "&cThat duel cannot be sent right now."
   duel-start-failed: "&cThe duel could not be started."
@@ -385,8 +381,6 @@ features:
   replay:
     enabled: true
     max-events-per-match: 2000
-  botduels:
-    enabled: true
   goldenhard:
     enabled: true
   party-stats:
