@@ -73,10 +73,6 @@ commands:
     description: Join, leave or inspect Free For All.
     usage: /ffa [kit|leave|stats]
     permission: voidflame.ffa
-  botduel:
-    description: Start a practice duel against a VoidFlame bot.
-    usage: /botduel [kit|leave]
-    permission: voidflame.botduel
 
 permissions:
   voidflame.duel:
@@ -117,9 +113,6 @@ permissions:
     default: true
   voidflame.ffa:
     description: Use Free For All.
-    default: true
-  voidflame.botduel:
-    description: Use BotDuels.
     default: true
   voidflame.duel.private:
     description: Create private duels.
