@@ -30,7 +30,6 @@ public final class AdvancedCommand implements CommandExecutor, TabCompleter {
             case "practice", "totalpractice" -> { plugin.advancedFeatures().openPractice(player); yield true; }
             case "goldenhard" -> { plugin.advancedFeatures().toggleGoldenHard(player); yield true; }
             case "ffa" -> ffa(player, args);
-            case "botduel" -> botduel(player, args);
             case "coins" -> coins(sender, args);
             case "replay" -> replay(player, args);
             default -> true;
@@ -86,16 +85,6 @@ public final class AdvancedCommand implements CommandExecutor, TabCompleter {
         }
         String kit = args.length == 0 ? "sword" : args[0];
         plugin.ffaManager().join(player, kit);
-        return true;
-    }
-
-    private boolean botduel(Player player, String[] args) {
-        if (args.length > 0 && args[0].equalsIgnoreCase("leave")) {
-            player.sendMessage(plugin.botDuelManager().stop(player, true) ? color("&aBot duel stopped.") : color("&cYou are not in a bot duel."));
-            return true;
-        }
-        String kit = args.length == 0 ? "sword" : args[0];
-        plugin.botDuelManager().start(player, kit);
         return true;
     }
 
