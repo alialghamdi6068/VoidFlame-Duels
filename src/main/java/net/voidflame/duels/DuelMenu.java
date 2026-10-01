@@ -27,7 +27,7 @@ public final class DuelMenu implements Listener {
         ItemStack accent = item(Material.PURPLE_STAINED_GLASS_PANE, " ");
         for (int slot = 0; slot < inv.getSize(); slot++) {
             int row = slot / 9, col = slot % 9;
-            if (row == 0 || row == 5 || col == 0 || col == 8) inv.setItem(slot, border.clone());
+            if (row == 0 || row == 2 || col == 0 || col == 8) inv.setItem(slot, border.clone());
         }
         for (int slot : new int[]{1,2,3,5,6,7,46,48,50,52}) inv.setItem(slot, accent.clone());
 
