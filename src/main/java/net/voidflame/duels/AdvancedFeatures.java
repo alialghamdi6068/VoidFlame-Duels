@@ -415,13 +415,25 @@ public final class AdvancedFeatures implements Listener {
         String tag = String.valueOf(entry.containsKey("id") ? entry.get("id") : entry.containsKey("name") ? entry.get("name") : "product");
         int cost = Math.max(0, parseInt(entry.get("price"), 0));
         if (tag.isBlank() || cost < 0) return;
-        if (!takeCoins(player.getUniqueId(), cost)) {
-            player.sendMessage(color("&cYou do not have enough coins."));
-            return;
-        }
-        storagePut(TAG_MODULE, player.getUniqueId().toString(), tag);
-        player.sendMessage(color("&aUnlocked tag &f" + tag + "&a."));
-        player.closeInventory();
+        storage.database().query(
+                "SELECT 1 FROM player_shop_purchases WHERE uuid=? AND product_id=?",
+                player.getUniqueId().toString(), tag)
+            .thenAccept(rows -> Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!rows.isEmpty()) {
+                    player.sendMessage(color("&eYou already own this product."));
+                    return;
+                }
+                if (!takeCoins(player.getUniqueId(), cost)) {
+                    player.sendMessage(color("&cYou do not have enough coins."));
+                    return;
+                }
+                storage.database().execute(
+                        "INSERT INTO player_shop_purchases(uuid, product_id, purchased_at) VALUES (?, ?, ?)",
+                        player.getUniqueId().toString(), tag, System.currentTimeMillis());
+                storagePut(TAG_MODULE, player.getUniqueId().toString(), tag);
+                player.sendMessage(color("&aPurchased &f" + tag + " &afor &e" + cost + " coins&a."));
+                player.closeInventory();
+            }));
     }
 
     public void toggleGoldenHard(Player player) {
