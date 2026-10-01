@@ -51,6 +51,7 @@ public final class AdvancedFeatures implements Listener {
     private final Map<UUID, Set<ArmorStand>> trainingDummies = new ConcurrentHashMap<>();
     private final Set<UUID> goldenHard = ConcurrentHashMap.newKeySet();
     private final Map<UUID, List<String>> recentCombat = new ConcurrentHashMap<>();
+    private final Map<UUID, UUID> replayMatchByPlayer = new ConcurrentHashMap<>();
     private final List<String> announcements = new ArrayList<>();
     private int announcementIndex;
     private int announcementTask = -1;
@@ -103,6 +104,7 @@ public final class AdvancedFeatures implements Listener {
         combatTags.clear();
         goldenHard.clear();
         trainingSessions.clear();
+        replayMatchByPlayer.clear();
         trainingDummies.values().forEach(set -> set.forEach(dummy -> { if (dummy != null && !dummy.isDead()) dummy.remove(); }));
         trainingDummies.clear();
     }
@@ -127,6 +129,11 @@ public final class AdvancedFeatures implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         recentCombat.remove(event.getPlayer().getUniqueId());
         combatTags.remove(event.getPlayer().getUniqueId());
+        UUID matchId = replayMatchByPlayer.get(event.getPlayer().getUniqueId());
+        if (matchId != null) {
+            recentCombat.computeIfAbsent(event.getPlayer().getUniqueId(), ignored -> Collections.synchronizedList(new ArrayList<>()))
+                    .add(System.currentTimeMillis() + "|QUIT");
+        }
         coins.remove(event.getPlayer().getUniqueId());
         finishTraining(event.getPlayer(), false);
     }
@@ -217,11 +224,43 @@ public final class AdvancedFeatures implements Listener {
         return Math.max(0L, (until - System.currentTimeMillis() + 999L) / 1000L);
     }
 
-    public void startReplay(UUID first, UUID second) {
+    public void startReplay(UUID matchId, UUID first, UUID second) {
         recentCombat.remove(first);
         recentCombat.remove(second);
         recentCombat.put(first, Collections.synchronizedList(new ArrayList<>()));
         recentCombat.put(second, Collections.synchronizedList(new ArrayList<>()));
+        replayMatchByPlayer.put(first, matchId);
+        replayMatchByPlayer.put(second, matchId);
+        long now = System.currentTimeMillis();
+        recentCombat.get(first).add(now + "|MATCH_START|" + second);
+        recentCombat.get(second).add(now + "|MATCH_START|" + first);
+    }
+
+    public void saveReplay(UUID matchId, UUID first, UUID second, String arena, String kit, long durationMs) {
+        if (!plugin.getConfig().getBoolean("features.replay.enabled", true)) return;
+        List<String> events = new ArrayList<>();
+        List<String> firstEvents = recentCombat.get(first);
+        List<String> secondEvents = recentCombat.get(second);
+        if (firstEvents != null) synchronized (firstEvents) { events.addAll(firstEvents); }
+        if (secondEvents != null) synchronized (secondEvents) { events.addAll(secondEvents); }
+        events.sort(Comparator.comparingLong(this::eventTimestamp));
+        int max = Math.max(1, plugin.getConfig().getInt("features.replay.max-events-per-match", 2000));
+        if (events.size() > max) events = new ArrayList<>(events.subList(events.size() - max, events.size()));
+        String payload = "kit=" + kit + "|arena=" + arena + "|duration=" + durationMs + "|events=" + String.join(";", events);
+        String players = "["" + first + "","" + second + ""]";
+        storage.database().execute(
+                "INSERT INTO replays(match_id, players_json, arena, kit, timestamp, replay_data) VALUES (?, ?, ?, ?, ?, ?) " +
+                        "ON CONFLICT(match_id) DO UPDATE SET players_json=excluded.players_json, arena=excluded.arena, kit=excluded.kit, timestamp=excluded.timestamp, replay_data=excluded.replay_data",
+                matchId.toString(), players, arena, kit, System.currentTimeMillis(), payload.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        recentCombat.remove(first);
+        recentCombat.remove(second);
+        replayMatchByPlayer.remove(first, matchId);
+        replayMatchByPlayer.remove(second, matchId);
+    }
+
+    private long eventTimestamp(String event) {
+        try { return Long.parseLong(event.substring(0, event.indexOf('|'))); }
+        catch (Exception ignored) { return Long.MAX_VALUE; }
     }
 
     public void saveReplay(Match match) {
@@ -330,7 +369,19 @@ public final class AdvancedFeatures implements Listener {
     }
 
     public void loadReplay(UUID player, UUID matchId, java.util.function.Consumer<String> consumer) {
-        storageGet(REPLAY_MODULE, player + ":" + matchId, consumer);
+        storage.database().query(
+                "SELECT players_json, replay_data FROM replays WHERE match_id=?",
+                matchId.toString())
+            .thenAccept(rows -> {
+                if (rows.isEmpty()) { consumer.accept(null); return; }
+                var row = rows.get(0);
+                String players = String.valueOf(row.get("players_json"));
+                if (!players.contains(player.toString())) { consumer.accept(null); return; }
+                Object raw = row.get("replay_data");
+                if (!(raw instanceof byte[] bytes)) { consumer.accept(null); return; }
+                consumer.accept(new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
+            })
+            .exceptionally(error -> { consumer.accept(null); return null; });
     }
 
     public int coinBalance(UUID player) { return coins.getOrDefault(player, 0); }
