@@ -93,6 +93,30 @@ public final class FfaManager implements Listener {
     public boolean isInFfa(UUID uuid) { return sessions.containsKey(uuid); }
     public int onlineCount() { return sessions.size(); }
 
+    public void sendStats(Player player) {
+        loadStatsAsync(player.getUniqueId()).thenAccept(stats -> Bukkit.getScheduler().runTask(plugin, () -> {
+            player.sendMessage(color("&8&m--------------------"));
+            player.sendMessage(color("&bVoidFlame &fFFA Stats"));
+            player.sendMessage(color("&7Kills: &f" + stats.kills));
+            player.sendMessage(color("&7Deaths: &f" + stats.deaths));
+            player.sendMessage(color("&7Streak: &d" + stats.streak));
+            player.sendMessage(color("&8&m--------------------"));
+        }));
+    }
+
+    private java.util.concurrent.CompletableFuture<Stats> loadStatsAsync(UUID uuid) {
+        return storage.get("duels.ffa", uuid.toString()).thenApply(raw -> {
+            if (raw == null) return new Stats(0, 0, 0);
+            try {
+                String[] p = raw.split(",", -1);
+                if (p.length != 3) return new Stats(0, 0, 0);
+                return new Stats(Math.max(0, Long.parseLong(p[0])), Math.max(0, Long.parseLong(p[1])), Math.max(0, Long.parseLong(p[2])));
+            } catch (Exception ignored) {
+                return new Stats(0, 0, 0);
+            }
+        });
+    }
+
     public void shutdown() {
         for (UUID uuid : new ArrayList<>(sessions.keySet())) {
             Player p = Bukkit.getPlayer(uuid);
@@ -119,6 +143,7 @@ public final class FfaManager implements Listener {
             persist(killer.getUniqueId(), killerSession);
             persist(victim.getUniqueId(), session);
             playerMessage(killer, "ffa-kill", "<player>", victim.getName());
+            rewardFfa(killer, "kill");
         } else {
             session.deaths++;
             session.streak = 0;
@@ -188,6 +213,17 @@ public final class FfaManager implements Listener {
         storage.put("duels.ffa", uuid.toString(),
                 session.kills + "," + session.deaths + "," + session.streak);
     }
+
+    private void rewardFfa(Player player, String outcome) {
+        String key = "rewards.ffa." + outcome;
+        if (!plugin.getConfig().getBoolean(key + ".enabled", true)) return;
+        int coins = Math.max(0, plugin.getConfig().getInt(key + ".coins", 0));
+        if (coins > 0) plugin.advancedFeatures().addCoins(player.getUniqueId(), coins);
+        String message = plugin.getConfig().getString(key + ".message", "");
+        if (!message.isBlank()) player.sendMessage(color(message.replace("<coins>", String.valueOf(coins))));
+    }
+
+    private String color(String value) { return ChatColor.translateAlternateColorCodes('&', value); }
 
     private record Stats(long kills, long deaths, long streak) {}
 }
