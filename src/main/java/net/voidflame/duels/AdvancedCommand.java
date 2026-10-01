@@ -41,6 +41,7 @@ public final class AdvancedCommand implements CommandExecutor, TabCompleter, Lis
             case "history" -> { plugin.advancedFeatures().openHistory(player); yield true; }
             case "coinshop" -> { plugin.advancedFeatures().openCoinShop(player); yield true; }
             case "practice", "totalpractice" -> { plugin.advancedFeatures().openPractice(player); yield true; }
+            case "settings" -> { plugin.settingsMenu().open(player); yield true; }
             case "goldenhard" -> { plugin.advancedFeatures().toggleGoldenHard(player); yield true; }
             case "ffa" -> ffa(player, args);
             case "coins" -> coins(sender, args);
