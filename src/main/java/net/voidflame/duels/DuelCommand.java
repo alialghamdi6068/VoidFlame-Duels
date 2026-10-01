@@ -24,6 +24,9 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
             case "duels" -> { plugin.menu().open(p); yield true; }
             case "queue" -> queue(p, args);
             case "duel" -> duel(p, args);
+            case "accept" -> accept(p, args);
+            case "deny" -> deny(p, args);
+            case "leave" -> leave(p);
             case "rematch" -> rematch(p, args);
             case "rejoin" -> rejoin(p);
             case "spectate" -> spectate(p, args);
@@ -87,6 +90,46 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
         }
         p.sendMessage(plugin.message("duel-sent").replace("<player>", target.getName()));
         target.sendMessage(plugin.message("duel-received").replace("<player>", p.getName()).replace("<kit>", pretty(kit)));
+        return true;
+    }
+
+    private boolean accept(Player p, String[] args) {
+        if (args.length < 1) { p.sendMessage(ChatColor.YELLOW + "/accept <player>"); return true; }
+        Player sender = Bukkit.getPlayerExact(args[0]);
+        if (sender == null) { p.sendMessage(plugin.message("player-not-found")); return true; }
+        DuelRequestManager.Request request = plugin.requests().getFrom(p, sender);
+        if (request == null) { p.sendMessage(plugin.message("request-expired")); return true; }
+        if (!plugin.matchManager().startDirect(p, sender, request.kit())) {
+            p.sendMessage(plugin.message("duel-start-failed")); return true;
+        }
+        plugin.requests().remove(p);
+        p.sendMessage(plugin.message("request-accepted"));
+        return true;
+    }
+
+    private boolean deny(Player p, String[] args) {
+        if (args.length < 1) { p.sendMessage(ChatColor.YELLOW + "/deny <player>"); return true; }
+        Player sender = Bukkit.getPlayerExact(args[0]);
+        if (sender == null) { p.sendMessage(plugin.message("player-not-found")); return true; }
+        DuelRequestManager.Request request = plugin.requests().getFrom(p, sender);
+        if (request == null) { p.sendMessage(plugin.message("request-expired")); return true; }
+        plugin.requests().remove(p);
+        p.sendMessage(ChatColor.GRAY + "Duel request denied.");
+        sender.sendMessage(ChatColor.RED + p.getName() + " denied your duel request.");
+        return true;
+    }
+
+    private boolean leave(Player p) {
+        if (plugin.queueManager().leave(p)) {
+            p.sendMessage(plugin.message("left-queue"));
+            plugin.scoreboardManager().update(p);
+            return true;
+        }
+        if (plugin.matchManager().leave(p)) {
+            p.sendMessage(plugin.message("left-match"));
+            return true;
+        }
+        p.sendMessage(ChatColor.GRAY + "You are not in a queue or match.");
         return true;
     }
 
