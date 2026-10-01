@@ -53,6 +53,12 @@ public final class RematchManager {
         return true;
     }
 
+    public boolean hasRecent(UUID player) {
+        History h = history.get(player);
+        if (h == null || h.expiresAt() <= System.currentTimeMillis()) { if (h != null) history.remove(player, h); return false; }
+        return true;
+    }
+
     public void clear() { history.clear(); pending.clear(); }
 
     private String pretty(KitType k) { return k == KitType.SPEAR_MACE ? "Spear & Mace" : k.name().replace('_', ' '); }
