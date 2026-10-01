@@ -375,6 +375,11 @@ rewards:
       enabled: true
       coins: 20
       message: "&e+<coins> coins for the draw."
+  ffa:
+    kill:
+      enabled: true
+      coins: 5
+      message: "&a+<coins> coins for an FFA elimination."
   party:
     win:
       enabled: true
