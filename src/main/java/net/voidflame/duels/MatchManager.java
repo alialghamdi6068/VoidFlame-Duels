@@ -102,6 +102,7 @@ public final class MatchManager implements Listener {
                 PlayerSnapshot.capture(a), PlayerSnapshot.capture(b));
         matches.put(a.getUniqueId(), match);
         matches.put(b.getUniqueId(), match);
+        audit("DUEL_START", match.matchId().toString(), "players=" + a.getUniqueId() + "," + b.getUniqueId() + "|kit=" + kit + "|arena=" + arena.name());
         match.start();
         plugin.scoreboardManager().updateAll();
         return true;
@@ -250,6 +251,11 @@ public final class MatchManager implements Listener {
         plugin.scoreboardManager().updateAll();
     }
 
+
+    private void audit(String action, String target, String metadata) {
+        var logs = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.AuditLogService.class);
+        if (logs != null && logs.getProvider() != null) logs.getProvider().log("SYSTEM", action, target, metadata);
+    }
 
     private void recordExternalMatchResult(Match match, UUID winner) {
         var registration = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.MatchResultService.class);
