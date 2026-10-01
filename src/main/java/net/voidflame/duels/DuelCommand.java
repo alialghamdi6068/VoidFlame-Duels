@@ -125,7 +125,9 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
             plugin.scoreboardManager().update(p);
             return true;
         }
-        if (plugin.matchManager().leave(p)) {
+        Match active = plugin.matchManager().get(p.getUniqueId());
+        if (active != null) {
+            active.finish(active.opponent(p.getUniqueId()));
             p.sendMessage(plugin.message("left-match"));
             return true;
         }
