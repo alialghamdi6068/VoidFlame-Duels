@@ -20,6 +20,8 @@ public final class ScoreboardManager {
     private final org.bukkit.scoreboard.ScoreboardManager bukkit;
     private Method statsGetCached;
     private Object statsService;
+    private Method rankGetPlayerRank;
+    private Method rankGetRank;
 
     public ScoreboardManager(VoidFlameDuelsPlugin plugin) {
         this.plugin = plugin;
@@ -44,15 +46,17 @@ public final class ScoreboardManager {
     public void update(Player player) {
         if (bukkit == null) return;
         Match match = plugin.matchManager().get(player.getUniqueId());
+        if (statsService == null) connectStats();
         if (!plugin.playerSettings().scoreboard(player)) {
             player.setScoreboard(bukkit.getMainScoreboard());
-            updateTab(player, match);
+            updateTab(player, match, state);
             return;
         }
         if (statsService == null) connectStats();
 
         Scoreboard board = bukkit.getNewScoreboard();
-        String path = match != null ? "scoreboard.match" : "scoreboard.spawn";
+        String state = state(player, match);
+        String path = "scoreboard." + state.toLowerCase(java.util.Locale.ROOT);
 
         if (!plugin.getConfig().getBoolean(path + ".enabled", true)) {
             player.setScoreboard(bukkit.getMainScoreboard());
@@ -89,14 +93,14 @@ public final class ScoreboardManager {
                 "tab.header", "&5&lVOIDFLAME &8• &dPRACTICE NETWORK"));
         String footer = color(plugin.getConfig().getString(
                 "tab.footer", "&7Status: &d%state% &8• &7Online: &f%server_online% &8• &5play.VoidFlame.net"))
-                .replace("%state%", state)
+                 .replace("%state%", stateLabel)
                 .replace("%server_online%", String.valueOf(Bukkit.getOnlinePlayers().size()));
 
         LegacyComponentSerializer legacy = LegacyComponentSerializer.legacySection();
         player.sendPlayerListHeaderAndFooter(
                 legacy.deserialize(header),
                 legacy.deserialize(footer));
-        player.playerListName(legacy.deserialize(color(player.getDisplayName())));
+        player.playerListName(legacy.deserialize(rankDisplay(player)));
     }
 
     private String render(String line, Player player, Match match) {
@@ -118,8 +122,44 @@ public final class ScoreboardManager {
                 .replace("%player_kills%", String.valueOf(stats.kills))
                 .replace("%player_deaths%", String.valueOf(stats.deaths))
                 .replace("%player_level%", plugin.playerSettings().personalLevel(player) ? "1" : "—")
-                .replace("%state%", match == null ? "Practice" : "Duel");
+                .replace("%state%", state(match == null ? null : player.getUniqueId()));
         return color(result);
+    }
+
+    private String state(Player player, Match match) {
+        if (plugin.spectatorManager().isSpectating(player.getUniqueId())) return "spectator";
+        if (plugin.ffaManager().isInFfa(player.getUniqueId())) return "ffa";
+        if (plugin.queueManager().isQueued(player.getUniqueId())) return "queue";
+        if (match != null) return "duel";
+        if (plugin.rematches().hasRecent(player.getUniqueId())) return "post-match";
+        return "spawn";
+    }
+
+    private String state(UUID ignored) { return "Practice"; }
+
+    private String rankDisplay(Player player) {
+        try {
+            Class<?> type = Class.forName("net.voidflame.ranks.VoidFlameRanksPlugin$RankService");
+            var registration = Bukkit.getServicesManager().getRegistration(type);
+            if (registration != null) {
+                Object service = registration.getProvider();
+                Method getPlayerRank = type.getMethod("getPlayerRank", UUID.class);
+                Method getRank = type.getMethod("getRank", String.class);
+                Object future = getPlayerRank.invoke(service, player.getUniqueId());
+                if (future instanceof java.util.concurrent.CompletableFuture<?> cf) {
+                    Object rankId = cf.getNow("player");
+                    if (rankId instanceof String id) {
+                        Object rank = getRank.invoke(service, id);
+                        if (rank != null) {
+                            String prefix = String.valueOf(rank.getClass().getMethod("prefix").invoke(rank));
+                            String suffix = String.valueOf(rank.getClass().getMethod("suffix").invoke(rank));
+                            return color(prefix) + " " + color(player.getName()) + color(suffix);
+                        }
+                    }
+                }
+            }
+        } catch (ReflectiveOperationException | RuntimeException ignored) {}
+        return color(player.getDisplayName());
     }
 
     private StatsView stats(UUID uuid) {
