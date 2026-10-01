@@ -313,34 +313,23 @@ public final class AdvancedFeatures implements Listener {
         return true;
     }
 
+    private List<Map<?, ?>> shopProducts() {
+        return plugin.getConfig().getMapList("shop.products");
+    }
+
     public void openCoinShop(Player player) {
         Inventory inv = Bukkit.createInventory(null, 54, color("&8VoidFlame CoinShop"));
-        String[][] catalog = {
-                {"[Void]", "100", "NAME_TAG", "&b"},
-                {"[Champion]", "500", "NETHER_STAR", "&d"},
-                {"[Duelist]", "750", "DIAMOND_SWORD", "&a"},
-                {"[Combo]", "900", "IRON_SWORD", "&e"},
-                {"[Clutch]", "1200", "TOTEM_OF_UNDYING", "&6"},
-                {"[Warlord]", "1500", "NETHERITE_SWORD", "&c"},
-                {"[Unbreakable]", "1750", "NETHERITE_CHESTPLATE", "&5"},
-                {"[Speedster]", "2000", "FEATHER", "&b"},
-                {"[Striker]", "2250", "ARROW", "&f"},
-                {"[Swordsman]", "2500", "DIAMOND_SWORD", "&3"},
-                {"[AxeMaster]", "2750", "DIAMOND_AXE", "&6"},
-                {"[Crystal]", "3000", "END_CRYSTAL", "&d"},
-                {"[Mace]", "3250", "MACE", "&5"},
-                {"[Spear]", "3500", "SPEAR", "&a"},
-                {"[VoidWalker]", "4000", "ENDER_PEARL", "&8"},
-                {"[Nightmare]", "5000", "WITHER_SKELETON_SKULL", "&8"},
-                {"[Legend]", "7500", "DRAGON_EGG", "&5"},
-                {"[Mythic]", "10000", "DRAGON_HEAD", "&d"}
-        };
-        for (int i = 0; i < catalog.length; i++) {
-            String[] entry = catalog[i];
-            inv.setItem(i, item(Material.matchMaterial(entry[2]) == null ? Material.NAME_TAG : Material.matchMaterial(entry[2]),
-                    entry[3] + entry[0], "&7Cost: &e" + entry[1] + " coins"));
+        List<Map<?, ?>> catalog = shopProducts();
+        for (int i = 0; i < Math.min(45, catalog.size()); i++) {
+            Map<?, ?> entry = catalog.get(i);
+            String name = String.valueOf(entry.getOrDefault("name", "Product"));
+            int price = Math.max(0, parseInt(entry.get("price"), 0));
+            Material material = Material.matchMaterial(String.valueOf(entry.getOrDefault("material", "NAME_TAG")));
+            if (material == null) material = Material.NAME_TAG;
+            String color = String.valueOf(entry.getOrDefault("color", "&b"));
+            inv.setItem(i, item(material, color + name, "&7Cost: &e" + price + " coins"));
         }
-        inv.setItem(49, item(Material.GOLD_NUGGET, "&eYour Coins: &f" + coinBalance(player.getUniqueId()), "&7Earn coins by playing."));
+        inv.setItem(49, item(Material.GOLD_NUGGET, "&eYour Coins: &f" + coinBalance(player.getUniqueId()), "&7Click a product to purchase."));
         player.openInventory(inv);
     }
 
@@ -358,18 +347,13 @@ public final class AdvancedFeatures implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         if (!event.getView().getTitle().equals(color("&8VoidFlame CoinShop"))) return;
         event.setCancelled(true);
-        String[][] catalog = {
-                {"[Void]", "100"}, {"[Champion]", "500"}, {"[Duelist]", "750"}, {"[Combo]", "900"},
-                {"[Clutch]", "1200"}, {"[Warlord]", "1500"}, {"[Unbreakable]", "1750"}, {"[Speedster]", "2000"},
-                {"[Striker]", "2250"}, {"[Swordsman]", "2500"}, {"[AxeMaster]", "2750"}, {"[Crystal]", "3000"},
-                {"[Mace]", "3250"}, {"[Spear]", "3500"}, {"[VoidWalker]", "4000"}, {"[Nightmare]", "5000"},
-                {"[Legend]", "7500"}, {"[Mythic]", "10000"}
-        };
+        List<Map<?, ?>> catalog = shopProducts();
         int slot = event.getRawSlot();
-        if (slot < 0 || slot >= catalog.length) return;
-        String tag = catalog[slot][0];
-        int cost;
-        try { cost = Integer.parseInt(catalog[slot][1]); } catch (NumberFormatException ex) { return; }
+        if (slot < 0 || slot >= Math.min(45, catalog.size())) return;
+        Map<?, ?> entry = catalog.get(slot);
+        String tag = String.valueOf(entry.getOrDefault("id", entry.getOrDefault("name", "product")));
+        int cost = Math.max(0, parseInt(entry.get("price"), 0));
+        if (tag.isBlank() || cost < 0) return;
         if (!takeCoins(player.getUniqueId(), cost)) {
             player.sendMessage(color("&cYou do not have enough coins."));
             return;
@@ -472,6 +456,10 @@ public final class AdvancedFeatures implements Listener {
 
     private String sanitize(String value) {
         return value.replace("|", "/").replace("\n", " ").replace("\r", " ").trim();
+    }
+
+    private int parseInt(Object value, int fallback) {
+        try { return Integer.parseInt(String.valueOf(value)); } catch (Exception ignored) { return fallback; }
     }
 
     private String color(String value) { return ChatColor.translateAlternateColorCodes('&', value); }
