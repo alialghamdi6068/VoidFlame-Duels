@@ -83,11 +83,10 @@ messages:
 
 gui:
   title: "&8VoidFlame &7• &fQueue"
-  rows: 6
+  rows: 3
   filler-item: GRAY_STAINED_GLASS_PANE
   kits:
-    sword:
-      slot: 19
+    sword:\n      slot: 9
       display-name: "&aSword"
       icon: DIAMOND_SWORD
       lore:
@@ -95,8 +94,7 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eLeft-click: Unranked  &7|  &dRight-click: Ranked."
-    axe:
-      slot: 21
+    axe:\n      slot: 10
       display-name: "&aAxe"
       icon: DIAMOND_AXE
       lore:
@@ -104,8 +102,7 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
-    uhc:
-      slot: 23
+    uhc:\n      slot: 11
       display-name: "&aUHC"
       icon: GOLDEN_APPLE
       lore:
@@ -113,8 +110,7 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
-    mace:
-      slot: 25
+    mace:\n      slot: 12
       display-name: "&aMace"
       icon: MACE
       lore:
@@ -123,8 +119,7 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
-    spear_mace:
-      slot: 28
+    spear_mace:\n      slot: 13
       display-name: "&aSpear & Mace"
       icon: SPEAR
       lore:
@@ -132,8 +127,7 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
-    smp:
-      slot: 30
+    smp:\n      slot: 14
       display-name: "&aSMP"
       icon: NETHERITE_SWORD
       lore:
@@ -142,8 +136,7 @@ gui:
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
 
-    crystal:
-      slot: 32
+    crystal:\n      slot: 15
       display-name: "&aCrystal"
       icon: END_CRYSTAL
       lore:
@@ -151,8 +144,7 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
-    netherite_pot:
-      slot: 34
+    netherite_pot:\n      slot: 16
       display-name: "&aNetherite Pot"
       icon: NETHERITE_HELMET
       lore:
