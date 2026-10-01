@@ -86,72 +86,46 @@ gui:
   rows: 3
   filler-item: GRAY_STAINED_GLASS_PANE
   kits:
-    sword:\n      slot: 10
-      display-name: "&aSword"
+    sword:
+      enabled: true
+      slot: 10
+      display-name: "&d&lSword"
       icon: DIAMOND_SWORD
-      lore:
-        - "&7Classic sword practice."
-        - "&fQueued: &a<queued_players>"
-        - "&fIn Match: &e<in_match_players>"
-        - "&eLeft-click: Unranked  &7|  &dRight-click: Ranked."
-    axe:\n      slot: 11
-      display-name: "&aAxe"
+    axe:
+      enabled: true
+      slot: 11
+      display-name: "&d&lAxe"
       icon: DIAMOND_AXE
-      lore:
-        - "&7Axe and shield practice."
-        - "&fQueued: &a<queued_players>"
-        - "&fIn Match: &e<in_match_players>"
-        - "&eClick to join."
-    uhc:\n      slot: 12
-      display-name: "&aUHC"
+    uhc:
+      enabled: true
+      slot: 12
+      display-name: "&d&lUHC"
       icon: GOLDEN_APPLE
-      lore:
-        - "&7UHC practice."
-        - "&fQueued: &a<queued_players>"
-        - "&fIn Match: &e<in_match_players>"
-        - "&eClick to join."
-    mace:\n      slot: 13
-      display-name: "&aMace"
+    mace:
+      enabled: true
+      slot: 13
+      display-name: "&d&lMace"
       icon: MACE
-      lore:
-        - "&7Elytra mace practice."
-        - "&7Includes Breach and Density maces."
-        - "&fQueued: &a<queued_players>"
-        - "&fIn Match: &e<in_match_players>"
-        - "&eClick to join."
-    spear_mace:\n      slot: 14
-      display-name: "&aSpear & Mace"
+    spear_mace:
+      enabled: true
+      slot: 14
+      display-name: "&d&lSpear & Mace"
       icon: SPEAR
-      lore:
-        - "&7Spear pressure with a Density mace."
-        - "&fQueued: &a<queued_players>"
-        - "&fIn Match: &e<in_match_players>"
-        - "&eClick to join."
-    smp:\n      slot: 15
-      display-name: "&aSMP"
+    smp:
+      enabled: true
+      slot: 15
+      display-name: "&d&lSMP"
       icon: NETHERITE_SWORD
-      lore:
-        - "&7Survival combat practice."
-        - "&fQueued: &a<queued_players>"
-        - "&fIn Match: &e<in_match_players>"
-        - "&eClick to join."
-
-    crystal:\n      slot: 16
-      display-name: "&aCrystal"
+    crystal:
+      enabled: true
+      slot: 16
+      display-name: "&d&lCrystal"
       icon: END_CRYSTAL
-      lore:
-        - "&7Crystal PvP practice."
-        - "&fQueued: &a<queued_players>"
-        - "&fIn Match: &e<in_match_players>"
-        - "&eClick to join."
-    netherite_pot:\n      slot: 17
-      display-name: "&aNetherite Pot"
+    netherite_pot:
+      enabled: true
+      slot: 17
+      display-name: "&d&lNetherite Pot"
       icon: NETHERITE_HELMET
-      lore:
-        - "&7High-power Netherite practice."
-        - "&fQueued: &a<queued_players>"
-        - "&fIn Match: &e<in_match_players>"
-        - "&eClick to join."
 
 kits:
   sword:
