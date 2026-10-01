@@ -16,6 +16,7 @@ import org.bukkit.Material;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 public final class AdvancedCommand implements CommandExecutor, TabCompleter, Listener {
     private static final String REPORT_GUI = "§8VoidFlame §7• §cReport Player";
