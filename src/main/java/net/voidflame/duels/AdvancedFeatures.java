@@ -393,6 +393,16 @@ public final class AdvancedFeatures implements Listener {
         return item;
     }
 
+    private ItemStack item(Material material, String name, String... lore) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return item;
+        meta.setDisplayName(color(name));
+        meta.setLore(Arrays.stream(lore).map(this::color).toList());
+        item.setItemMeta(meta);
+        return item;
+    }
+
     @EventHandler
     public void onShopClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
