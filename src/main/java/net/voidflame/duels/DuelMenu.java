@@ -86,7 +86,7 @@ public final class DuelMenu implements Listener {
         if (!e.getView().getTitle().equals(title)) return;
         e.setCancelled(true);
         if (e.getRawSlot() == 51) { p.closeInventory(); return; }
-        if (e.getRawSlot() == 49) { p.closeInventory(); Bukkit.dispatchCommand(p, "menu"); return; }
+        if (e.getRawSlot() == 49) { p.closeInventory(); return; }
 
         for (KitType kit : KitType.values()) {
             String key = kit.name().toLowerCase(Locale.ROOT);
