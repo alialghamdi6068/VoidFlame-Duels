@@ -8,15 +8,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
@@ -26,244 +27,143 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class LobbyItemsManager implements Listener {
-    private static final String KIT_MENU = "§8⚔・𝗗𝘂𝗲𝗹𝘀";
-    private static final String PARTY_MENU = "§8➕・𝗣𝗮𝗿𝘁𝘆";
-
+    private static final String DUEL_MENU = "§8VoidFlame §7• §dDuel";
+    private static final String PARTY_MENU = "§8VoidFlame §7• §bParty";
+    private static final String TARGET_PREFIX = "§8VoidFlame §7• §dDuel ";
     private final VoidFlameDuelsPlugin plugin;
-    private final NamespacedKey lobbyItemKey;
-    private final Map<UUID, KitType> selectedKits = new ConcurrentHashMap<>();
+    private final NamespacedKey key;
+    private final Map<UUID, UUID> targetByViewer = new ConcurrentHashMap<>();
 
     public LobbyItemsManager(VoidFlameDuelsPlugin plugin) {
-        this.plugin = plugin;
-        this.lobbyItemKey = new NamespacedKey(plugin, "lobby-item");
+        this.plugin=plugin;
+        this.key=new NamespacedKey(plugin,"spawn-item");
     }
 
-    @EventHandler
-    public void onJoin(PlayerJoinEvent event) {
-        Bukkit.getScheduler().runTask(plugin, () -> giveLobbyItems(event.getPlayer()));
+    @EventHandler public void onJoin(PlayerJoinEvent e) {
+        Bukkit.getScheduler().runTask(plugin,()->giveLobbyItems(e.getPlayer()));
     }
 
-    public void giveLobbyItems(Player player) {
-        if (plugin.matchManager().isInMatch(player.getUniqueId())
-                || plugin.matchManager().isDisconnected(player.getUniqueId())
-                || plugin.spectatorManager().isSpectating(player.getUniqueId())) return;
-        PlayerInventoryAccess.clearAndPlace(player, lobbyItemKey);
-        player.updateInventory();
+    public void giveLobbyItems(Player p) {
+        if(plugin.matchManager().isInMatch(p.getUniqueId()) || plugin.matchManager().isDisconnected(p.getUniqueId())
+                || plugin.spectatorManager().isSpectating(p.getUniqueId())) return;
+        PlayerInventory inv=p.getInventory();
+        inv.setItem(0, item(Material.DIAMOND_SWORD,"§d§lDuel","§7Right-click §8» §fChoose a kit and play","§7Left-click a player §8» §fChoose a kit and duel"));
+        inv.setItem(1, item(Material.GOAT_HORN,"§b§lParty +","§7Right-click §8» §fOpen Party"));
+        for(int i=2;i<=7;i++) inv.setItem(i,null);
+        inv.setItem(8, item(Material.BOOK,"§e§lKit Editor","§7Right-click §8» §fOpen Kit Editor"));
+        mark(inv.getItem(0),"duel"); mark(inv.getItem(1),"party"); mark(inv.getItem(8),"editor");
+        p.updateInventory();
     }
 
-    public void openKitMenu(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 45, KIT_MENU);
+    @EventHandler public void onInteract(PlayerInteractEvent e) {
+        if(e.getHand()!=EquipmentSlot.HAND)return;
+        if(e.getAction()!=Action.RIGHT_CLICK_AIR&&e.getAction()!=Action.RIGHT_CLICK_BLOCK)return;
+        ItemStack it=e.getItem(); if(!is(it))return;
+        e.setCancelled(true);
+        String type=it.getItemMeta().getPersistentDataContainer().get(key,PersistentDataType.STRING);
+        Player p=e.getPlayer();
+        if("duel".equals(type)) openSelfKit(p);
+        else if("party".equals(type)) openParty(p);
+        else if("editor".equals(type)) plugin.kitEditorManager().open(p,KitType.SWORD);
+    }
+
+    @EventHandler public void onInteractEntity(PlayerInteractEntityEvent e) {
+        if(e.getHand()!=EquipmentSlot.HAND || !(e.getRightClicked() instanceof Player target)) return;
+        Player p=e.getPlayer();
+        if(p.equals(target) || plugin.matchManager().isInMatch(p.getUniqueId()) || plugin.matchManager().isInMatch(target.getUniqueId())) return;
+        ItemStack held=p.getInventory().getItemInMainHand();
+        if(!isType(held,"duel")) return;
+        e.setCancelled(true);
+        openTargetKit(p,target);
+    }
+
+    private void openSelfKit(Player p){openKitMenu(p,DUEL_MENU,null);}
+    private void openTargetKit(Player p,Player target){targetByViewer.put(p.getUniqueId(),target.getUniqueId());openKitMenu(p,TARGET_PREFIX+target.getName(),target.getUniqueId());}
+
+    private void openKitMenu(Player p,String title,UUID target) {
+        Inventory inv=Bukkit.createInventory(null,27,title);
         fill(inv);
-        int slot = 10;
-        for (KitType kit : KitType.values()) {
-            if (slot >= 29) break;
-            Material icon = switch (kit) {
-                case SWORD -> Material.IRON_SWORD;
-                case AXE -> Material.NETHERITE_AXE;
-                case UHC -> Material.GOLDEN_APPLE;
-                case MACE -> Material.MACE;
-                case SPEAR_MACE -> Material.TRIDENT;
-                case CRYSTAL -> Material.END_CRYSTAL;
-                case NETHERITE_POT -> Material.NETHERITE_HELMET;
-                case SMP -> Material.CHEST;
-            };
-            button(inv, slot++, icon, "§b" + pretty(kit), "§7اضغط لاختيار هذا الكيت");
+        int[] slots={10,11,12,13,14,15,16,19};
+        KitType[] kits=KitType.values();
+        for(int i=0;i<Math.min(slots.length,kits.length);i++) {
+            KitType k=kits[i];
+            Material icon=switch(k){case SWORD->Material.DIAMOND_SWORD;case AXE->Material.DIAMOND_AXE;case UHC->Material.GOLDEN_APPLE;case MACE->Material.MACE;case SPEAR_MACE->Material.TRIDENT;case CRYSTAL->Material.END_CRYSTAL;case NETHERITE_POT->Material.NETHERITE_HELMET;case SMP->Material.CHEST;};
+            inv.setItem(slots[i],item(icon,"§d§l"+pretty(k),"§7Click to "+(target==null?"play":"send a duel request")));
         }
-        button(inv, 31, Material.BARRIER, "§c✕・𝗖𝗹𝗼𝘀𝗲", "§7إغلاق القائمة");
-        player.openInventory(inv);
+        inv.setItem(18,item(Material.ARROW,"§7§lBack"));
+        inv.setItem(26,item(Material.BARRIER,"§c§lClose"));
+        p.openInventory(inv);
     }
 
-    public void openPartyMenu(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 45, PARTY_MENU);
-        fill(inv);
-        button(inv, 10, Material.DIAMOND_SWORD, "§b⚔・𝗣𝗮𝗿𝘁𝘆 𝟭𝘃𝟭", "§7مباراة لاعب ضد لاعب من البارتي");
-        button(inv, 13, Material.IRON_SWORD, "§a⚔・𝗣𝗮𝗿𝘁𝘆 𝟮𝘃𝟮", "§7مباراة فريقين، لاعبان ضد لاعبين");
-        button(inv, 16, Material.TNT, "§c☠・𝗣𝗮𝗿𝘁𝘆 𝗙𝗙𝗔", "§7كل أعضاء البارتي ضد بعضهم");
-        button(inv, 22, Material.PLAYER_HEAD, "§e👥・𝗣𝗮𝗿𝘁𝘆 𝗠𝗲𝗺𝗯𝗲𝗿𝘀", "§7عرض أعضاء البارتي");
-        button(inv, 31, Material.BARRIER, "§c✕・𝗖𝗹𝗼𝘀𝗲", "§7إغلاق القائمة");
-        player.openInventory(inv);
+    private void openParty(Player p){
+        Inventory inv=Bukkit.createInventory(null,27,PARTY_MENU);fill(inv);
+        inv.setItem(10,item(Material.DIAMOND_SWORD,"§b§lParty 1v1","§7Start a 1v1 party match"));
+        inv.setItem(13,item(Material.IRON_SWORD,"§a§lParty 2v2","§7Start a 2v2 party match"));
+        inv.setItem(16,item(Material.TNT,"§c§lParty FFA","§7Start party FFA"));
+        inv.setItem(22,item(Material.PLAYER_HEAD,"§e§lParty Members","§7Show current members"));
+        inv.setItem(18,item(Material.ARROW,"§7§lBack"));
+        inv.setItem(26,item(Material.BARRIER,"§c§lClose"));
+        p.openInventory(inv);
     }
 
-    @EventHandler
-    public void onInteract(PlayerInteractEvent event) {
-        if (event.getHand() != EquipmentSlot.HAND) return;
-        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
-        Player player = event.getPlayer();
-        ItemStack item = event.getItem();
-        if (!isLobbyItem(item)) return;
-        event.setCancelled(true);
-
-        String key = item.getItemMeta().getPersistentDataContainer().get(lobbyItemKey, PersistentDataType.STRING);
-        if ("kit".equals(key)) {
-            openKitMenu(player);
-        } else if ("party".equals(key)) {
-            if (plugin.partyManager().partyOf(player.getUniqueId()) == null) {
-                plugin.partyManager().create(player);
+    @EventHandler public void onClick(InventoryClickEvent e){
+        if(!(e.getWhoClicked() instanceof Player p))return;
+        String title=e.getView().getTitle();
+        if(title.equals(DUEL_MENU)||title.startsWith(TARGET_PREFIX)||title.equals(PARTY_MENU)){
+            e.setCancelled(true); int s=e.getRawSlot(); if(s<0||s>=27)return;
+            if(s==26){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
+            if(s==18){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
+            int[] slots={10,11,12,13,14,15,16,19};
+            for(int i=0;i<slots.length&&i<KitType.values().length;i++) if(s==slots[i]){
+                KitType kit=KitType.values()[i];
+                UUID target=targetByViewer.get(p.getUniqueId());
+                if(title.startsWith(TARGET_PREFIX) && target!=null){
+                    Player t=Bukkit.getPlayer(target);
+                    if(t==null){p.sendMessage(plugin.message("player-not-found"));p.closeInventory();return;}
+                    if(plugin.requests().send(p,t,kit)) p.sendMessage(plugin.message("duel-sent").replace("<player>",t.getName()));
+                    else p.sendMessage(plugin.message("duel-unavailable"));
+                } else if(plugin.queueManager().join(p,kit,false)){
+                    p.sendMessage(plugin.message("joined-queue").replace("<kit>",pretty(kit)).replace("<type>","Unranked"));
+                } else p.sendMessage(plugin.message("already-queued"));
+                targetByViewer.remove(p.getUniqueId());p.closeInventory();return;
             }
-            openPartyMenu(player);
-        } else if ("editor".equals(key)) {
-            KitType kit = selectedKits.getOrDefault(player.getUniqueId(), KitType.SWORD);
-            if (!plugin.kitEditorManager().open(player, kit)) {
-                player.sendMessage(plugin.message("kit-editor-failed"));
-            }
-        }
-    }
-
-    @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
-        String title = event.getView().getTitle();
-
-        if (title.equals(KIT_MENU) || title.equals(PARTY_MENU)) {
-            event.setCancelled(true);
-            if (event.getRawSlot() < 0 || event.getRawSlot() >= event.getInventory().getSize()) return;
-
-            if (title.equals(KIT_MENU)) {
-                int slot = event.getRawSlot();
-                int index = slot - 10;
-                if (index >= 0 && index < KitType.values().length && slot < 29) {
-                    KitType kit = KitType.values()[index];
-                    if (plugin.kitManager().apply(player, kit)) {
-                        selectedKits.put(player.getUniqueId(), kit);
-                        player.sendMessage(plugin.message("kit-selected").replace("<kit>", pretty(kit)));
-                        player.closeInventory();
-                        giveLobbyItems(player);
-                    } else {
-                        player.sendMessage(plugin.message("unknown-kit"));
-                    }
-                } else if (slot == 31) {
-                    player.closeInventory();
-                }
-            } else {
-                switch (event.getRawSlot()) {
-                    case 10 -> startPartyMode(player, PartyMode.ONE_V_ONE);
-                    case 13 -> startPartyMode(player, PartyMode.TWO_V_TWO);
-                    case 16 -> startPartyMode(player, PartyMode.FFA);
-                    case 22 -> {
-                        PartyManager.Party party = plugin.partyManager().partyOf(player.getUniqueId());
-                        if (party == null) {
-                            player.sendMessage(plugin.message("party-not-in"));
-                        } else {
-                            player.sendMessage(ChatColor.AQUA + "Party members: " + party.members().stream()
-                                    .map(id -> {
-                                        Player p = Bukkit.getPlayer(id);
-                                        return p == null ? Bukkit.getOfflinePlayer(id).getName() : p.getName();
-                                    })
-                                    .filter(java.util.Objects::nonNull)
-                                    .reduce((a, b) -> a + ", " + b).orElse("-"));
-                        }
-                    }
-                    case 31 -> player.closeInventory();
-                    default -> {}
+            if(title.equals(PARTY_MENU)){
+                switch(s){
+                    case 10->startParty(p,PartyMode.ONE_V_ONE);
+                    case 13->startParty(p,PartyMode.TWO_V_TWO);
+                    case 16->startParty(p,PartyMode.FFA);
+                    case 22->showMembers(p);
+                    default->{}
                 }
             }
             return;
         }
-
-        if (plugin.matchManager().isInMatch(player.getUniqueId())) return;
-        if (event.getRawSlot() >= 0 && event.getRawSlot() < 9 && isLobbyItem(event.getCurrentItem())) {
-            event.setCancelled(true);
-        }
-        if (event.isShiftClick() && isLobbyItem(event.getCurrentItem())) {
-            event.setCancelled(true);
-        }
+        if(plugin.matchManager().isInMatch(p.getUniqueId()))return;
+        if(e.getRawSlot()<9&&is(e.getCurrentItem()))e.setCancelled(true);
+        if(e.isShiftClick()&&is(e.getCurrentItem()))e.setCancelled(true);
     }
 
-    private void startPartyMode(Player player, PartyMode mode) {
-        if (plugin.partyManager().partyOf(player.getUniqueId()) == null) {
-            player.sendMessage(plugin.message("party-not-in"));
-            return;
-        }
-        if (!plugin.partyManager().isLeader(player.getUniqueId())) {
-            player.sendMessage(ChatColor.RED + "فقط قائد البارتي يقدر يبدأ هذا الطور.");
-            return;
-        }
-        plugin.partyManager().setMode(player.getUniqueId(), mode);
-        if (!plugin.getConfig().getBoolean("settings.party-auto-start", true)
-                || !plugin.matchManager().startParty(player.getUniqueId())) {
-            plugin.partyManager().queue(player.getUniqueId(), mode);
-            player.sendMessage(plugin.message("party-queued").replace("<mode>", mode.displayName));
-            player.closeInventory();
-            return;
-        }
-        player.sendMessage(plugin.message("party-started").replace("<mode>", mode.displayName));
-        player.closeInventory();
+    private void startParty(Player p,PartyMode mode){
+        if(plugin.partyManager().partyOf(p.getUniqueId())==null){plugin.partyManager().create(p);}
+        if(!plugin.partyManager().isLeader(p.getUniqueId())){p.sendMessage("§cOnly the party leader can start the match.");return;}
+        plugin.partyManager().setMode(p.getUniqueId(),mode);
+        if(plugin.getConfig().getBoolean("settings.party-auto-start",true)&&plugin.matchManager().startParty(p.getUniqueId())){p.closeInventory();return;}
+        plugin.partyManager().queue(p.getUniqueId(),mode);p.closeInventory();
     }
 
-    @EventHandler
-    public void onDrag(InventoryDragEvent event) {
-        String title = event.getView().getTitle();
-        if (title.equals(KIT_MENU) || title.equals(PARTY_MENU)) event.setCancelled(true);
+    private void showMembers(Player p){
+        PartyManager.Party party=plugin.partyManager().partyOf(p.getUniqueId());
+        if(party==null){p.sendMessage(plugin.message("party-not-in"));return;}
+        p.sendMessage(ChatColor.AQUA+"Party members: "+party.members().stream().map(id->{Player x=Bukkit.getPlayer(id);return x==null?Bukkit.getOfflinePlayer(id).getName():x.getName();}).filter(java.util.Objects::nonNull).reduce((a,b)->a+", "+b).orElse("-"));
     }
 
-    @EventHandler
-    public void onDrop(PlayerDropItemEvent event) {
-        if (isLobbyItem(event.getItemDrop().getItemStack())) event.setCancelled(true);
-    }
+    @EventHandler public void onDrop(PlayerDropItemEvent e){if(is(e.getItemDrop().getItemStack()))e.setCancelled(true);}
+    @EventHandler public void onDrag(InventoryDragEvent e){if(e.getWhoClicked() instanceof Player p&&e.getRawSlots().stream().anyMatch(s->s<9)&&is(e.getOldCursor()))e.setCancelled(true);}
 
-    @EventHandler
-    public void onDeath(PlayerDeathEvent event) {
-        event.getDrops().removeIf(this::isLobbyItem);
-    }
-
-    private boolean isLobbyItem(ItemStack item) {
-        return item != null && item.hasItemMeta()
-                && item.getItemMeta().getPersistentDataContainer().has(lobbyItemKey, PersistentDataType.STRING);
-    }
-
-    private void fill(Inventory inv) {
-        ItemStack filler = item(Material.GRAY_STAINED_GLASS_PANE, " ");
-        for (int i = 0; i < inv.getSize(); i++) inv.setItem(i, filler.clone());
-    }
-
-    private void button(Inventory inv, int slot, Material material, String name, String... lore) {
-        inv.setItem(slot, item(material, name, lore));
-    }
-
-    private ItemStack item(Material material, String name, String... lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(name);
-            meta.setLore(List.of(lore));
-            item.setItemMeta(meta);
-        }
-        return item;
-    }
-
-    private String pretty(KitType kit) {
-        return kit == KitType.SPEAR_MACE ? "Spear & Mace" : kit.name().replace('_', ' ');
-    }
-
-    public enum PartyMode {
-        ONE_V_ONE("Party 1v1"),
-        TWO_V_TWO("Party 2v2"),
-        FFA("Party FFA");
-
-        private final String displayName;
-        PartyMode(String displayName) { this.displayName = displayName; }
-        public String displayName() { return displayName; }
-    }
-
-    private static final class PlayerInventoryAccess {
-        static void clearAndPlace(Player player, NamespacedKey key) {
-            var inv = player.getInventory();
-            inv.clear();
-            inv.setItem(0, named(Material.IRON_SWORD, "§b⚔・𝗗𝘂𝗲𝗹𝘀", "§7اضغط بالزر الأيمن لاختيار الـKit", key, "kit"));
-            inv.setItem(1, named(Material.GOAT_HORN, "§d➕・𝗣𝗮𝗿𝘁𝘆", "§7اضغط بالزر الأيمن لفتح نظام البارتي", key, "party"));
-            inv.setItem(8, named(Material.BOOK, "§6✎・𝗞𝗶𝘁 𝗘𝗱𝗶𝘁𝗼𝗿", "§7اضغط بالزر الأيمن لتعديل الكيت", key, "editor"));
-        }
-
-        private static ItemStack named(Material material, String name, String lore, NamespacedKey key, String value) {
-            ItemStack item = new ItemStack(material);
-            ItemMeta meta = item.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName(name);
-                meta.setLore(List.of(lore));
-                meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, value);
-                item.setItemMeta(meta);
-            }
-            return item;
-        }
-    }
+    private boolean is(ItemStack x){if(x==null||x.getType()==Material.AIR||x.getItemMeta()==null)return false;return x.getItemMeta().getPersistentDataContainer().has(key,PersistentDataType.STRING);}
+    private boolean isType(ItemStack x,String type){if(!is(x))return false;return type.equals(x.getItemMeta().getPersistentDataContainer().get(key,PersistentDataType.STRING));}
+    private void mark(ItemStack x,String type){if(x==null||x.getItemMeta()==null)return;ItemMeta m=x.getItemMeta();m.getPersistentDataContainer().set(key,PersistentDataType.STRING,type);x.setItemMeta(m);}
+    private ItemStack item(Material m,String name,String... lore){ItemStack x=new ItemStack(m);ItemMeta meta=x.getItemMeta();if(meta!=null){meta.setDisplayName(name);meta.setLore(List.of(lore));x.setItemMeta(meta);}return x;}
+    private void fill(Inventory inv){ItemStack x=item(Material.GRAY_STAINED_GLASS_PANE," ");for(int i=0;i<27;i++)inv.setItem(i,x.clone());}
+    private String pretty(KitType k){return k==KitType.SPEAR_MACE?"Spear & Mace":k.name().replace('_',' ');}
 }
