@@ -39,7 +39,7 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
         if (args.length == 0) { plugin.menu().open(p); return true; }
         if (args[0].equalsIgnoreCase("leave")) {
             p.sendMessage(plugin.queueManager().leave(p) ? plugin.message("left-queue") : plugin.message("not-queued"));
-            plugin.scoreboardManager().update(p);
+            
             return true;
         }
         boolean ranked = false;
@@ -59,7 +59,7 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
         p.sendMessage(ok
                 ? plugin.message("joined-queue").replace("<kit>", pretty(kit)).replace("<type>", queueType)
                 : plugin.message("already-queued"));
-        plugin.scoreboardManager().update(p);
+        
         return true;
     }
 
@@ -122,7 +122,7 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
     private boolean leave(Player p) {
         if (plugin.queueManager().leave(p)) {
             p.sendMessage(plugin.message("left-queue"));
-            plugin.scoreboardManager().update(p);
+            
             return true;
         }
         Match active = plugin.matchManager().get(p.getUniqueId());
