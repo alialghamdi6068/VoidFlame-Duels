@@ -412,6 +412,10 @@ chat-rate-limit:
   enabled: true
   minimum-interval-ms: 750
 
+# إعدادات التدريب
+training:
+  duration-seconds: 30
+
 features:
   ffa:
     enabled: true
