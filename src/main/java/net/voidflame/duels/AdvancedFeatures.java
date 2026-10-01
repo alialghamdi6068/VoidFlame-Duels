@@ -211,6 +211,13 @@ public final class AdvancedFeatures implements Listener {
         return Math.max(0L, (until - System.currentTimeMillis() + 999L) / 1000L);
     }
 
+    public void startReplay(UUID first, UUID second) {
+        recentCombat.remove(first);
+        recentCombat.remove(second);
+        recentCombat.put(first, Collections.synchronizedList(new ArrayList<>()));
+        recentCombat.put(second, Collections.synchronizedList(new ArrayList<>()));
+    }
+
     public void saveReplay(Match match) {
         if (!plugin.getConfig().getBoolean("features.replay.enabled", true) || match == null) return;
         int max = Math.max(1, plugin.getConfig().getInt("features.replay.max-events-per-match", 2000));
