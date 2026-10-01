@@ -39,7 +39,7 @@ public final class Match {
             finish(a == null ? second : first);
             return;
         }
-        plugin.advancedFeatures().startReplay(first, second);
+        plugin.advancedFeatures().startReplay(matchId, first, second);
         prepare(a, arena.spawnA());
         prepare(b, arena.spawnB());
         transition(MatchState.COUNTDOWN);
