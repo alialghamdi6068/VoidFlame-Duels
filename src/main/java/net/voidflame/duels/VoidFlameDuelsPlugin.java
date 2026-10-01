@@ -20,7 +20,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     private DuelMenu menu;
     private SpectatorManager spectatorManager;
     private PartyManager partyManager;
-    private KitEditorManager kitEditorManager;
     private AdvancedFeatures advancedFeatures;
     private LobbyItemsManager lobbyItemsManager;
     private PlayerSettings playerSettings;
@@ -58,7 +57,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         menu = new DuelMenu(this);
         spectatorManager = new SpectatorManager(this);
         partyManager = new PartyManager(this);
-        kitEditorManager = new KitEditorManager(this);
         advancedFeatures = new AdvancedFeatures(this);
         lobbyItemsManager = new LobbyItemsManager(this);
         combatTagManager = new CombatTagManager(this);
@@ -70,7 +68,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         coreServices.register(MatchManager.class, matchManager);
         coreServices.register(KitManager.class, kitManager);
         coreServices.register(PartyManager.class, partyManager);
-        coreServices.register(KitEditorManager.class, kitEditorManager);
 
         registerPublicServices();
 
@@ -79,7 +76,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(menu, this);
         getServer().getPluginManager().registerEvents(spectatorManager, this);
         getServer().getPluginManager().registerEvents(partyManager, this);
-        getServer().getPluginManager().registerEvents(kitEditorManager, this);
         getServer().getPluginManager().registerEvents(advancedFeatures, this);
         getServer().getPluginManager().registerEvents(lobbyItemsManager, this);
         getServer().getPluginManager().registerEvents(settingsMenu, this);
@@ -100,6 +96,9 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         register("duels", duelCommand);
         register("spectate", duelCommand);
         register("kiteditor", duelCommand);
+        register("accept", duelCommand);
+        register("deny", duelCommand);
+        register("leave", duelCommand);
 
         AdvancedCommand advancedCommand = new AdvancedCommand(this);
         getServer().getPluginManager().registerEvents(advancedCommand, this);
@@ -120,7 +119,8 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         getLogger().info("VoidFlame-Duels enabled with 8 ladders and external arena service.");
     }
 
-    @EventHandler
+    /* removed legacy command preprocess alias */
+    /* @EventHandler
     public void onCommandAlias(PlayerCommandPreprocessEvent event) {
         String raw = event.getMessage();
         if (!raw.startsWith("/") || !(event.getPlayer() instanceof Player)) return;
@@ -133,6 +133,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
             @Override public boolean execute(org.bukkit.command.CommandSender sender, String commandLabel, String[] args) { return false; }
         }, name, java.util.Arrays.copyOfRange(parts, 1, parts.length));
     }
+    */
 
     private void registerPublicServices() {
         getServer().getServicesManager().register(QueueManager.class, queueManager, this, ServicePriority.Normal);
@@ -177,7 +178,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         if (advancedFeatures != null) advancedFeatures.shutdown();
-        if (kitEditorManager != null) kitEditorManager.shutdown();
         if (matchManager != null) matchManager.shutdown();
         if (spectatorManager != null) spectatorManager.shutdown();
         if (requests != null) requests.clear();
@@ -193,8 +193,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
             coreServices.unregister(MatchManager.class);
             coreServices.unregister(KitManager.class);
             coreServices.unregister(PartyManager.class);
-            coreServices.unregister(KitEditorManager.class);
-        }
+            }
     }
 
     public String message(String key) {
@@ -213,7 +212,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     public SettingsMenu settingsMenu() { return settingsMenu; }
     public SpectatorManager spectatorManager() { return spectatorManager; }
     public PartyManager partyManager() { return partyManager; }
-    public KitEditorManager kitEditorManager() { return kitEditorManager; }
     public AdvancedFeatures advancedFeatures() { return advancedFeatures; }
     public LobbyItemsManager lobbyItemsManager() { return lobbyItemsManager; }
     public PlayerSettings playerSettings() { return playerSettings; }
