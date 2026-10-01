@@ -247,7 +247,7 @@ public final class AdvancedFeatures implements Listener {
         int max = Math.max(1, plugin.getConfig().getInt("features.replay.max-events-per-match", 2000));
         if (events.size() > max) events = new ArrayList<>(events.subList(events.size() - max, events.size()));
         String payload = "kit=" + kit + "|arena=" + arena + "|duration=" + durationMs + "|events=" + String.join(";", events);
-        String players = "[\\"" + first + "\\",\\"" + second + "\\"]";
+        String players = "[" + first + "," + second + "]";
         storage.database().execute(
                 "INSERT INTO replays(match_id, players_json, arena, kit, timestamp, replay_data) VALUES (?, ?, ?, ?, ?, ?) " +
                         "ON CONFLICT(match_id) DO UPDATE SET players_json=excluded.players_json, arena=excluded.arena, kit=excluded.kit, timestamp=excluded.timestamp, replay_data=excluded.replay_data",
