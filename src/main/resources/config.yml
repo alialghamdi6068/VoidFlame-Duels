@@ -1,6 +1,15 @@
+# ================================================================
+# VoidFlame Duels • Production Configuration
+# Paper 26.2 • Java 25
+# ================================================================
+# Matchmaking, GUI, rewards, combat, reports, replay and performance.
+# Keep all player-facing text and tunables here so gameplay does not
+# require source-code edits.
+
 settings:
   language: en
   queue-timeout-seconds: 300
+  # Queue timeout keeps stale entries from accumulating.
   countdown-seconds: 5
   match-time-limit-seconds: 1800
   disconnect-grace-seconds: 30
@@ -83,7 +92,7 @@ messages:
 
 gui:
   title: "&8VoidFlame &7• &fQueue"
-  rows: 3
+  rows: 6
   filler-item: GRAY_STAINED_GLASS_PANE
   kits:
     sword:
@@ -217,6 +226,12 @@ arenas:
   #   spawn-a: {x: 0.5, y: 100, z: 0.5, yaw: 90, pitch: 0}
   #   spawn-b: {x: 20.5, y: 100, z: 0.5, yaw: -90, pitch: 0}
 
+# ================================================================
+# Presentation & gameplay extensions
+# ================================================================
+# GUI is intentionally 6 rows (54 slots), matching the modern practice
+# server layout. Kit positions/icons remain fully configurable below.
+#
 # Advanced Duels features
 welcome:
   title: "&b&lVOIDFLAME"
