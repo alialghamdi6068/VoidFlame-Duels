@@ -19,7 +19,7 @@ public final class DuelMenu implements Listener {
     public DuelMenu(VoidFlameDuelsPlugin plugin) { this.plugin = plugin; }
 
     public void open(Player player) {
-        int rows = Math.max(6, Math.min(6, plugin.getConfig().getInt("gui.rows", 6)));
+        int rows = Math.max(1, Math.min(6, plugin.getConfig().getInt("gui.rows", 6)));
         Inventory inv = Bukkit.createInventory(null, rows * 9,
                 color(plugin.getConfig().getString("gui.title", "&8VoidFlame &7• &fQueue")));
 
