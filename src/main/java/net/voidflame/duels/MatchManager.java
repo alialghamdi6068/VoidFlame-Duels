@@ -150,8 +150,12 @@ public final class MatchManager implements Listener {
         }
         
         plugin.partyManager().clearMode(match.players());
-        arenas.reset(match.arena()).thenAccept(success ->
-                
+        arenas.reset(match.arena()).thenAccept(success -> plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (!success) {
+                plugin.getLogger().severe("Party arena '" + match.arena().name()
+                        + "' failed to reset and will remain unavailable.");
+            }
+        }));
     }
 
     public boolean isDisconnected(UUID id) {
