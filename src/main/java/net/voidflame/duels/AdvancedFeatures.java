@@ -373,11 +373,11 @@ public final class AdvancedFeatures implements Listener {
         List<Map<?, ?>> catalog = shopProducts();
         for (int i = 0; i < Math.min(45, catalog.size()); i++) {
             Map<?, ?> entry = catalog.get(i);
-            String name = String.valueOf(entry.getOrDefault("name", "Product"));
+            String name = String.valueOf(entry.containsKey("name") ? entry.get("name") : "Product");
             int price = Math.max(0, parseInt(entry.get("price"), 0));
-            Material material = Material.matchMaterial(String.valueOf(entry.getOrDefault("material", "NAME_TAG")));
+            Material material = Material.matchMaterial(String.valueOf(entry.containsKey("material") ? entry.get("material") : "NAME_TAG"));
             if (material == null) material = Material.NAME_TAG;
-            String color = String.valueOf(entry.getOrDefault("color", "&b"));
+            String color = String.valueOf(entry.containsKey("color") ? entry.get("color") : "&b");
             inv.setItem(i, item(material, color + name, "&7Cost: &e" + price + " coins"));
         }
         inv.setItem(49, item(Material.GOLD_NUGGET, "&eYour Coins: &f" + coinBalance(player.getUniqueId()), "&7Click a product to purchase."));
@@ -412,7 +412,7 @@ public final class AdvancedFeatures implements Listener {
         int slot = event.getRawSlot();
         if (slot < 0 || slot >= Math.min(45, catalog.size())) return;
         Map<?, ?> entry = catalog.get(slot);
-        String tag = String.valueOf(entry.getOrDefault("id", entry.getOrDefault("name", "product")));
+        String tag = String.valueOf(entry.containsKey("id") ? entry.get("id") : entry.containsKey("name") ? entry.get("name") : "product");
         int cost = Math.max(0, parseInt(entry.get("price"), 0));
         if (tag.isBlank() || cost < 0) return;
         if (!takeCoins(player.getUniqueId(), cost)) {
