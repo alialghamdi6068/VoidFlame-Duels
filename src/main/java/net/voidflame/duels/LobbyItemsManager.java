@@ -166,4 +166,11 @@ public final class LobbyItemsManager implements Listener {
     private ItemStack item(Material m,String name,String... lore){ItemStack x=new ItemStack(m);ItemMeta meta=x.getItemMeta();if(meta!=null){meta.setDisplayName(name);meta.setLore(List.of(lore));x.setItemMeta(meta);}return x;}
     private void fill(Inventory inv){ItemStack x=item(Material.GRAY_STAINED_GLASS_PANE," ");for(int i=0;i<27;i++)inv.setItem(i,x.clone());}
     private String pretty(KitType k){return k==KitType.SPEAR_MACE?"Spear & Mace":k.name().replace('_',' ');}
+
+    public enum PartyMode {
+        ONE_V_ONE("Party 1v1"), TWO_V_TWO("Party 2v2"), FFA("Party FFA");
+        private final String displayName;
+        PartyMode(String displayName){this.displayName=displayName;}
+        public String displayName(){return displayName;}
+    }
 }
