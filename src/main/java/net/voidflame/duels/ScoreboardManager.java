@@ -96,7 +96,9 @@ public final class ScoreboardManager {
                 .replace("%state%", stateLabel)
                 .replace("%server_online%", String.valueOf(Bukkit.getOnlinePlayers().size()))
                 .replace("%player_ping%", String.valueOf(player.getPing()))
-                .replace("%party_status%", plugin.partyManager().partyOf(player.getUniqueId()) == null ? "None" : "In Party");
+                .replace("%party_status%", plugin.partyManager().partyOf(player.getUniqueId()) == null ? "None" : "In Party")
+                .replace("%party_size%", String.valueOf(plugin.partyManager().sizeOf(player.getUniqueId())))
+                .replace("%staff_status%", player.hasPermission("voidflame.staffmode") ? "Staff" : "Player");
 
         LegacyComponentSerializer legacy = LegacyComponentSerializer.legacySection();
         player.sendPlayerListHeaderAndFooter(
