@@ -49,7 +49,7 @@ public final class ScoreboardManager {
         if (statsService == null) connectStats();
         if (!plugin.playerSettings().scoreboard(player)) {
             player.setScoreboard(bukkit.getMainScoreboard());
-            updateTab(player, match, state);
+            updateTab(player, state);
             return;
         }
         if (statsService == null) connectStats();
@@ -60,7 +60,7 @@ public final class ScoreboardManager {
 
         if (!plugin.getConfig().getBoolean(path + ".enabled", true)) {
             player.setScoreboard(bukkit.getMainScoreboard());
-            updateTab(player, match);
+            updateTab(player, state);
             return;
         }
 
@@ -93,7 +93,7 @@ public final class ScoreboardManager {
                 "tab.header", "&5&lVOIDFLAME &8• &dPRACTICE NETWORK"));
         String footer = color(plugin.getConfig().getString(
                 "tab.footer", "&7Status: &d%state% &8• &7Online: &f%server_online% &8• &5play.VoidFlame.net"))
-                 .replace("%state%", stateLabel)
+                .replace("%state%", stateLabel)
                 .replace("%server_online%", String.valueOf(Bukkit.getOnlinePlayers().size()));
 
         LegacyComponentSerializer legacy = LegacyComponentSerializer.legacySection();
@@ -122,7 +122,7 @@ public final class ScoreboardManager {
                 .replace("%player_kills%", String.valueOf(stats.kills))
                 .replace("%player_deaths%", String.valueOf(stats.deaths))
                 .replace("%player_level%", plugin.playerSettings().personalLevel(player) ? "1" : "—")
-                .replace("%state%", state(match == null ? null : player.getUniqueId()));
+                .replace("%state%", state(player, match));
         return color(result);
     }
 
