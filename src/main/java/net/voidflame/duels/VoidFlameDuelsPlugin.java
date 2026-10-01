@@ -18,13 +18,13 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     private DuelRequestManager requests;
     private RematchManager rematches;
     private DuelMenu menu;
-    private ScoreboardManager scoreboardManager;
     private SpectatorManager spectatorManager;
     private PartyManager partyManager;
     private KitEditorManager kitEditorManager;
     private AdvancedFeatures advancedFeatures;
     private LobbyItemsManager lobbyItemsManager;
     private PlayerSettings playerSettings;
+    private SettingsMenu settingsMenu;
     private CombatTagManager combatTagManager;
     private MatchExploitGuard matchExploitGuard;
     private FfaManager ffaManager;
@@ -56,7 +56,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         queueManager = new QueueManager(this);
         matchManager = new MatchManager(this, queueManager, arenaManager, kitManager);
         menu = new DuelMenu(this);
-        scoreboardManager = new ScoreboardManager(this);
         spectatorManager = new SpectatorManager(this);
         partyManager = new PartyManager(this);
         kitEditorManager = new KitEditorManager(this);
@@ -65,6 +64,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         combatTagManager = new CombatTagManager(this);
         matchExploitGuard = new MatchExploitGuard(this);
         ffaManager = new FfaManager(this);
+        settingsMenu = new SettingsMenu(this);
 
         coreServices.register(QueueManager.class, queueManager);
         coreServices.register(MatchManager.class, matchManager);
@@ -82,15 +82,15 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(kitEditorManager, this);
         getServer().getPluginManager().registerEvents(advancedFeatures, this);
         getServer().getPluginManager().registerEvents(lobbyItemsManager, this);
+        getServer().getPluginManager().registerEvents(settingsMenu, this);
         getServer().getPluginManager().registerEvents(combatTagManager, this);
         getServer().getPluginManager().registerEvents(matchExploitGuard, this);
         getServer().getPluginManager().registerEvents(ffaManager, this);
         getServer().getPluginManager().registerEvents(new PlayerSettingsListener(this), this);
 
-        getServer().getScheduler().runTaskTimer(this, scoreboardManager::updateAll, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, partyManager::expireInvites, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, partyManager::processQueue, 20L, 20L);
-        getServer().getScheduler().runTask(this, scoreboardManager::updateAll);
+        getServer().getScheduler().runTask(this, () -> {});
 
         DuelCommand duelCommand = new DuelCommand(this);
         register("duel", duelCommand);
@@ -108,6 +108,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         registerAdvanced("coinshop", advancedCommand);
         registerAdvanced("coins", advancedCommand);
         registerAdvanced("replay", advancedCommand);
+        registerAdvanced("history", advancedCommand);
         registerAdvanced("practice", advancedCommand);
         registerAdvanced("totalpractice", advancedCommand);
         registerAdvanced("goldenhard", advancedCommand);
@@ -209,7 +210,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     public DuelRequestManager requests() { return requests; }
     public RematchManager rematches() { return rematches; }
     public DuelMenu menu() { return menu; }
-    public ScoreboardManager scoreboardManager() { return scoreboardManager; }
+    public SettingsMenu settingsMenu() { return settingsMenu; }
     public SpectatorManager spectatorManager() { return spectatorManager; }
     public PartyManager partyManager() { return partyManager; }
     public KitEditorManager kitEditorManager() { return kitEditorManager; }
