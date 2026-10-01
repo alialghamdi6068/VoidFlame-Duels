@@ -86,7 +86,7 @@ gui:
   rows: 3
   filler-item: GRAY_STAINED_GLASS_PANE
   kits:
-    sword:\n      slot: 9
+    sword:\n      slot: 10
       display-name: "&aSword"
       icon: DIAMOND_SWORD
       lore:
@@ -94,7 +94,7 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eLeft-click: Unranked  &7|  &dRight-click: Ranked."
-    axe:\n      slot: 10
+    axe:\n      slot: 11
       display-name: "&aAxe"
       icon: DIAMOND_AXE
       lore:
@@ -102,7 +102,7 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
-    uhc:\n      slot: 11
+    uhc:\n      slot: 12
       display-name: "&aUHC"
       icon: GOLDEN_APPLE
       lore:
@@ -110,7 +110,7 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
-    mace:\n      slot: 12
+    mace:\n      slot: 13
       display-name: "&aMace"
       icon: MACE
       lore:
@@ -119,7 +119,7 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
-    spear_mace:\n      slot: 13
+    spear_mace:\n      slot: 14
       display-name: "&aSpear & Mace"
       icon: SPEAR
       lore:
@@ -127,7 +127,7 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
-    smp:\n      slot: 14
+    smp:\n      slot: 15
       display-name: "&aSMP"
       icon: NETHERITE_SWORD
       lore:
@@ -136,7 +136,7 @@ gui:
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
 
-    crystal:\n      slot: 15
+    crystal:\n      slot: 16
       display-name: "&aCrystal"
       icon: END_CRYSTAL
       lore:
@@ -144,7 +144,7 @@ gui:
         - "&fQueued: &a<queued_players>"
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
-    netherite_pot:\n      slot: 16
+    netherite_pot:\n      slot: 17
       display-name: "&aNetherite Pot"
       icon: NETHERITE_HELMET
       lore:
