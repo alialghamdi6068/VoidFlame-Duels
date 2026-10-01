@@ -30,6 +30,7 @@ public final class LobbyItemsManager implements Listener {
     private static final String DUEL_MENU = "§8VoidFlame §7• §dDuel";
     private static final String PARTY_MENU = "§8VoidFlame §7• §bParty";
     private static final String TARGET_PREFIX = "§8VoidFlame §7• §dDuel ";
+    private static final String PARTY_GUI = "§8VoidFlame §7• §bParty";
     private final VoidFlameDuelsPlugin plugin;
     private final NamespacedKey key;
     private final Map<UUID, UUID> targetByViewer = new ConcurrentHashMap<>();
@@ -55,6 +56,25 @@ public final class LobbyItemsManager implements Listener {
         p.updateInventory();
     }
 
+    public void givePartyItems(Player p) {
+        if (plugin.matchManager().isInMatch(p.getUniqueId())
+                || plugin.matchManager().isDisconnected(p.getUniqueId())
+                || plugin.spectatorManager().isSpectating(p.getUniqueId())) return;
+        PlayerInventory inv = p.getInventory();
+        inv.setItem(0, item(Material.PLAYER_HEAD, "§b§lParty", "§7Right-click §8» §fManage your party"));
+        inv.setItem(1, item(Material.NETHER_STAR, "§d§lParty Queue", "§7Right-click §8» §fChoose a party mode"));
+        inv.setItem(2, item(Material.NAME_TAG, "§e§lInvite", "§7Right-click §8» §fInvite a player"));
+        inv.setItem(7, item(Material.BOOK, "§a§lParty Info", "§7Right-click §8» §fView members"));
+        inv.setItem(8, item(Material.BARRIER, "§c§lLeave Party", "§7Right-click §8» §fLeave / disband"));
+        for (int i = 3; i <= 6; i++) inv.setItem(i, null);
+        mark(inv.getItem(0), "party-menu");
+        mark(inv.getItem(1), "party-queue");
+        mark(inv.getItem(2), "party-invite");
+        mark(inv.getItem(7), "party-info");
+        mark(inv.getItem(8), "party-leave");
+        p.updateInventory();
+    }
+
     @EventHandler public void onInteract(PlayerInteractEvent e) {
         if(e.getHand()!=EquipmentSlot.HAND)return;
         if(e.getAction()!=Action.RIGHT_CLICK_AIR&&e.getAction()!=Action.RIGHT_CLICK_BLOCK)return;
@@ -63,7 +83,11 @@ public final class LobbyItemsManager implements Listener {
         String type=it.getItemMeta().getPersistentDataContainer().get(key,PersistentDataType.STRING);
         Player p=e.getPlayer();
         if("duel".equals(type)) openSelfKit(p);
-        else if("party".equals(type)) openParty(p);
+        else if("party".equals(type) || "party-menu".equals(type)) openParty(p);
+        else if("party-queue".equals(type)) openParty(p);
+        else if("party-invite".equals(type)) p.sendMessage("§bParty §7» §fUse §e/party invite <player> §fto invite someone.");
+        else if("party-info".equals(type)) showMembers(p);
+        else if("party-leave".equals(type)) leaveParty(p);
         else if("editor".equals(type)) plugin.kitManager().openEditor(p,KitType.SWORD);
     }
 
@@ -96,23 +120,82 @@ public final class LobbyItemsManager implements Listener {
     }
 
     private void openParty(Player p){
-        Inventory inv=Bukkit.createInventory(null,27,PARTY_MENU);fill(inv);
-        inv.setItem(10,item(Material.DIAMOND_SWORD,"§b§lParty 1v1","§7Start a 1v1 party match"));
-        inv.setItem(13,item(Material.IRON_SWORD,"§a§lParty 2v2","§7Start a 2v2 party match"));
-        inv.setItem(16,item(Material.TNT,"§c§lParty FFA","§7Start party FFA"));
-        inv.setItem(22,item(Material.PLAYER_HEAD,"§e§lParty Members","§7Show current members"));
-        inv.setItem(18,item(Material.ARROW,"§7§lBack"));
-        inv.setItem(26,item(Material.BARRIER,"§c§lClose"));
+        if (plugin.partyManager().partyOf(p.getUniqueId()) == null) {
+            plugin.partyManager().create(p);
+            givePartyItems(p);
+        }
+        Inventory inv=Bukkit.createInventory(null,54,PARTY_GUI);
+        fillModern(inv);
+        inv.setItem(4,item(Material.NETHER_STAR,"§b§lYOUR PARTY","§7Manage your party and choose a mode."));
+        PartyManager.Party party=plugin.partyManager().partyOf(p.getUniqueId());
+        if (party != null) {
+            int slot=19;
+            for (UUID id : party.members()) {
+                Player member=Bukkit.getPlayer(id);
+                String name=member==null?Bukkit.getOfflinePlayer(id).getName():""+member.getName();
+                ItemStack head=new ItemStack(Material.PLAYER_HEAD);
+                ItemMeta meta=head.getItemMeta();
+                if(meta!=null){meta.setDisplayName("§f"+name+(id.equals(party.leader())?" §6★":""));meta.setLore(List.of("§7Party member","§7Click for party actions."));head.setItemMeta(meta);}
+                inv.setItem(slot,head); slot += slot%9==7 ? 3 : 1; if(slot>=44) break;
+            }
+        }
+        inv.setItem(45,item(Material.DIAMOND_SWORD,"§d§lParty 1v1","§7Queue your party for 1v1."));
+        inv.setItem(47,item(Material.IRON_SWORD,"§a§lParty 2v2","§7Queue your party for 2v2."));
+        inv.setItem(49,item(Material.TNT,"§c§lParty FFA","§7Queue your party for FFA."));
+        inv.setItem(51,item(Material.NAME_TAG,"§e§lInvite","§7Use /party invite <player>."));
+        inv.setItem(52,item(Material.ARROW,"§7§lBack","§7Return to your lobby items."));
+        inv.setItem(53,item(Material.BARRIER,"§c§lClose","§7Close the menu."));
         p.openInventory(inv);
+    }
+
+    private void fillModern(Inventory inv){
+        ItemStack border=item(Material.BLACK_STAINED_GLASS_PANE," ");
+        ItemStack accent=item(Material.PURPLE_STAINED_GLASS_PANE," ");
+        for(int s=0;s<inv.getSize();s++){
+            int r=s/9,c=s%9;
+            if(r==0||r==5||c==0||c==8) inv.setItem(s,border.clone());
+        }
+        for(int s: new int[]{1,2,3,5,6,7,10,11,12,14,15,16,46,48,50}) inv.setItem(s,accent.clone());
+    }
+
+    private void showMembers(Player p){
+        PartyManager.Party party=plugin.partyManager().partyOf(p.getUniqueId());
+        if(party==null){p.sendMessage(plugin.message("party-not-in"));return;}
+        p.sendMessage(ChatColor.AQUA+"Party members: "+party.members().stream().map(id->{Player x=Bukkit.getPlayer(id);return x==null?Bukkit.getOfflinePlayer(id).getName():x.getName();}).filter(java.util.Objects::nonNull).reduce((a,b)->a+", "+b).orElse("-"));
+    }
+
+    private void leaveParty(Player p){
+        PartyManager.Party party=plugin.partyManager().partyOf(p.getUniqueId());
+        if(party==null){p.sendMessage(plugin.message("party-not-in"));return;}
+        if(party.leader().equals(p.getUniqueId())){
+            plugin.partyManager().disband(p);
+        }else{
+            plugin.partyManager().leave(p);
+        }
+        giveLobbyItems(p);
+        p.closeInventory();
+        p.sendMessage(plugin.message("party-left"));
     }
 
     @EventHandler public void onClick(InventoryClickEvent e){
         if(!(e.getWhoClicked() instanceof Player p))return;
         String title=e.getView().getTitle();
-        if(title.equals(DUEL_MENU)||title.startsWith(TARGET_PREFIX)||title.equals(PARTY_MENU)){
+        if(title.equals(DUEL_MENU)||title.startsWith(TARGET_PREFIX)||title.equals(PARTY_MENU)||title.equals(PARTY_GUI)){
             e.setCancelled(true); int s=e.getRawSlot(); if(s<0||s>=27)return;
             if(s==26){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
             if(s==18){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
+            if(title.equals(PARTY_GUI)){
+                switch(s){
+                    case 45 -> startParty(p,PartyMode.ONE_V_ONE);
+                    case 47 -> startParty(p,PartyMode.TWO_V_TWO);
+                    case 49 -> startParty(p,PartyMode.FFA);
+                    case 51 -> p.sendMessage("§bParty §7» §fUse §e/party invite <player> §fto invite.");
+                    case 52 -> { p.closeInventory(); givePartyItems(p); }
+                    case 53 -> p.closeInventory();
+                    default -> {}
+                }
+                return;
+            }
             int[] slots={10,11,12,13,14,15,16,19};
             for(int i=0;i<slots.length&&i<KitType.values().length;i++) if(s==slots[i]){
                 KitType kit=KitType.values()[i];
