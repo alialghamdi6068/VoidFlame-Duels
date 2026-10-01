@@ -13,6 +13,18 @@ commands:
     description: Send or manage a duel request.
     usage: /duel <player> [kit]
     permission: voidflame.duel
+  accept:
+    description: Accept an incoming duel request.
+    usage: /accept [player]
+    permission: voidflame.duel
+  deny:
+    description: Deny an incoming duel request.
+    usage: /deny [player]
+    permission: voidflame.duel
+  leave:
+    description: Leave your queue or active duel.
+    usage: /leave
+    permission: voidflame.queue
   queue:
     description: Join or leave a duel queue.
     usage: /queue [ranked|unranked] <kit> | leave
