@@ -85,6 +85,10 @@ commands:
     description: Toggle GoldenHard practice mode.
     usage: /goldenhard
     permission: voidflame.practice.goldenhard
+  settings:
+    description: Open practice settings.
+    usage: /settings
+    permission: voidflame.duels.settings
   ffa:
     description: Join, leave or inspect Free For All.
     usage: /ffa [kit|leave|stats]
@@ -157,3 +161,7 @@ permissions:
   voidflame.report.handle:
     description: Handle player reports.
     default: op
+
+  voidflame.duels.settings:
+    description: Open practice settings.
+    default: true
