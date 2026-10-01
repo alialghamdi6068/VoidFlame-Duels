@@ -121,7 +121,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     public void onCommandAlias(PlayerCommandPreprocessEvent event) {
         String raw = event.getMessage();
         if (!raw.startsWith("/") || !(event.getPlayer() instanceof Player)) return;
-        String[] parts = raw.substring(1).trim().split("\\\\s+");
+        String[] parts = raw.substring(1).trim().split(" ");
         if (parts.length == 0) return;
         String name = parts[0].toLowerCase(java.util.Locale.ROOT);
         if (!name.equals("accept") && !name.equals("deny") && !name.equals("leave")) return;
