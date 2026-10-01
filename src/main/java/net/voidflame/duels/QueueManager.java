@@ -185,7 +185,7 @@ public final class QueueManager implements Listener {
             if (p == null || !p.isOnline() || now - entry.joinedAt() >= timeout) {
                 if (leave(entry.player()) && p != null && p.isOnline()) {
                     p.sendMessage(plugin.message("queue-expired"));
-                    plugin.scoreboardManager().update(p);
+                    
                 }
             }
         }
