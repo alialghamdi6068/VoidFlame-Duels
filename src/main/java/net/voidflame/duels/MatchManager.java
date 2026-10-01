@@ -104,7 +104,7 @@ public final class MatchManager implements Listener {
         matches.put(b.getUniqueId(), match);
         audit("DUEL_START", match.matchId().toString(), "players=" + a.getUniqueId() + "," + b.getUniqueId() + "|kit=" + kit + "|arena=" + arena.name());
         match.start();
-        plugin.scoreboardManager().updateAll();
+        
         return true;
     }
 
@@ -139,7 +139,7 @@ public final class MatchManager implements Listener {
         PartyMatch match = new PartyMatch(plugin, this, arena, mode, partyKit, participants);
         for (Player player : participants) partyMatches.put(player.getUniqueId(), match);
         match.start();
-        plugin.scoreboardManager().updateAll();
+        
         return true;
     }
 
@@ -148,10 +148,10 @@ public final class MatchManager implements Listener {
             partyMatches.remove(id, match);
             plugin.combatTagManager().clear(id);
         }
-        plugin.scoreboardManager().updateAll();
+        
         plugin.partyManager().clearMode(match.players());
         arenas.reset(match.arena()).thenAccept(success ->
-                plugin.getServer().getScheduler().runTask(plugin, plugin.scoreboardManager()::updateAll));
+                
     }
 
     public boolean isDisconnected(UUID id) {
@@ -227,7 +227,7 @@ public final class MatchManager implements Listener {
                                 + "' was disabled because its reset failed.");
                     }
                     match.transition(MatchState.FINISHED);
-                    plugin.scoreboardManager().updateAll();
+                    
                 })
         );
 
@@ -248,7 +248,7 @@ public final class MatchManager implements Listener {
             plugin.rematches().remember(match.first(), match.second(), match.kit());
             plugin.rematches().remember(match.second(), match.first(), match.kit());
         }
-        plugin.scoreboardManager().updateAll();
+        
     }
 
 
@@ -317,7 +317,7 @@ public final class MatchManager implements Listener {
             }
         }, graceSeconds() * 20L);
 
-        plugin.scoreboardManager().updateAll();
+        
     }
 
     public boolean rejoin(Player player) {
@@ -333,7 +333,7 @@ public final class MatchManager implements Listener {
         player.teleport(match.spawnFor(id));
         kits.apply(player, match.kit());
         player.sendMessage(plugin.message("rejoined"));
-        plugin.scoreboardManager().updateAll();
+        
         return true;
     }
 
@@ -417,10 +417,10 @@ public final class MatchManager implements Listener {
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             PartyMatch partyMatch = partyMatches.get(id);
             if (partyMatch != null && partyMatch.rejoin(event.getPlayer())) {
-                plugin.scoreboardManager().update(event.getPlayer());
+                
                 return;
             }
-            plugin.scoreboardManager().update(event.getPlayer());
+            
         });
     }
 
