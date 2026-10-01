@@ -82,12 +82,12 @@ messages:
   kit-editor-failed: "&cThe kit editor could not be opened."
 
 gui:
-  title: "&8⚔ Join Queue"
+  title: "&8VoidFlame &7• &fQueue"
   rows: 6
   filler-item: GRAY_STAINED_GLASS_PANE
   kits:
     sword:
-      slot: 11
+      slot: 19
       display-name: "&aSword"
       icon: DIAMOND_SWORD
       lore:
@@ -96,7 +96,7 @@ gui:
         - "&fIn Match: &e<in_match_players>"
         - "&eLeft-click: Unranked  &7|  &dRight-click: Ranked."
     axe:
-      slot: 13
+      slot: 21
       display-name: "&aAxe"
       icon: DIAMOND_AXE
       lore:
@@ -105,7 +105,7 @@ gui:
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
     uhc:
-      slot: 15
+      slot: 23
       display-name: "&aUHC"
       icon: GOLDEN_APPLE
       lore:
@@ -114,7 +114,7 @@ gui:
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
     mace:
-      slot: 29
+      slot: 25
       display-name: "&aMace"
       icon: MACE
       lore:
@@ -124,7 +124,7 @@ gui:
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
     spear_mace:
-      slot: 31
+      slot: 28
       display-name: "&aSpear & Mace"
       icon: SPEAR
       lore:
@@ -133,7 +133,7 @@ gui:
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
     smp:
-      slot: 27
+      slot: 30
       display-name: "&aSMP"
       icon: NETHERITE_SWORD
       lore:
@@ -143,7 +143,7 @@ gui:
         - "&eClick to join."
 
     crystal:
-      slot: 33
+      slot: 32
       display-name: "&aCrystal"
       icon: END_CRYSTAL
       lore:
@@ -152,7 +152,7 @@ gui:
         - "&fIn Match: &e<in_match_players>"
         - "&eClick to join."
     netherite_pot:
-      slot: 35
+      slot: 34
       display-name: "&aNetherite Pot"
       icon: NETHERITE_HELMET
       lore:
