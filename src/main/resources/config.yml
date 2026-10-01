@@ -433,6 +433,28 @@ features:
     item-pickup: true
     hand-swap: false
 
+# متجر العملات — جميع المنتجات والأسعار قابلة للتعديل من هنا.
+shop:
+  products:
+    - {id: void, name: "[Void]", price: 100, material: NAME_TAG, color: "&b"}
+    - {id: champion, name: "[Champion]", price: 500, material: NETHER_STAR, color: "&d"}
+    - {id: duelist, name: "[Duelist]", price: 750, material: DIAMOND_SWORD, color: "&a"}
+    - {id: combo, name: "[Combo]", price: 900, material: IRON_SWORD, color: "&e"}
+    - {id: clutch, name: "[Clutch]", price: 1200, material: TOTEM_OF_UNDYING, color: "&6"}
+    - {id: warlord, name: "[Warlord]", price: 1500, material: NETHERITE_SWORD, color: "&c"}
+    - {id: unbreakable, name: "[Unbreakable]", price: 1750, material: NETHERITE_CHESTPLATE, color: "&5"}
+    - {id: speedster, name: "[Speedster]", price: 2000, material: FEATHER, color: "&b"}
+    - {id: striker, name: "[Striker]", price: 2250, material: ARROW, color: "&f"}
+    - {id: swordsman, name: "[Swordsman]", price: 2500, material: DIAMOND_SWORD, color: "&3"}
+    - {id: axemaster, name: "[AxeMaster]", price: 2750, material: DIAMOND_AXE, color: "&6"}
+    - {id: crystal, name: "[Crystal]", price: 3000, material: END_CRYSTAL, color: "&d"}
+    - {id: mace, name: "[Mace]", price: 3250, material: MACE, color: "&5"}
+    - {id: spear, name: "[Spear]", price: 3500, material: SPEAR, color: "&a"}
+    - {id: voidwalker, name: "[VoidWalker]", price: 4000, material: ENDER_PEARL, color: "&8"}
+    - {id: nightmare, name: "[Nightmare]", price: 5000, material: WITHER_SKELETON_SKULL, color: "&8"}
+    - {id: legend, name: "[Legend]", price: 7500, material: DRAGON_EGG, color: "&5"}
+    - {id: mythic, name: "[Mythic]", price: 10000, material: DRAGON_HEAD, color: "&d"}
+
 combat-tag:
   enabled: true
   duration-seconds: 15
