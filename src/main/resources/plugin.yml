@@ -45,6 +45,10 @@ commands:
     description: Report a player to online staff.
     usage: /report <player> <reason>
     permission: voidflame.report
+  reports:
+    description: Open the staff report management GUI.
+    usage: /reports
+    permission: voidflame.report.view
   coinshop:
     description: Open the practice CoinShop.
     usage: /coinshop
