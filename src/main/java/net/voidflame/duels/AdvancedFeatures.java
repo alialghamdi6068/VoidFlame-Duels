@@ -223,6 +223,48 @@ public final class AdvancedFeatures implements Listener {
         storagePut(REPLAY_MODULE, match.second() + ":" + match.matchId(), value);
     }
 
+    public void openHistory(Player player) {
+        storage.database().query(
+                "SELECT data_key,data_value FROM module_data WHERE module=? AND data_key LIKE ? ORDER BY updated_at DESC LIMIT 45",
+                "stats", "history:" + player.getUniqueId() + ":%")
+            .thenAccept(rows -> Bukkit.getScheduler().runTask(plugin, () -> {
+                Inventory inv = Bukkit.createInventory(null, 54, color("&8VoidFlame Match History"));
+                int slot = 0;
+                for (var row : rows) {
+                    if (slot >= 45) break;
+                    String value = String.valueOf(row.get("data_value"));
+                    String[] parts = value.split("\\|", -1);
+                    String outcome = parts.length > 0 ? parts[0] : "MATCH";
+                    String kit = parts.length > 1 ? parts[1].replace('_', ' ') : "Unknown";
+                    String mode = parts.length > 2 ? parts[2] : "Duel";
+                    String arena = parts.length > 3 ? parts[3] : "Unknown";
+                    Material icon = outcome.equalsIgnoreCase("WIN") ? Material.EMERALD : outcome.equalsIgnoreCase("LOSS") ? Material.REDSTONE : Material.PAPER;
+                    ItemStack item = new ItemStack(icon);
+                    ItemMeta meta = item.getItemMeta();
+                    if (meta != null) {
+                        meta.setDisplayName(color((outcome.equalsIgnoreCase("WIN") ? "&a" : outcome.equalsIgnoreCase("LOSS") ? "&c" : "&e") + outcome));
+                        meta.setLore(List.of(
+                                color("&7Kit: &f" + kit),
+                                color("&7Mode: &f" + mode),
+                                color("&7Arena: &f" + arena),
+                                color("&8Match history")
+                        ));
+                        item.setItemMeta(meta);
+                    }
+                    inv.setItem(slot++, item);
+                }
+                if (rows.isEmpty()) {
+                    ItemStack empty = item(Material.BARRIER, "&cNo match history", "&7Complete a duel to see it here.");
+                    inv.setItem(22, empty);
+                }
+                player.openInventory(inv);
+            }))
+            .exceptionally(error -> {
+                plugin.getLogger().warning("Could not load match history: " + error.getMessage());
+                return null;
+            });
+    }
+
     public void loadReplay(UUID player, UUID matchId, java.util.function.Consumer<String> consumer) {
         storageGet(REPLAY_MODULE, player + ":" + matchId, consumer);
     }
