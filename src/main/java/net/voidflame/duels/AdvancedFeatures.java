@@ -183,6 +183,10 @@ public final class AdvancedFeatures implements Listener {
         String key = now + "-" + reporter.getUniqueId();
         String value = reporter.getUniqueId() + "|" + reporter.getName() + "|" +
                 target.getUniqueId() + "|" + target.getName() + "|" + sanitize(reason);
+        storage.database().execute(
+                "INSERT INTO reports(report_id, reporter, target, reason, status, staff, timestamp) VALUES (?, ?, ?, ?, 'OPEN', NULL, ?)",
+                key, reporter.getUniqueId().toString(), target.getUniqueId().toString(), sanitize(reason), now
+        );
         storagePut(REPORT_MODULE, key, value);
         String staffMessage = color(plugin.getConfig().getString("report.staff-message",
                 "&c[Report] &f<reporter> &7reported &e<target> &7for: &f<reason>"));
@@ -262,6 +266,53 @@ public final class AdvancedFeatures implements Listener {
             .exceptionally(error -> {
                 plugin.getLogger().warning("Could not load match history: " + error.getMessage());
                 return null;
+            });
+    }
+
+    public void openReports(Player staff) {
+        if (!staff.hasPermission("voidflame.report.view") && !staff.isOp()) {
+            staff.sendMessage(plugin.message("no-permission"));
+            return;
+        }
+        storage.database().query(
+                "SELECT report_id, reporter, target, reason, status, timestamp FROM reports ORDER BY CASE status WHEN 'OPEN' THEN 0 WHEN 'CLAIMED' THEN 1 ELSE 2 END, timestamp DESC LIMIT 45")
+            .thenAccept(rows -> Bukkit.getScheduler().runTask(plugin, () -> {
+                Inventory inv = Bukkit.createInventory(null, 54, color("&8VoidFlame Reports"));
+                int slot = 0;
+                for (var row : rows) {
+                    if (slot >= 45) break;
+                    String status = String.valueOf(row.get("status"));
+                    String reason = String.valueOf(row.get("reason"));
+                    String target = String.valueOf(row.get("target"));
+                    Material icon = status.equals("OPEN") ? Material.REDSTONE : status.equals("CLAIMED") ? Material.GOLD_INGOT : Material.EMERALD;
+                    inv.setItem(slot++, item(icon, "&cReport &7" + target,
+                            "&7Status: &f" + status + " &8| &7" + reason,
+                            "&eLeft-click: claim", "&aRight-click: resolve"));
+                }
+                if (rows.isEmpty()) inv.setItem(22, item(Material.BARRIER, "&aNo reports", "&7There are no stored reports."));
+                staff.openInventory(inv);
+            }));
+    }
+
+    @EventHandler
+    public void onReportsClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player staff)) return;
+        if (!event.getView().getTitle().equals(color("&8VoidFlame Reports"))) return;
+        event.setCancelled(true);
+        if (!staff.hasPermission("voidflame.report.handle") && !staff.isOp()) return;
+        int slot = event.getRawSlot();
+        if (slot < 0 || slot >= 45) return;
+        storage.database().query(
+                "SELECT report_id, status FROM reports ORDER BY CASE status WHEN 'OPEN' THEN 0 WHEN 'CLAIMED' THEN 1 ELSE 2 END, timestamp DESC LIMIT 45")
+            .thenAccept(rows -> {
+                if (slot >= rows.size()) return;
+                String id = String.valueOf(rows.get(slot).get("report_id"));
+                String status = String.valueOf(rows.get(slot).get("status"));
+                String next = event.isRightClick() ? "RESOLVED" : "CLAIMED";
+                if ("RESOLVED".equals(status)) return;
+                storage.database().execute("UPDATE reports SET status=?, staff=? WHERE report_id=?",
+                        next, staff.getUniqueId().toString(), id);
+                Bukkit.getScheduler().runTask(plugin, () -> openReports(staff));
             });
     }
 
