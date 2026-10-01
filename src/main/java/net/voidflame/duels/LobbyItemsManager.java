@@ -64,7 +64,7 @@ public final class LobbyItemsManager implements Listener {
         Player p=e.getPlayer();
         if("duel".equals(type)) openSelfKit(p);
         else if("party".equals(type)) openParty(p);
-        else if("editor".equals(type)) plugin.kitEditorManager().open(p,KitType.SWORD);
+        else if("editor".equals(type)) plugin.kitManager().openEditor(p,KitType.SWORD);
     }
 
     @EventHandler public void onInteractEntity(PlayerInteractEntityEvent e) {
