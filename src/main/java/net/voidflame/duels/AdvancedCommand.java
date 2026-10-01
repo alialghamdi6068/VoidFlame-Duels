@@ -4,12 +4,22 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.Material;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public final class AdvancedCommand implements CommandExecutor, TabCompleter {
+public final class AdvancedCommand implements CommandExecutor, TabCompleter, Listener {
+    private static final String REPORT_GUI = "§8VoidFlame §7• §cReport Player";
+    private final java.util.Map<java.util.UUID, java.util.UUID> pendingReports = new java.util.concurrent.ConcurrentHashMap<>();
     private final VoidFlameDuelsPlugin plugin;
 
     public AdvancedCommand(VoidFlameDuelsPlugin plugin) {
@@ -92,7 +102,7 @@ public final class AdvancedCommand implements CommandExecutor, TabCompleter {
 
     private boolean report(Player reporter, String[] args) {
         if (args.length < 2) {
-            reporter.sendMessage(ChatColor.YELLOW + "/report <player> <reason>");
+            openReportTargets(reporter);
             return true;
         }
         Player target = Bukkit.getPlayerExact(args[0]);
@@ -105,6 +115,79 @@ public final class AdvancedCommand implements CommandExecutor, TabCompleter {
                 ? color("&aReport sent to online staff.")
                 : color("&cYour report could not be sent right now."));
         return true;
+    }
+
+
+    private void openReportTargets(Player viewer) {
+        Inventory inventory = Bukkit.createInventory(null, 27, REPORT_GUI);
+        int slot = 0;
+        for (Player target : Bukkit.getOnlinePlayers()) {
+            if (target.equals(viewer)) continue;
+            if (slot >= 18) break;
+            ItemStack item = new ItemStack(Material.PLAYER_HEAD);
+            ItemMeta meta = item.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName("§c" + target.getName());
+                meta.setLore(List.of("§7Click to select this player.", "§8You will enter the reason in chat."));
+                item.setItemMeta(meta);
+            }
+            inventory.setItem(slot++, item);
+        }
+        ItemStack close = new ItemStack(Material.BARRIER);
+        ItemMeta closeMeta = close.getItemMeta();
+        if (closeMeta != null) {
+            closeMeta.setDisplayName("§c§lClose");
+            close.setItemMeta(closeMeta);
+        }
+        inventory.setItem(26, close);
+        viewer.openInventory(inventory);
+    }
+
+    @EventHandler
+    public void onReportClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player reporter)) return;
+        if (!REPORT_GUI.equals(event.getView().getTitle())) return;
+        event.setCancelled(true);
+        if (event.getRawSlot() == 26) {
+            reporter.closeInventory();
+            return;
+        }
+        if (event.getRawSlot() < 0 || event.getRawSlot() >= 18) return;
+        ItemStack clicked = event.getCurrentItem();
+        if (clicked == null || !clicked.hasItemMeta() || clicked.getItemMeta().getDisplayName() == null) return;
+        String targetName = ChatColor.stripColor(clicked.getItemMeta().getDisplayName());
+        Player target = Bukkit.getPlayerExact(targetName);
+        if (target == null || target.equals(reporter)) {
+            reporter.sendMessage(color("&cThat player is no longer online."));
+            return;
+        }
+        pendingReports.put(reporter.getUniqueId(), target.getUniqueId());
+        reporter.closeInventory();
+        reporter.sendMessage(color("&eEnter the report reason in chat. Type &ccancel &eto abort."));
+    }
+
+    @EventHandler
+    public void onReportReason(AsyncPlayerChatEvent event) {
+        UUID reporterId = event.getPlayer().getUniqueId();
+        UUID targetId = pendingReports.remove(reporterId);
+        if (targetId == null) return;
+        event.setCancelled(true);
+        String reason = event.getMessage().trim();
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (reason.equalsIgnoreCase("cancel")) {
+                event.getPlayer().sendMessage(color("&7Report cancelled."));
+                return;
+            }
+            Player target = Bukkit.getPlayer(targetId);
+            if (target == null) {
+                event.getPlayer().sendMessage(color("&cThat player is no longer online."));
+                return;
+            }
+            boolean sent = plugin.advancedFeatures().report(event.getPlayer(), target, reason);
+            event.getPlayer().sendMessage(sent
+                    ? color("&aReport sent to online staff.")
+                    : color("&cYour report could not be sent right now."));
+        });
     }
 
     private boolean coins(CommandSender sender, String[] args) {
