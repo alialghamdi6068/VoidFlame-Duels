@@ -82,7 +82,7 @@ public final class AdvancedCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         if (args.length > 0 && args[0].equalsIgnoreCase("stats")) {
-            player.sendMessage(color("&bVoidFlame &fFFA stats are tracked persistently."));
+            plugin.ffaManager().sendStats(player);
             return true;
         }
         String kit = args.length == 0 ? "sword" : args[0];
