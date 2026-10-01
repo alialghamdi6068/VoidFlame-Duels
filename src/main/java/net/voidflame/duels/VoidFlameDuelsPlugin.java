@@ -4,8 +4,12 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.entity.Player;
 
-public final class VoidFlameDuelsPlugin extends JavaPlugin {
+public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     private CoreServices coreServices;
     private QueueManager queueManager;
     private MatchManager matchManager;
@@ -28,6 +32,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        getServer().getPluginManager().registerEvents(this, this);
 
         coreServices = CoreServices.connect(getServer().getServicesManager());
         if (coreServices == null) {
@@ -110,6 +115,20 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin {
         registerParty("party", partyCommand);
 
         getLogger().info("VoidFlame-Duels enabled with 8 ladders and external arena service.");
+    }
+
+    @EventHandler
+    public void onCommandAlias(PlayerCommandPreprocessEvent event) {
+        String raw = event.getMessage();
+        if (!raw.startsWith("/") || !(event.getPlayer() instanceof Player)) return;
+        String[] parts = raw.substring(1).trim().split("\\\\s+");
+        if (parts.length == 0) return;
+        String name = parts[0].toLowerCase(java.util.Locale.ROOT);
+        if (!name.equals("accept") && !name.equals("deny") && !name.equals("leave")) return;
+        event.setCancelled(true);
+        new DuelCommand(this).onCommand(event.getPlayer(), new org.bukkit.command.Command(name) {
+            @Override public boolean execute(org.bukkit.command.CommandSender sender, String commandLabel, String[] args) { return false; }
+        }, name, java.util.Arrays.copyOfRange(parts, 1, parts.length));
     }
 
     private void registerPublicServices() {
