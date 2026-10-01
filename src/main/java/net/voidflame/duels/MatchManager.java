@@ -252,7 +252,12 @@ public final class MatchManager implements Listener {
             plugin.rematches().remember(match.first(), match.second(), match.kit());
             plugin.rematches().remember(match.second(), match.first(), match.kit());
         }
-        
+
+        // Restore the canonical spawn items after the match inventory is restored.
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (a != null && a.isOnline()) plugin.lobbyItemsManager().giveLobbyItems(a);
+            if (b != null && b.isOnline()) plugin.lobbyItemsManager().giveLobbyItems(b);
+        });
     }
 
 
