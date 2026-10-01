@@ -140,7 +140,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         getServer().getServicesManager().register(MatchManager.class, matchManager, this, ServicePriority.Normal);
         getServer().getServicesManager().register(KitManager.class, kitManager, this, ServicePriority.Normal);
         getServer().getServicesManager().register(PartyManager.class, partyManager, this, ServicePriority.Normal);
-        getServer().getServicesManager().register(KitEditorManager.class, kitEditorManager, this, ServicePriority.Normal);
     }
 
     private void unregisterPublicServices() {
@@ -148,7 +147,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         if (matchManager != null) getServer().getServicesManager().unregister(MatchManager.class, matchManager);
         if (kitManager != null) getServer().getServicesManager().unregister(KitManager.class, kitManager);
         if (partyManager != null) getServer().getServicesManager().unregister(PartyManager.class, partyManager);
-        if (kitEditorManager != null) getServer().getServicesManager().unregister(KitEditorManager.class, kitEditorManager);
     }
 
     private void register(String name, DuelCommand executor) {
