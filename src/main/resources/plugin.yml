@@ -110,9 +110,6 @@ permissions:
   voidflame.spectate:
     description: Spectate active duels.
     default: true
-  voidflame.kits.edit:
-    description: Edit personal kit layouts.
-    default: true
   voidflame.party:
     description: Use party features.
     default: true
@@ -161,7 +158,6 @@ permissions:
   voidflame.report.handle:
     description: Handle player reports.
     default: op
-
   voidflame.duels.settings:
     description: Open practice settings.
     default: true
