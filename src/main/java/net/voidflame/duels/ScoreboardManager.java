@@ -47,6 +47,7 @@ public final class ScoreboardManager {
         if (bukkit == null) return;
         Match match = plugin.matchManager().get(player.getUniqueId());
         if (statsService == null) connectStats();
+        String state = state(player, match);
         if (!plugin.playerSettings().scoreboard(player)) {
             player.setScoreboard(bukkit.getMainScoreboard());
             updateTab(player, state);
@@ -55,7 +56,6 @@ public final class ScoreboardManager {
         if (statsService == null) connectStats();
 
         Scoreboard board = bukkit.getNewScoreboard();
-        String state = state(player, match);
         String path = "scoreboard." + state.toLowerCase(java.util.Locale.ROOT);
 
         if (!plugin.getConfig().getBoolean(path + ".enabled", true)) {
@@ -80,19 +80,19 @@ public final class ScoreboardManager {
         }
 
         player.setScoreboard(board);
-        updateTab(player, match);
+        updateTab(player, state);
     }
 
     public void updateAll() {
         for (Player player : Bukkit.getOnlinePlayers()) update(player);
     }
 
-    private void updateTab(Player player, Match match) {
-        String state = match == null ? "PRACTICE" : "IN DUEL";
+    private void updateTab(Player player, String state) {
+        String stateLabel = state.replace('_', ' ').toUpperCase(java.util.Locale.ROOT);
         String header = color(plugin.getConfig().getString(
                 "tab.header", "&5&lVOIDFLAME &8• &dPRACTICE NETWORK"));
         String footer = color(plugin.getConfig().getString(
-                "tab.footer", "&7Status: &d%state% &8• &7Online: &f%server_online% &8• &5play.VoidFlame.net"))
+                "tab.footer", "&7Status: &d%state% &8• &7Online: &f%server_online% &8• &7Ping: &f%player_ping%ms &8• &7Party: &f%party_status% &8• &dplay.VoidFlame.net"))
                 .replace("%state%", stateLabel)
                 .replace("%server_online%", String.valueOf(Bukkit.getOnlinePlayers().size()))
                 .replace("%player_ping%", String.valueOf(player.getPing()))
