@@ -94,7 +94,9 @@ public final class ScoreboardManager {
         String footer = color(plugin.getConfig().getString(
                 "tab.footer", "&7Status: &d%state% &8• &7Online: &f%server_online% &8• &5play.VoidFlame.net"))
                 .replace("%state%", stateLabel)
-                .replace("%server_online%", String.valueOf(Bukkit.getOnlinePlayers().size()));
+                .replace("%server_online%", String.valueOf(Bukkit.getOnlinePlayers().size()))
+                .replace("%player_ping%", String.valueOf(player.getPing()))
+                .replace("%party_status%", plugin.partyManager().partyOf(player.getUniqueId()) == null ? "None" : "In Party");
 
         LegacyComponentSerializer legacy = LegacyComponentSerializer.legacySection();
         player.sendPlayerListHeaderAndFooter(
@@ -122,7 +124,8 @@ public final class ScoreboardManager {
                 .replace("%player_kills%", String.valueOf(stats.kills))
                 .replace("%player_deaths%", String.valueOf(stats.deaths))
                 .replace("%player_level%", plugin.playerSettings().personalLevel(player) ? "1" : "—")
-                .replace("%state%", state(player, match));
+                .replace("%state%", state(player, match))
+                .replace("%queue_mode%", plugin.queueManager().isRanked(player.getUniqueId()) ? "Ranked" : "Unranked");
         return color(result);
     }
 
