@@ -26,6 +26,7 @@ public final class AdvancedCommand implements CommandExecutor, TabCompleter {
 
         return switch (name) {
             case "report" -> report(player, args);
+            case "history" -> { plugin.advancedFeatures().openHistory(player); yield true; }
             case "coinshop" -> { plugin.advancedFeatures().openCoinShop(player); yield true; }
             case "practice", "totalpractice" -> { plugin.advancedFeatures().openPractice(player); yield true; }
             case "goldenhard" -> { plugin.advancedFeatures().toggleGoldenHard(player); yield true; }
