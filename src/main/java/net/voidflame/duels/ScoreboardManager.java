@@ -150,7 +150,7 @@ public final class ScoreboardManager {
                 Method getRank = type.getMethod("getRank", String.class);
                 Object future = getPlayerRank.invoke(service, player.getUniqueId());
                 if (future instanceof java.util.concurrent.CompletableFuture<?> cf) {
-                    Object rankId = cf.getNow("player");
+                    Object rankId = cf.getNow(null);
                     if (rankId instanceof String id) {
                         Object rank = getRank.invoke(service, id);
                         if (rank != null) {
