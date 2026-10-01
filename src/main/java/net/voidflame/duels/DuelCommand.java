@@ -169,7 +169,7 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
             p.sendMessage(plugin.message("unknown-kit"));
             return true;
         }
-        if (!plugin.kitEditorManager().open(p, kit)) {
+        if (!plugin.kitManager().openEditor(p, kit)) {
             p.sendMessage(plugin.message("kit-editor-failed"));
         }
         return true;
