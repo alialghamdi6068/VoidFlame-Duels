@@ -47,6 +47,8 @@ public final class AdvancedFeatures implements Listener {
     private final Map<UUID, Long> chatCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> coins = new ConcurrentHashMap<>();
     private final Map<UUID, Long> combatTags = new ConcurrentHashMap<>();
+    private final Map<UUID, UUID> trainingSessions = new ConcurrentHashMap<>();
+    private final Map<UUID, Set<ArmorStand>> trainingDummies = new ConcurrentHashMap<>();
     private final Set<UUID> goldenHard = ConcurrentHashMap.newKeySet();
     private final Map<UUID, List<String>> recentCombat = new ConcurrentHashMap<>();
     private final List<String> announcements = new ArrayList<>();
@@ -100,6 +102,9 @@ public final class AdvancedFeatures implements Listener {
         chatCooldown.clear();
         combatTags.clear();
         goldenHard.clear();
+        trainingSessions.clear();
+        trainingDummies.values().forEach(set -> set.forEach(dummy -> { if (dummy != null && !dummy.isDead()) dummy.remove(); }));
+        trainingDummies.clear();
     }
 
     @EventHandler
@@ -123,6 +128,7 @@ public final class AdvancedFeatures implements Listener {
         recentCombat.remove(event.getPlayer().getUniqueId());
         combatTags.remove(event.getPlayer().getUniqueId());
         coins.remove(event.getPlayer().getUniqueId());
+        finishTraining(event.getPlayer(), false);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -477,20 +483,11 @@ public final class AdvancedFeatures implements Listener {
         if (!event.getView().getTitle().equals(color("&8TotalPractice"))) return;
         event.setCancelled(true);
         if (event.getRawSlot() == 10) {
-            player.setWalkSpeed(0.32f);
-            player.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SPEED, 20 * 30, 1));
-            player.sendMessage(color("&aMovement drill started."));
+            startTraining(player, "movement");
         } else if (event.getRawSlot() == 13) {
-            player.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.JUMP_BOOST, 20 * 30, 1));
-            player.sendMessage(color("&aStrafing drill started."));
+            startTraining(player, "strafing");
         } else if (event.getRawSlot() == 16) {
-            ArmorStand dummy = player.getWorld().spawn(player.getLocation().add(0, 0, 3), ArmorStand.class);
-            dummy.setInvisible(false);
-            dummy.setInvulnerable(false);
-            dummy.setCustomName(color("&cTraining Target"));
-            dummy.setCustomNameVisible(true);
-            dummy.setPersistent(false);
-            player.sendMessage(color("&aAim target spawned."));
+            startTraining(player, "aim");
         }
         player.closeInventory();
     }
@@ -528,6 +525,49 @@ public final class AdvancedFeatures implements Listener {
             return;
         }
         chatCooldown.put(player.getUniqueId(), now);
+    }
+
+    private void startTraining(Player player, String drill) {
+        finishTraining(player, false);
+        UUID sessionId = UUID.randomUUID();
+        UUID uuid = player.getUniqueId();
+        trainingSessions.put(uuid, sessionId);
+        storage.database().execute(
+                "INSERT INTO training_sessions(session_id, uuid, drill, started_at, score) VALUES (?, ?, ?, ?, 0)",
+                sessionId.toString(), uuid.toString(), drill, System.currentTimeMillis());
+        long duration = Math.max(5L, plugin.getConfig().getLong("training.duration-seconds", 30L));
+        if ("movement".equals(drill)) {
+            player.setWalkSpeed(0.32f);
+            player.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SPEED, (int)duration * 20, 1));
+        } else if ("strafing".equals(drill)) {
+            player.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.JUMP_BOOST, (int)duration * 20, 1));
+        } else if ("aim".equals(drill)) {
+            ArmorStand dummy = player.getWorld().spawn(player.getLocation().add(0, 0, 3), ArmorStand.class);
+            dummy.setInvisible(false);
+            dummy.setInvulnerable(false);
+            dummy.setCustomName(color("&cTraining Target"));
+            dummy.setCustomNameVisible(true);
+            dummy.setPersistent(false);
+            trainingDummies.computeIfAbsent(uuid, ignored -> ConcurrentHashMap.newKeySet()).add(dummy);
+        }
+        player.sendMessage(color("&a" + drill.substring(0, 1).toUpperCase(Locale.ROOT) + drill.substring(1) + " drill started."));
+        Bukkit.getScheduler().runTaskLater(plugin, () -> finishTraining(player, true), duration * 20L);
+    }
+
+    private void finishTraining(Player player, boolean completed) {
+        UUID uuid = player.getUniqueId();
+        UUID sessionId = trainingSessions.remove(uuid);
+        if (sessionId != null) {
+            storage.database().execute(
+                    "UPDATE training_sessions SET finished_at=? WHERE session_id=?",
+                    System.currentTimeMillis(), sessionId.toString());
+            if (completed && player.isOnline()) player.sendMessage(color("&aTraining drill completed."));
+        }
+        Set<ArmorStand> dummies = trainingDummies.remove(uuid);
+        if (dummies != null) dummies.forEach(dummy -> {
+            if (dummy != null && !dummy.isDead()) dummy.remove();
+        });
+        if (player.isOnline()) player.setWalkSpeed(0.2f);
     }
 
     private void loadGoldenHard(Player player) {
