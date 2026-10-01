@@ -208,6 +208,9 @@ public final class MatchManager implements Listener {
         // Stats/ELO persistence is owned by the Core service.
         match.transition(MatchState.STATS);
         recordExternalMatchResult(match, winner);
+        plugin.advancedFeatures().saveReplay(
+                match.matchId(), match.first(), match.second(), match.arena().name(),
+                match.kit().name(), match.durationSeconds() * 1000L);
         match.transition(MatchState.REPLAY);
         plugin.advancedFeatures().saveReplay(match);
         match.transition(MatchState.LOG);
