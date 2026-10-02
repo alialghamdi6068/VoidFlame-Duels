@@ -7,6 +7,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.plugin.RegisteredServiceProvider;
+import net.voidflame.core.api.KitService;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -39,6 +41,7 @@ public final class DuelMenu implements Listener {
         int[] fallbackSlots = {19,21,23,25,28,30,32,34};
         int fallbackIndex = 0;
         for (KitType kit : KitType.values()) {
+            if (!isKitEnabled(kit)) continue;
             String key = kit.name().toLowerCase(Locale.ROOT);
             var sec = plugin.getConfig().getConfigurationSection("gui.kits." + key);
             if (sec == null || !sec.getBoolean("enabled", true)) continue;
@@ -89,9 +92,12 @@ public final class DuelMenu implements Listener {
         if (e.getRawSlot() == 49) { p.closeInventory(); return; }
 
         for (KitType kit : KitType.values()) {
+            if (!isKitEnabled(kit)) continue;
             String key = kit.name().toLowerCase(Locale.ROOT);
             var sec = plugin.getConfig().getConfigurationSection("gui.kits." + key);
-            if (sec == null || sec.getInt("slot", -1) != e.getRawSlot()) continue;
+            if (sec == null) continue;
+            int configured = sec.getInt("slot", -1);
+            if (configured != e.getRawSlot()) continue;
             boolean ranked = e.isRightClick();
             if (plugin.queueManager().join(p, kit, ranked)) {
                 p.sendMessage(plugin.message("joined-queue")
@@ -103,6 +109,12 @@ public final class DuelMenu implements Listener {
             p.closeInventory();
             return;
         }
+    }
+
+
+    private boolean isKitEnabled(KitType kit) {
+        RegisteredServiceProvider<KitService> reg = Bukkit.getServicesManager().getRegistration(KitService.class);
+        return reg == null || reg.getProvider().isEnabled(kit.name().toLowerCase(Locale.ROOT));
     }
 
     private ItemStack item(Material material, String name, String... lore) {
