@@ -92,7 +92,7 @@ messages:
 
 gui:
   title: "&8VoidFlame &7• &fQueue"
-  rows: 6
+  rows: 3
   filler-item: GRAY_STAINED_GLASS_PANE
   kits:
     sword:
@@ -125,7 +125,6 @@ gui:
       slot: 15
       display-name: "&d&lCrystal"
       icon: END_CRYSTAL
-
 kits:
   sword:
     armor: DIAMOND_SET_PROT4
@@ -205,8 +204,7 @@ arenas:
 # ================================================================
 # Presentation & gameplay extensions
 # ================================================================
-# GUI is intentionally 6 rows (54 slots), matching the modern practice
-# server layout. Kit positions/icons remain fully configurable below.
+# Main queue GUI is intentionally 3 rows (27 slots), matching the compact practice layout.
 #
 # Advanced Duels features
 welcome:
