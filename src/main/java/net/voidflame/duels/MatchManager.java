@@ -91,7 +91,7 @@ public final class MatchManager implements Listener {
                 || plugin.spectatorManager().isSpectating(a.getUniqueId())
                 || plugin.spectatorManager().isSpectating(b.getUniqueId())) return false;
 
-        Arena arena = arenas.acquire();
+        Arena arena = arenas.acquire(kit);
         if (arena == null) {
             a.sendMessage(plugin.message("no-arena"));
             b.sendMessage(plugin.message("no-arena"));
