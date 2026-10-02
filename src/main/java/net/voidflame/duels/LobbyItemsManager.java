@@ -234,12 +234,6 @@ public final class LobbyItemsManager implements Listener {
         plugin.partyManager().queue(p.getUniqueId(),mode);p.closeInventory();
     }
 
-    private void showMembers(Player p){
-        PartyManager.Party party=plugin.partyManager().partyOf(p.getUniqueId());
-        if(party==null){p.sendMessage(plugin.message("party-not-in"));return;}
-        p.sendMessage(ChatColor.AQUA+"Party members: "+party.members().stream().map(id->{Player x=Bukkit.getPlayer(id);return x==null?Bukkit.getOfflinePlayer(id).getName():x.getName();}).filter(java.util.Objects::nonNull).reduce((a,b)->a+", "+b).orElse("-"));
-    }
-
     @EventHandler public void onDrop(PlayerDropItemEvent e){if(is(e.getItemDrop().getItemStack()))e.setCancelled(true);}
     @EventHandler public void onDrag(InventoryDragEvent e){if(e.getWhoClicked() instanceof Player p&&e.getRawSlots().stream().anyMatch(s->s<9)&&is(e.getOldCursor()))e.setCancelled(true);}
 
