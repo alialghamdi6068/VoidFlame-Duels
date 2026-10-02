@@ -31,14 +31,14 @@ public final class DuelMenu implements Listener {
             int row = slot / 9, col = slot % 9;
             if (row == 0 || row == 2 || col == 0 || col == 8) inv.setItem(slot, border.clone());
         }
-        for (int slot : new int[]{1,2,3,5,6,7,46,48,50,52}) inv.setItem(slot, accent.clone());
+        for (int slot : new int[]{1,2,3,5,6,7,19,21,23,25}) inv.setItem(slot, accent.clone());
 
         inv.setItem(4, item(Material.NETHER_STAR, color("&d&lQUEUE"),
                 color("&7Choose your kit and queue mode."),
                 color("&fLeft-click &8» &aUnranked"),
                 color("&fRight-click &8» &dRanked")));
 
-        int[] fallbackSlots = {19,21,23,25,28,30,32,34};
+        int[] fallbackSlots = {10,11,12,13,14,15};
         int fallbackIndex = 0;
         for (KitType kit : KitType.values()) {
             if (!isKitEnabled(kit)) continue;
@@ -77,8 +77,8 @@ public final class DuelMenu implements Listener {
             inv.setItem(slot, stack);
         }
 
-        inv.setItem(49, item(Material.ARROW, "&7&lBack", "&7Return to the main menu."));
-        inv.setItem(51, item(Material.BARRIER, "&c&lClose", "&7Close this menu."));
+        inv.setItem(18, item(Material.ARROW, "&7&lBack", "&7Return to the main menu."));
+        inv.setItem(26, item(Material.BARRIER, "&c&lClose", "&7Close this menu."));
         player.openInventory(inv);
     }
 
@@ -88,8 +88,8 @@ public final class DuelMenu implements Listener {
         String title = color(plugin.getConfig().getString("gui.title", "&8VoidFlame &7• &fQueue"));
         if (!e.getView().getTitle().equals(title)) return;
         e.setCancelled(true);
-        if (e.getRawSlot() == 51) { p.closeInventory(); return; }
-        if (e.getRawSlot() == 49) { p.closeInventory(); return; }
+        if (e.getRawSlot() == 26) { p.closeInventory(); return; }
+        if (e.getRawSlot() == 18) { p.closeInventory(); return; }
 
         for (KitType kit : KitType.values()) {
             if (!isKitEnabled(kit)) continue;
