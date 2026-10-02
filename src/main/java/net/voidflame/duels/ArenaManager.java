@@ -28,10 +28,14 @@ public final class ArenaManager {
         provider = registration.getProvider();
     }
 
-    public synchronized Arena acquire() {
+    public synchronized Arena acquire() { return acquire(null); }
+
+    public synchronized Arena acquire(KitType kit) {
         ensureConnected();
         if (provider == null) return null;
-        Optional<ArenaService.ArenaHandle> result = provider.acquireHandle();
+        Optional<ArenaService.ArenaHandle> result = kit == null
+                ? provider.acquireHandle()
+                : provider.acquireHandleForKit(kit.name().toLowerCase(java.util.Locale.ROOT));
         if (result.isEmpty()) return null;
         ArenaService.ArenaHandle handle = result.get();
         if (handle.spawnA() == null || handle.spawnB() == null) return null;
