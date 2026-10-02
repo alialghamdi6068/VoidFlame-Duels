@@ -1,5 +1,6 @@
 package net.voidflame.duels;
 
+import net.voidflame.core.api.KitService;
 import net.voidflame.core.storage.PlayerProfile;
 import net.voidflame.core.storage.PlayerProfileService;
 import org.bukkit.Bukkit;
@@ -21,6 +22,7 @@ public final class QueueManager implements Listener {
     private final Map<UUID, QueueEntry> playerQueues = new ConcurrentHashMap<>();
     private final Map<UUID, Double> eloCache = new ConcurrentHashMap<>();
     private PlayerProfileService profiles;
+    private KitService kits;
 
     public QueueManager(VoidFlameDuelsPlugin plugin) {
         this.plugin = plugin;
@@ -28,6 +30,8 @@ public final class QueueManager implements Listener {
         RegisteredServiceProvider<PlayerProfileService> registration =
                 Bukkit.getServicesManager().getRegistration(PlayerProfileService.class);
         if (registration != null) profiles = registration.getProvider();
+        RegisteredServiceProvider<KitService> kitRegistration = Bukkit.getServicesManager().getRegistration(KitService.class);
+        if (kitRegistration != null) kits = kitRegistration.getProvider();
     }
 
     public synchronized boolean join(Player player, KitType kit) {
@@ -37,6 +41,7 @@ public final class QueueManager implements Listener {
     public synchronized boolean join(Player player, KitType kit, boolean ranked) {
         UUID id = player.getUniqueId();
         if (!player.isOnline() || playerQueues.containsKey(id) || plugin.matchManager().isInMatch(id)) return false;
+        if (kits != null && !kits.isEnabled(kit.name().toLowerCase(Locale.ROOT))) return false;
         if (ranked && !plugin.getConfig().getBoolean("queue.ranked.enabled", true)) return false;
 
         double elo = eloCache.getOrDefault(id, plugin.getConfig().getDouble("queue.ranked.default-elo", 1000.0));
@@ -79,6 +84,7 @@ public final class QueueManager implements Listener {
     }
 
     public synchronized QueueEntry pollEntry(KitType kit, boolean ranked) {
+        if (kits != null && !kits.isEnabled(kit.name().toLowerCase(Locale.ROOT))) return null;
         LinkedHashMap<UUID, QueueEntry> queue = queues.get(kit);
         if (queue == null || queue.isEmpty()) return null;
 
