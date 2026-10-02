@@ -10,6 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -101,6 +102,16 @@ public final class LobbyItemsManager implements Listener {
         openTargetKit(p,target);
     }
 
+    @EventHandler public void onLeftClickPlayer(EntityDamageByEntityEvent e) {
+        if (!(e.getDamager() instanceof Player p) || !(e.getEntity() instanceof Player target)) return;
+        if (p.equals(target)) return;
+        if (plugin.matchManager().isInMatch(p.getUniqueId()) || plugin.matchManager().isInMatch(target.getUniqueId())) return;
+        ItemStack held = p.getInventory().getItemInMainHand();
+        if (!isType(held, "duel")) return;
+        e.setCancelled(true);
+        openTargetKit(p, target);
+    }
+
     private void openSelfKit(Player p){openKitMenu(p,DUEL_MENU,null);}
     private void openTargetKit(Player p,Player target){targetByViewer.put(p.getUniqueId(),target.getUniqueId());openKitMenu(p,TARGET_PREFIX+target.getName(),target.getUniqueId());}
 
@@ -181,10 +192,11 @@ public final class LobbyItemsManager implements Listener {
         if(!(e.getWhoClicked() instanceof Player p))return;
         String title=e.getView().getTitle();
         if(title.equals(DUEL_MENU)||title.startsWith(TARGET_PREFIX)||title.equals(PARTY_MENU)||title.equals(PARTY_GUI)){
-            e.setCancelled(true); int s=e.getRawSlot(); if(s<0||s>=27)return;
-            if(s==26){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
-            if(s==18){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
+            e.setCancelled(true);
+            int s=e.getRawSlot();
+            if(s<0)return;
             if(title.equals(PARTY_GUI)){
+                if(s>=54)return;
                 switch(s){
                     case 45 -> startParty(p,PartyMode.ONE_V_ONE);
                     case 47 -> startParty(p,PartyMode.TWO_V_TWO);
@@ -196,6 +208,9 @@ public final class LobbyItemsManager implements Listener {
                 }
                 return;
             }
+            if(s>=27)return;
+            if(s==26){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
+            if(s==18){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
             int[] slots={10,11,12,13,14,15,16,19};
             for(int i=0;i<slots.length&&i<KitType.values().length;i++) if(s==slots[i]){
                 KitType kit=KitType.values()[i];
