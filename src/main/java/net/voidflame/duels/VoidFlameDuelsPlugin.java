@@ -27,6 +27,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     private CombatTagManager combatTagManager;
     private MatchExploitGuard matchExploitGuard;
     private FfaManager ffaManager;
+    private DuelsAdminMenu duelsAdminMenu;
 
     @Override
     public void onEnable() {
@@ -63,6 +64,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         matchExploitGuard = new MatchExploitGuard(this);
         ffaManager = new FfaManager(this);
         settingsMenu = new SettingsMenu(this);
+        duelsAdminMenu = new DuelsAdminMenu(this);
 
         coreServices.register(QueueManager.class, queueManager);
         coreServices.register(MatchManager.class, matchManager);
@@ -79,6 +81,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(advancedFeatures, this);
         getServer().getPluginManager().registerEvents(lobbyItemsManager, this);
         getServer().getPluginManager().registerEvents(settingsMenu, this);
+        getServer().getPluginManager().registerEvents(duelsAdminMenu, this);
         getServer().getPluginManager().registerEvents(combatTagManager, this);
         getServer().getPluginManager().registerEvents(matchExploitGuard, this);
         getServer().getPluginManager().registerEvents(ffaManager, this);
@@ -99,6 +102,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         register("accept", duelCommand);
         register("deny", duelCommand);
         register("leave", duelCommand);
+        if (getCommand("duelsadmin") != null) getCommand("duelsadmin").setExecutor((sender, command, label, args) -> { if (sender instanceof Player p && p.hasPermission("voidflame.duels.admin")) duelsAdminMenu.open(p); return true; });
 
         AdvancedCommand advancedCommand = new AdvancedCommand(this);
         getServer().getPluginManager().registerEvents(advancedCommand, this);
