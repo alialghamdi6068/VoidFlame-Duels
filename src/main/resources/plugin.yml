@@ -89,6 +89,10 @@ commands:
     description: Open practice settings.
     usage: /settings
     permission: voidflame.duels.settings
+  duelsadmin:
+    description: Open the VoidFlame Duels administration GUI.
+    usage: /duelsadmin
+    permission: voidflame.duels.admin
   ffa:
     description: Join, leave or inspect Free For All.
     usage: /ffa [kit|leave|stats]
