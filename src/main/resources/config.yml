@@ -120,11 +120,6 @@ gui:
       slot: 14
       display-name: "&d&lSpear & Mace"
       icon: SPEAR
-    spear_mace:
-      enabled: true
-      slot: 14
-      display-name: "&d&lSpear & Mace"
-      icon: SPEAR
     crystal:
       enabled: true
       slot: 15
