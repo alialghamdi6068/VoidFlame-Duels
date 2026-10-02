@@ -111,7 +111,7 @@ public final class LobbyItemsManager implements Listener {
         KitType[] kits=KitType.values();
         for(int i=0;i<Math.min(slots.length,kits.length);i++) {
             KitType k=kits[i];
-            Material icon=switch(k){case SWORD->Material.DIAMOND_SWORD;case AXE->Material.DIAMOND_AXE;case UHC->Material.GOLDEN_APPLE;case MACE->Material.MACE;case SPEAR_MACE->Material.TRIDENT;case CRYSTAL->Material.END_CRYSTAL;case NETHERITE_POT->Material.NETHERITE_HELMET;case SMP->Material.CHEST;};
+            Material icon=switch(k){case SWORD->Material.DIAMOND_SWORD;case AXE->Material.DIAMOND_AXE;case UHC->Material.GOLDEN_APPLE;case MACE->Material.MACE;case SPEAR_MACE->Material.SPEAR;case CRYSTAL->Material.END_CRYSTAL;};
             inv.setItem(slots[i],item(icon,"§d§l"+pretty(k),"§7Click to "+(target==null?"play":"send a duel request")));
         }
         inv.setItem(18,item(Material.ARROW,"§7§lBack"));
