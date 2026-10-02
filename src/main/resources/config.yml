@@ -120,21 +120,16 @@ gui:
       slot: 14
       display-name: "&d&lSpear & Mace"
       icon: SPEAR
-    smp:
+    spear_mace:
       enabled: true
-      slot: 15
-      display-name: "&d&lSMP"
-      icon: NETHERITE_SWORD
+      slot: 14
+      display-name: "&d&lSpear & Mace"
+      icon: SPEAR
     crystal:
       enabled: true
-      slot: 16
+      slot: 15
       display-name: "&d&lCrystal"
       icon: END_CRYSTAL
-    netherite_pot:
-      enabled: true
-      slot: 17
-      display-name: "&d&lNetherite Pot"
-      icon: NETHERITE_HELMET
 
 kits:
   sword:
@@ -203,20 +198,6 @@ kits:
       - {slot: 5, material: ENDER_PEARL, amount: 16}
       - {slot: 6, material: TOTEM_OF_UNDYING, amount: 1}
     offhand: TOTEM_OF_UNDYING
-  netherite_pot:
-    armor: NETHERITE_SET_PROT4
-    items:
-      - {slot: 0, material: NETHERITE_SWORD, amount: 1, enchantments: ["SHARPNESS:5", "UNBREAKING:3"]}
-      - {slot: 1, material: RESPAWN_ANCHOR, amount: 64}
-      - {slot: 2, material: GLOWSTONE, amount: 64}
-      - {slot: 3, material: END_CRYSTAL, amount: 64}
-      - {slot: 4, material: OBSIDIAN, amount: 64}
-      - {slot: 5, material: TOTEM_OF_UNDYING, amount: 1}
-      - {slot: 6, material: GOLDEN_APPLE, amount: 64}
-      - {slot: 7, material: ENCHANTED_GOLDEN_APPLE, amount: 16}
-      - {slot: 8, material: NETHERITE_AXE, amount: 1, enchantments: ["SHARPNESS:5", "UNBREAKING:3"]}
-    offhand: TOTEM_OF_UNDYING
-
 arenas:
   auto-discover-worlds: true
   list: []
