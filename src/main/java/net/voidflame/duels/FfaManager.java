@@ -48,8 +48,13 @@ public final class FfaManager implements Listener {
         if (!plugin.getConfig().getBoolean("features.ffa.enabled", true)) {
             player.sendMessage(plugin.message("ffa-disabled")); return false;
         }
-        if (sessions.containsKey(player.getUniqueId())) return true;
-        if (plugin.matchManager().isInMatch(player.getUniqueId())) {
+        UUID id = player.getUniqueId();
+        if (sessions.containsKey(id)) return true;
+        if (plugin.matchManager().isInMatch(id)) {
+            player.sendMessage(plugin.message("already-in-match")); return false;
+        }
+        if (plugin.queueManager().isQueued(id) || plugin.spectatorManager().isSpectating(id)
+                || plugin.partyManager().partyOf(id) != null) {
             player.sendMessage(plugin.message("already-in-match")); return false;
         }
         World world = Bukkit.getWorld(plugin.getConfig().getString("features.ffa.world", "ffa"));
@@ -65,7 +70,7 @@ public final class FfaManager implements Listener {
         PlayerSnapshot snapshot = PlayerSnapshot.capture(player);
         Stats stats = loadStats(player.getUniqueId());
         Session session = new Session(snapshot, kit, stats.kills, stats.deaths, stats.streak);
-        sessions.put(player.getUniqueId(), session);
+        sessions.put(id, session);
 
         player.closeInventory();
         player.setGameMode(GameMode.SURVIVAL);
@@ -162,8 +167,7 @@ public final class FfaManager implements Listener {
         if (session == null) return;
         World world = Bukkit.getWorld(plugin.getConfig().getString("features.ffa.world", "ffa"));
         if (world == null) return;
-        Location spawn = world.getSpawnLocation();
-        event.setRespawnLocation(spawn);
+        event.setRespawnLocation(world.getSpawnLocation());
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = event.getPlayer();
             if (!sessions.containsKey(player.getUniqueId())) return;
@@ -178,9 +182,15 @@ public final class FfaManager implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        Session session = sessions.remove(event.getPlayer().getUniqueId());
-        lastKiller.remove(event.getPlayer().getUniqueId());
-        if (session != null) persist(event.getPlayer().getUniqueId(), session);
+        UUID id = event.getPlayer().getUniqueId();
+        Session session = sessions.remove(id);
+        lastKiller.remove(id);
+        if (session != null) {
+            // Never persist the temporary FFA kit as the player's real inventory.
+            // Restore before the disconnect is saved by Minecraft.
+            session.snapshot.restore(event.getPlayer());
+            persist(id, session);
+        }
     }
 
     private String normalizeKit(String raw) {
