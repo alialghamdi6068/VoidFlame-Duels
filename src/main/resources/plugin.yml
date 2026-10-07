@@ -6,7 +6,8 @@ author: VoidFlame
 website: https://github.com/alialghamdi6068/VoidFlame-Duels
 api-version: '26.2'
 load: POSTWORLD
-depend: [VoidFlame-Core, VoidFlame-Arenas, VoidFlame-Kits]
+depend: [VoidFlame-Core]
+softdepend: [VoidFlame-Arenas, VoidFlame-Kits]
 
 commands:
   duel:
