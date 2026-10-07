@@ -89,7 +89,9 @@ public final class MatchManager implements Listener {
                 || isDisconnected(a.getUniqueId()) || isDisconnected(b.getUniqueId())
                 || queues.isQueued(a.getUniqueId()) || queues.isQueued(b.getUniqueId())
                 || plugin.spectatorManager().isSpectating(a.getUniqueId())
-                || plugin.spectatorManager().isSpectating(b.getUniqueId())) return false;
+                || plugin.spectatorManager().isSpectating(b.getUniqueId())
+                || plugin.ffaManager().isInFfa(a.getUniqueId())
+                || plugin.ffaManager().isInFfa(b.getUniqueId())) return false;
 
         Arena arena = arenas.acquire(kit);
         if (arena == null) {
@@ -121,6 +123,7 @@ public final class MatchManager implements Listener {
         List<Player> participants = plugin.partyManager().onlineMembers(leader).stream()
                 .filter(p -> !isInMatch(p.getUniqueId()))
                 .filter(p -> !plugin.spectatorManager().isSpectating(p.getUniqueId()))
+                .filter(p -> !plugin.ffaManager().isInFfa(p.getUniqueId()))
                 .toList();
         int required = switch (mode) {
             case ONE_V_ONE -> 2;
@@ -403,6 +406,10 @@ public final class MatchManager implements Listener {
         UUID id = event.getPlayer().getUniqueId();
         queues.leave(id);
 
+        if (plugin.ffaManager().isInFfa(id)) {
+            plugin.ffaManager().leave(event.getPlayer());
+        }
+
         PartyMatch partyMatch = partyMatches.get(id);
         if (partyMatch != null && !partyMatch.finished()) {
             partyMatch.handleQuit(id);
@@ -443,7 +450,10 @@ public final class MatchManager implements Listener {
     }
 
     public void shutdown() {
-        matches.values().stream().distinct().toList().forEach(m -> m.finish(null));
+        Map<Match, Boolean> all = new IdentityHashMap<>();
+        matches.values().forEach(m -> all.put(m, Boolean.TRUE));
+        disconnected.values().forEach(m -> all.put(m, Boolean.TRUE));
+        all.keySet().forEach(m -> m.finish(null));
         partyMatches.values().stream().distinct().toList().forEach(m -> m.finish(null));
         matches.clear();
         disconnected.clear();
