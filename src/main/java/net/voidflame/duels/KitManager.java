@@ -3,18 +3,24 @@ package net.voidflame.duels;
 import net.voidflame.core.api.KitService;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.CrossbowMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.block.ShulkerBox;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
+import org.bukkit.enchantments.Enchantment;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public final class KitManager {
     private final VoidFlameDuelsPlugin plugin;
@@ -32,7 +38,24 @@ public final class KitManager {
         if (externalKits != null && externalKits.isEnabled(id)) {
             return externalKits.apply(player, id);
         }
-        return applyFromConfig(player, kit);
+
+        ConfigurationSection root = plugin.getConfig().getConfigurationSection("kits." + id);
+        if (root == null) return false;
+        player.getInventory().clear();
+        player.getInventory().setArmorContents(new ItemStack[4]);
+        player.getInventory().setItemInOffHand(new ItemStack(Material.AIR));
+        player.setItemOnCursor(new ItemStack(Material.AIR));
+
+        ConfigurationSection items = root.getConfigurationSection("items");
+        if (items == null) return false;
+        for (String key : items.getKeys(false)) {
+            int slot;
+            try { slot = Integer.parseInt(key); } catch (NumberFormatException ignored) { continue; }
+            if (slot < 0 || slot > 40) continue;
+            ItemStack item = readItem(items.getConfigurationSection(key));
+            if (item != null) setSlot(player, slot, item);
+        }
+        return true;
     }
 
     public boolean applyBase(Player player, KitType kit) {
@@ -44,121 +67,99 @@ public final class KitManager {
         if (externalKits != null) {
             return externalKits.openEditor(player, kit.name().toLowerCase(Locale.ROOT), "default");
         }
-        // A local editor is intentionally not faked: without a persistence contract,
-        // silently opening a non-saving GUI would be worse than reporting unavailable.
         return false;
     }
 
-    private boolean applyFromConfig(Player player, KitType kit) {
-        String path = "kits." + kit.name().toLowerCase(Locale.ROOT);
-        ConfigurationSection section = plugin.getConfig().getConfigurationSection(path);
-        if (section == null) return false;
+    private ItemStack readItem(ConfigurationSection section) {
+        if (section == null) return null;
+        String materialName = section.getString("material", "AIR");
+        Material material = section.getBoolean("golden-head", false)
+                ? Material.PLAYER_HEAD : Material.matchMaterial(materialName);
+        if (material == null || material == Material.AIR) return null;
 
-        player.getInventory().clear();
-        player.getInventory().setArmorContents(new ItemStack[4]);
-        player.getInventory().setItemInOffHand(null);
+        int amount = Math.max(1, Math.min(section.getInt("amount", 1), material.getMaxStackSize()));
+        ItemStack item = new ItemStack(material, amount);
+        ItemMeta meta = item.getItemMeta();
 
-        String armor = section.getString("armor", "");
-        if (armor != null && !armor.isBlank()) {
-            ItemStack[] armorContents = buildArmor(armor);
-            player.getInventory().setArmorContents(armorContents);
+        if (meta != null && section.getBoolean("golden-head", false)) {
+            meta.setDisplayName("Golden Head");
+            item.setItemMeta(meta);
         }
 
-        List<Map<?, ?>> items = section.getMapList("items");
-        for (Map<?, ?> raw : items) {
-            int slot = number(raw.get("slot"), -1);
-            String materialName = string(raw.get("material"));
-            if (slot < 0 || slot >= player.getInventory().getSize() || materialName == null) continue;
-            Material material;
-            try {
-                material = Material.valueOf(materialName.toUpperCase(Locale.ROOT));
-            } catch (IllegalArgumentException ex) {
-                plugin.getLogger().warning("Invalid kit material '" + materialName + "' in " + path);
-                continue;
-            }
-            int amount = Math.max(1, Math.min(material.getMaxStackSize(), number(raw.get("amount"), 1)));
-            ItemStack item = new ItemStack(material, amount);
-            applyEnchantments(item, raw.get("enchantments"));
-            applyPotion(item, raw.get("potion"));
-            player.getInventory().setItem(slot, item);
-        }
-
-        String offhand = section.getString("offhand");
-        if (offhand != null && !offhand.isBlank()) {
-            try {
-                player.getInventory().setItemInOffHand(new ItemStack(Material.valueOf(offhand.toUpperCase(Locale.ROOT))));
-            } catch (IllegalArgumentException ex) {
-                plugin.getLogger().warning("Invalid offhand material '" + offhand + "' in " + path);
-            }
-        }
-
-        player.updateInventory();
-        return true;
+        applyPotion(item, section.getString("potion"));
+        applyCustomPotionEffect(item, section.getString("custom-potion-effect"),
+                section.getInt("custom-potion-duration-ticks", 0));
+        applyChargedProjectile(item, section.getConfigurationSection("charged-projectile"));
+        applyEnchantments(item, section.getConfigurationSection("enchants"));
+        applyShulkerContents(item, section.getConfigurationSection("contents"));
+        return item;
     }
 
-    private ItemStack[] buildArmor(String value) {
-        Material material;
-        int protection = 0;
-        String normalized = value.toUpperCase(Locale.ROOT);
-        if (normalized.startsWith("DIAMOND_SET")) material = Material.DIAMOND_HELMET;
-        else if (normalized.startsWith("NETHERITE_SET")) material = Material.NETHERITE_HELMET;
-        else return new ItemStack[4];
-
-        int marker = normalized.indexOf("PROT");
-        if (marker >= 0) {
-            try { protection = Integer.parseInt(normalized.substring(marker + 4)); }
-            catch (NumberFormatException ignored) {}
-        }
-
-        Material[] pieces = {
-                material,
-                material == Material.DIAMOND_HELMET ? Material.DIAMOND_CHESTPLATE : Material.NETHERITE_CHESTPLATE,
-                material == Material.DIAMOND_HELMET ? Material.DIAMOND_LEGGINGS : Material.NETHERITE_LEGGINGS,
-                material == Material.DIAMOND_HELMET ? Material.DIAMOND_BOOTS : Material.NETHERITE_BOOTS
-        };
-        ItemStack[] result = new ItemStack[4];
-        for (int i = 0; i < pieces.length; i++) {
-            result[i] = new ItemStack(pieces[i]);
-            if (protection > 0) {
-                var enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft("protection"));
-                if (enchantment != null) result[i].addUnsafeEnchantment(enchantment, protection);
-            }
-        }
-        return result;
-    }
-
-    private void applyEnchantments(ItemStack item, Object raw) {
-        if (!(raw instanceof List<?> list)) return;
-        for (Object value : list) {
-            if (!(value instanceof String spec)) continue;
-            String[] parts = spec.split(":", 2);
-            if (parts.length != 2) continue;
-            try {
-                int level = Integer.parseInt(parts[1]);
-                var enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(parts[0].toLowerCase(Locale.ROOT)));
-                if (enchantment != null) item.addUnsafeEnchantment(enchantment, Math.max(1, level));
-            } catch (NumberFormatException ignored) {}
-        }
-    }
-
-    private void applyPotion(ItemStack item, Object raw) {
-        if (!(raw instanceof String value) || !(item.getItemMeta() instanceof PotionMeta meta)) return;
+    private void applyPotion(ItemStack item, String potionName) {
+        if (potionName == null || !(item.getItemMeta() instanceof PotionMeta meta)) return;
         try {
-            PotionType type = PotionType.valueOf(value.toUpperCase(Locale.ROOT));
-            meta.setBasePotionType(type);
+            meta.setBasePotionType(PotionType.valueOf(potionName.toUpperCase(Locale.ROOT)));
             item.setItemMeta(meta);
         } catch (IllegalArgumentException ignored) {
-            plugin.getLogger().warning("Invalid potion type '" + value + "'.");
+            plugin.getLogger().warning("Invalid potion type '" + potionName + "'.");
         }
     }
 
-    private static String string(Object value) {
-        return value == null ? null : String.valueOf(value);
+    private void applyCustomPotionEffect(ItemStack item, String effectName, int durationTicks) {
+        if (effectName == null || durationTicks <= 0 || !(item.getItemMeta() instanceof PotionMeta meta)) return;
+        PotionEffectType type = PotionEffectType.getByName(effectName.toUpperCase(Locale.ROOT));
+        if (type == null) return;
+        meta.addCustomEffect(new PotionEffect(type, durationTicks, 0, false, true, true), true);
+        item.setItemMeta(meta);
     }
 
-    private static int number(Object value, int fallback) {
-        if (value instanceof Number n) return n.intValue();
-        try { return value == null ? fallback : Integer.parseInt(String.valueOf(value)); }
-        catch (NumberFormatException ignored) { return fallback; }
+    private void applyChargedProjectile(ItemStack item, ConfigurationSection section) {
+        if (section == null || !(item.getItemMeta() instanceof CrossbowMeta meta)) return;
+        ItemStack projectile = readItem(section);
+        if (projectile == null) return;
+        meta.setChargedProjectiles(List.of(projectile));
+        item.setItemMeta(meta);
+    }
+
+    private void applyEnchantments(ItemStack item, ConfigurationSection enchants) {
+        if (enchants == null) return;
+        for (String name : enchants.getKeys(false)) {
+            Enchantment enchantment = Enchantment.getByName(name.toUpperCase(Locale.ROOT));
+            if (enchantment == null) {
+                enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(name.toLowerCase(Locale.ROOT)));
+            }
+            if (enchantment != null) {
+                item.addUnsafeEnchantment(enchantment, Math.max(1, enchants.getInt(name, 1)));
+            }
+        }
+    }
+
+    private void applyShulkerContents(ItemStack item, ConfigurationSection contents) {
+        if (contents == null || !(item.getItemMeta() instanceof BlockStateMeta meta)) return;
+        if (!(meta.getBlockState() instanceof ShulkerBox shulker)) return;
+        for (String key : contents.getKeys(false)) {
+            int slot;
+            try { slot = Integer.parseInt(key); } catch (NumberFormatException ignored) { continue; }
+            if (slot < 0 || slot >= shulker.getInventory().getSize()) continue;
+            ItemStack nested = readItem(contents.getConfigurationSection(key));
+            if (nested != null) shulker.getInventory().setItem(slot, nested);
+        }
+        meta.setBlockState(shulker);
+        item.setItemMeta(meta);
+    }
+
+    private void setSlot(Player player, int slot, ItemStack item) {
+        if (slot < 36) {
+            player.getInventory().setItem(slot, item);
+            return;
+        }
+        switch (slot) {
+            case 36 -> player.getInventory().setBoots(item);
+            case 37 -> player.getInventory().setLeggings(item);
+            case 38 -> player.getInventory().setChestplate(item);
+            case 39 -> player.getInventory().setHelmet(item);
+            case 40 -> player.getInventory().setItemInOffHand(item);
+            default -> { }
+        }
     }
 }
