@@ -162,8 +162,8 @@ gui:
       "4": {material: GOLDEN_APPLE, amount: 64}
       "5": {material: CROSSBOW, amount: 1, enchants: {MULTISHOT: 1, QUICK_CHARGE: 3, DURABILITY: 3}, charged-projectile: {material: TIPPED_ARROW, amount: 1, custom-potion-effect: SLOW_FALLING, custom-potion-duration-ticks: 600}}
       "6": {material: GLOWSTONE, amount: 64}
-      "7": {material: RESPAWN_ANCHOR, amount: 64}
-      "8": {material: TOTEM_OF_UNDYING, amount: 1}
+      "7": {material: TOTEM_OF_UNDYING, amount: 1}
+      "8": {material: SHIELD, amount: 1, enchants: {MENDING: 1, DURABILITY: 3}}
       "9": {material: TOTEM_OF_UNDYING, amount: 1}
       "10": {material: TOTEM_OF_UNDYING, amount: 1}
       "11": {material: TOTEM_OF_UNDYING, amount: 1}
