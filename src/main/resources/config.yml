@@ -126,19 +126,18 @@ gui:
       "6": {material: LAVA_BUCKET, amount: 1}
       "7": {material: CROSSBOW, amount: 1, enchants: {PIERCING: 1}, charged-projectile: {material: ARROW, amount: 1}}
       "8": {material: COBWEB, amount: 8}
-      "18": {material: DIAMOND_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3}}
-      "19": {material: DIAMOND_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 2}}
-      "20": {material: DIAMOND_LEGGINGS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 2}}
-      "21": {material: DIAMOND_BOOTS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3}}
-      "26": {material: SHIELD, amount: 1}
-      "27": {material: WATER_BUCKET, amount: 1}
-      "28": {material: WATER_BUCKET, amount: 1}
-      "29": {material: WATER_BUCKET, amount: 1}
-      "30": {material: ARROW, amount: 10}
-      "31": {material: LAVA_BUCKET, amount: 1}
-      "35": {material: BOW, amount: 1, enchants: {ARROW_DAMAGE: 1}}
-      "40": {material: DIAMOND_PICKAXE, amount: 1, enchants: {EFFICIENCY: 3}}
-      "44": {material: OAK_PLANKS, amount: 64}
+      "9": {material: WATER_BUCKET, amount: 1}
+      "10": {material: WATER_BUCKET, amount: 1}
+      "11": {material: WATER_BUCKET, amount: 1}
+      "12": {material: ARROW, amount: 10}
+      "13": {material: LAVA_BUCKET, amount: 1}
+      "14": {material: BOW, amount: 1, enchants: {ARROW_DAMAGE: 1}}
+      "15": {material: DIAMOND_PICKAXE, amount: 1, enchants: {EFFICIENCY: 3}}
+      "16": {material: OAK_PLANKS, amount: 64}
+      "36": {material: DIAMOND_BOOTS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3}}
+      "37": {material: DIAMOND_LEGGINGS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 2}}
+      "38": {material: DIAMOND_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 2}}
+      "39": {material: DIAMOND_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3}}
     offhand: {material: SHIELD, amount: 1}
 
   mace:
