@@ -11,6 +11,8 @@ public enum KitType {
                 .replace('&', ' ')
                 .replace('-', '_')
                 .replace(' ', '_');
+        if (normalized.equals("POT") || normalized.equals("NETHERITE_OP") || normalized.equals("NETH_OP")) normalized = "NETHERITE_POT";
+        if (normalized.equals("SPEAR_AND_MACE")) normalized = "SPEAR_MACE";
         return valueOf(normalized.replaceAll("_+", "_"));
     }
 }
