@@ -9,7 +9,6 @@
 settings:
   language: en
   queue-timeout-seconds: 300
-  # Queue timeout keeps stale entries from accumulating.
   countdown-seconds: 5
   match-time-limit-seconds: 1800
   disconnect-grace-seconds: 30
@@ -103,7 +102,6 @@ gui:
       "38": {material: DIAMOND_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, DURABILITY: 3}}
       "39": {material: DIAMOND_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, DURABILITY: 3}}
 
-
   axe:
     items:
       "0": {material: DIAMOND_SWORD, amount: 1}
@@ -120,28 +118,28 @@ gui:
   uhc:
     items:
       "0": {material: DIAMOND_SWORD, amount: 1, enchants: {DAMAGE_ALL: 3}}
-      "1": {material: BOW, amount: 1, enchants: {ARROW_DAMAGE: 1}}
-      "2": {material: LAVA_BUCKET, amount: 1}
-      "3": {material: DIAMOND_AXE, amount: 1, enchants: {DAMAGE_ALL: 3}}
-      "4": {material: WATER_BUCKET, amount: 1}
-      "5": {material: STRIPPED_OAK_LOG, amount: 64}
-      "6": {material: CROSSBOW, amount: 1, enchants: {PIERCING: 1}}
-      "7": {material: GOLDEN_APPLE, amount: 8}
+      "1": {material: DIAMOND_AXE, amount: 1, enchants: {EFFICIENCY: 3}}
+      "2": {material: GOLDEN_APPLE, amount: 8}
+      "3": {material: PLAYER_HEAD, amount: 2, golden-head: true}
+      "4": {material: OAK_PLANKS, amount: 64}
+      "5": {material: WATER_BUCKET, amount: 1}
+      "6": {material: LAVA_BUCKET, amount: 1}
+      "7": {material: CROSSBOW, amount: 1, enchants: {PIERCING: 1}, charged-projectile: {material: ARROW, amount: 1}}
       "8": {material: COBWEB, amount: 8}
-      "9": {material: WATER_BUCKET, amount: 1}
-      "10": {material: WATER_BUCKET, amount: 1}
-      "11": {material: WATER_BUCKET, amount: 1}
-      "12": {material: LAVA_BUCKET, amount: 1}
-      "13": {material: LAVA_BUCKET, amount: 1}
-      "14": {material: PLAYER_HEAD, amount: 1, golden-head: true}
-      "15": {material: PLAYER_HEAD, amount: 1, golden-head: true}
-      "16": {material: ARROW, amount: 12}
-      "17": {material: STRIPPED_OAK_LOG, amount: 64}
-      "18": {material: DIAMOND_PICKAXE, amount: 1}
-      "36": {material: DIAMOND_BOOTS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3}}
-      "37": {material: DIAMOND_LEGGINGS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3}}
-      "38": {material: DIAMOND_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3}}
-      "39": {material: DIAMOND_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3}}
+      "18": {material: DIAMOND_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3}}
+      "19": {material: DIAMOND_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 2}}
+      "20": {material: DIAMOND_LEGGINGS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 2}}
+      "21": {material: DIAMOND_BOOTS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3}}
+      "26": {material: SHIELD, amount: 1}
+      "27": {material: WATER_BUCKET, amount: 1}
+      "28": {material: WATER_BUCKET, amount: 1}
+      "29": {material: WATER_BUCKET, amount: 1}
+      "30": {material: ARROW, amount: 10}
+      "31": {material: LAVA_BUCKET, amount: 1}
+      "35": {material: BOW, amount: 1, enchants: {ARROW_DAMAGE: 1}}
+      "40": {material: DIAMOND_PICKAXE, amount: 1, enchants: {EFFICIENCY: 3}}
+      "44": {material: OAK_PLANKS, amount: 64}
+    offhand: {material: SHIELD, amount: 1}
 
   mace:
     items:
@@ -154,61 +152,6 @@ gui:
       "6": {material: MACE, amount: 1, enchants: {BREACH: 4, DURABILITY: 3}}
       "7": {material: MACE, amount: 1, enchants: {DENSITY: 5, WIND_BURST: 1, DURABILITY: 3}}
       "8": {material: SHIELD, amount: 1, enchants: {MENDING: 1, DURABILITY: 3}}
-      "9": {material: WIND_CHARGE, amount: 64}
-      "10": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "11": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "12": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "13": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "14": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "15": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "16": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "17": {material: GOLDEN_APPLE, amount: 64}
-      "18": {material: ENDER_PEARL, amount: 16}
-      "19": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "20": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "21": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "22": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "23": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "24": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "25": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "26": {material: PURPLE_SHULKER_BOX, amount: 1, contents:
-            "0": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-            "1": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-            "2": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-            "3": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-            "4": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-            "5": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-            "6": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-            "7": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-            "8": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-            "9": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-            "10": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-            "11": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-            "12": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-            "13": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-            "14": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-            "15": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-            "16": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-            "17": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-            "18": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-            "19": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-            "20": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-            "21": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-            "22": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-            "23": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-            "24": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-            "25": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-            "26": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      }
-      "27": {material: ENDER_PEARL, amount: 16}
-      "28": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "29": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "30": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "31": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "32": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "33": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "34": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "35": {material: TOTEM_OF_UNDYING, amount: 1}
       "36": {material: NETHERITE_BOOTS, amount: 1, enchants: {FEATHER_FALLING: 4, PROTECTION_ENVIRONMENTAL: 4}}
       "37": {material: NETHERITE_LEGGINGS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4}}
       "38": {material: NETHERITE_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4}}
@@ -372,18 +315,7 @@ gui:
 arenas:
   auto-discover-worlds: true
   list: []
-  # Example:
-  # - name: Arena-1
-  #   world: duels
-  #   spawn-a: {x: 0.5, y: 100, z: 0.5, yaw: 90, pitch: 0}
-  #   spawn-b: {x: 20.5, y: 100, z: 0.5, yaw: -90, pitch: 0}
 
-# ================================================================
-# Presentation & gameplay extensions
-# ================================================================
-# Main queue GUI is intentionally 3 rows (27 slots), matching the compact practice layout.
-#
-# Advanced Duels features
 welcome:
   title: "&b&lVOIDFLAME"
   subtitle: "&fWelcome &e<player>&f."
@@ -453,7 +385,6 @@ chat-rate-limit:
   enabled: true
   minimum-interval-ms: 750
 
-# إعدادات التدريب
 training:
   duration-seconds: 30
 
@@ -483,7 +414,6 @@ features:
     item-pickup: true
     hand-swap: false
 
-# متجر العملات — جميع المنتجات والأسعار قابلة للتعديل من هنا.
 shop:
   products:
     - {id: void, name: "[Void]", price: 100, material: NAME_TAG, color: "&b"}
@@ -525,7 +455,6 @@ combat:
     - r
     - reply
   blocked-message: "&cCommands are disabled while fighting."
-
 
 queue:
   ranked:
