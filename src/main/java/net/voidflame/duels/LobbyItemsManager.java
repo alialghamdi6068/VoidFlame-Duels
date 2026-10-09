@@ -143,7 +143,7 @@ public final class LobbyItemsManager implements Listener {
                     "",
                     "§aLeft-click §8» §f"+(target==null?"join unranked queue":"send duel request")));
         }
-        inv.setItem(37,item(Material.ARROW,"§b§lBack","§7Return to the previous menu."));
+        inv.setItem(37,item(Material.ARROW,"§b§lBack","§7Close this menu."));
         inv.setItem(43,item(Material.BARRIER,"§c§lClose","§7Close this menu."));
         p.openInventory(inv);
     }
