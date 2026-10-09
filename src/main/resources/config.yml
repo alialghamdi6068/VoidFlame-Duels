@@ -91,9 +91,67 @@ messages:
 
 gui:
   title: "&8VoidFlame &7• &fQueue"
-  rows: 3
+  rows: 5
   filler-item: GRAY_STAINED_GLASS_PANE
+  accent-item: PURPLE_STAINED_GLASS_PANE
   kits:
+    sword:
+      enabled: true
+      slot: 10
+      icon: DIAMOND_SWORD
+      display-name: "&b&lSWORD"
+    axe:
+      enabled: true
+      slot: 11
+      icon: DIAMOND_AXE
+      display-name: "&6&lAXE"
+    uhc:
+      enabled: true
+      slot: 12
+      icon: GOLDEN_APPLE
+      display-name: "&a&lUHC"
+    mace:
+      enabled: true
+      slot: 13
+      icon: MACE
+      display-name: "&d&lMACE"
+    spear_mace:
+      enabled: true
+      slot: 14
+      icon: TRIDENT
+      display-name: "&3&lSPEAR & MACE"
+    crystal:
+      enabled: true
+      slot: 15
+      icon: END_CRYSTAL
+      display-name: "&5&lCRYSTAL"
+    netherite_pot:
+      enabled: true
+      slot: 16
+      icon: SPLASH_POTION
+      display-name: "&c&lNETHERITE POT"
+    smp:
+      enabled: true
+      slot: 19
+      icon: TOTEM_OF_UNDYING
+      display-name: "&e&lSMP"
+    diamond_smp:
+      enabled: true
+      slot: 20
+      icon: DIAMOND_CHESTPLATE
+      display-name: "&b&lDIAMOND SMP"
+    tnt_minecart_lt:
+      enabled: true
+      slot: 21
+      icon: TNT_MINECART
+      display-name: "&6&lCART LT"
+    tnt_minecart_ht:
+      enabled: true
+      slot: 22
+      icon: TNT_MINECART
+      display-name: "&c&lCART HT"
+
+kits:
   sword:
     items:
       "0": {material: DIAMOND_SWORD, amount: 1, enchants: {DURABILITY: 3}}
