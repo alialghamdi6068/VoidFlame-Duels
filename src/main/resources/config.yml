@@ -279,6 +279,87 @@ gui:
       "38": {material: NETHERITE_CHESTPLATE, amount: 1, enchants: {PROTECTION: 4, MENDING: 1, UNBREAKING: 3}}
       "39": {material: NETHERITE_HELMET, amount: 1, enchants: {PROTECTION: 4, RESPIRATION: 3, AQUA_AFFINITY: 1, MENDING: 1, UNBREAKING: 3}}
       "40": {material: SHIELD, amount: 1, enchants: {MENDING: 1, UNBREAKING: 3}}
+  diamond_smp:
+    # Diamond SMP practice loadout; community-style approximation, not an official extracted inventory.
+    items:
+      "0": {material: DIAMOND_SWORD, amount: 1, enchants: {SHARPNESS: 5, FIRE_ASPECT: 2, SWEEPING_EDGE: 3, UNBREAKING: 3}}
+      "1": {material: DIAMOND_AXE, amount: 1, enchants: {SHARPNESS: 5, EFFICIENCY: 5, UNBREAKING: 3}}
+      "2": {material: ENDER_PEARL, amount: 16}
+      "3": {material: GOLDEN_APPLE, amount: 64}
+      "4": {material: COBWEB, amount: 16}
+      "5": {material: WATER_BUCKET, amount: 1}
+      "6": {material: LAVA_BUCKET, amount: 1}
+      "7": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "8": {material: TOTEM_OF_UNDYING, amount: 1}
+      "9": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "10": {material: SPLASH_POTION, potion: LONG_FIRE_RESISTANCE}
+      "11": {material: EXPERIENCE_BOTTLE, amount: 64}
+      "12": {material: ENDER_PEARL, amount: 16}
+      "13": {material: GOLDEN_APPLE, amount: 64}
+      "14": {material: SHIELD, amount: 1, enchants: {UNBREAKING: 3, MENDING: 1}}
+      "36": {material: DIAMOND_BOOTS, amount: 1, enchants: {PROTECTION: 4, FEATHER_FALLING: 4, UNBREAKING: 3, MENDING: 1}}
+      "37": {material: DIAMOND_LEGGINGS, amount: 1, enchants: {PROTECTION: 4, UNBREAKING: 3, MENDING: 1}}
+      "38": {material: DIAMOND_CHESTPLATE, amount: 1, enchants: {PROTECTION: 4, UNBREAKING: 3, MENDING: 1}}
+      "39": {material: DIAMOND_HELMET, amount: 1, enchants: {PROTECTION: 4, RESPIRATION: 3, AQUA_AFFINITY: 1, UNBREAKING: 3, MENDING: 1}}
+      "40": {material: TOTEM_OF_UNDYING, amount: 1}
+
+  tnt_minecart_lt:
+    # TNT Minecart low-tier practice loadout.
+    items:
+      "0": {material: CROSSBOW, amount: 1, enchants: {QUICK_CHARGE: 3, UNBREAKING: 3}}
+      "1": {material: FIREWORK_ROCKET, amount: 64}
+      "2": {material: TNT_MINECART, amount: 1}
+      "3": {material: ACTIVATOR_RAIL, amount: 16}
+      "4": {material: REDSTONE_BLOCK, amount: 16}
+      "5": {material: FLINT_AND_STEEL, amount: 1, enchants: {UNBREAKING: 3}}
+      "6": {material: ENDER_PEARL, amount: 16}
+      "7": {material: GOLDEN_APPLE, amount: 16}
+      "8": {material: TOTEM_OF_UNDYING, amount: 1}
+      "9": {material: TNT_MINECART, amount: 1}
+      "10": {material: TNT_MINECART, amount: 1}
+      "11": {material: TNT_MINECART, amount: 1}
+      "12": {material: TNT_MINECART, amount: 1}
+      "13": {material: RAIL, amount: 16}
+      "14": {material: BOW, amount: 1, enchants: {POWER: 5, FLAME: 1, UNBREAKING: 3}}
+      "15": {material: ARROW, amount: 64}
+      "36": {material: NETHERITE_BOOTS, amount: 1, enchants: {PROTECTION: 4, FEATHER_FALLING: 4, UNBREAKING: 3}}
+      "37": {material: NETHERITE_LEGGINGS, amount: 1, enchants: {PROTECTION: 4, UNBREAKING: 3}}
+      "38": {material: NETHERITE_CHESTPLATE, amount: 1, enchants: {PROTECTION: 4, UNBREAKING: 3}}
+      "39": {material: NETHERITE_HELMET, amount: 1, enchants: {PROTECTION: 4, UNBREAKING: 3}}
+      "40": {material: TOTEM_OF_UNDYING, amount: 1}
+
+  tnt_minecart_high_tier:
+    # TNT Minecart high-tier practice loadout.
+    items:
+      "0": {material: CROSSBOW, amount: 1, enchants: {MULTISHOT: 1, QUICK_CHARGE: 3, PIERCING: 4, UNBREAKING: 3}}
+      "1": {material: FIREWORK_ROCKET, amount: 64}
+      "2": {material: TNT_MINECART, amount: 1}
+      "3": {material: ACTIVATOR_RAIL, amount: 32}
+      "4": {material: REDSTONE_BLOCK, amount: 32}
+      "5": {material: FLINT_AND_STEEL, amount: 1, enchants: {UNBREAKING: 3, MENDING: 1}}
+      "6": {material: ENDER_PEARL, amount: 16}
+      "7": {material: GOLDEN_APPLE, amount: 64}
+      "8": {material: TOTEM_OF_UNDYING, amount: 1}
+      "9": {material: TNT_MINECART, amount: 1}
+      "10": {material: TNT_MINECART, amount: 1}
+      "11": {material: TNT_MINECART, amount: 1}
+      "12": {material: TNT_MINECART, amount: 1}
+      "13": {material: TNT_MINECART, amount: 1}
+      "14": {material: TNT_MINECART, amount: 1}
+      "15": {material: ACTIVATOR_RAIL, amount: 32}
+      "16": {material: RAIL, amount: 32}
+      "17": {material: BOW, amount: 1, enchants: {POWER: 5, FLAME: 1, UNBREAKING: 3}}
+      "18": {material: ARROW, amount: 64}
+      "19": {material: ENDER_PEARL, amount: 16}
+      "20": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "21": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "22": {material: SPLASH_POTION, potion: LONG_FIRE_RESISTANCE}
+      "36": {material: NETHERITE_BOOTS, amount: 1, enchants: {PROTECTION: 4, FEATHER_FALLING: 4, UNBREAKING: 3, MENDING: 1}}
+      "37": {material: NETHERITE_LEGGINGS, amount: 1, enchants: {PROTECTION: 4, UNBREAKING: 3, MENDING: 1}}
+      "38": {material: NETHERITE_CHESTPLATE, amount: 1, enchants: {PROTECTION: 4, UNBREAKING: 3, MENDING: 1}}
+      "39": {material: NETHERITE_HELMET, amount: 1, enchants: {PROTECTION: 4, RESPIRATION: 3, AQUA_AFFINITY: 1, UNBREAKING: 3, MENDING: 1}}
+      "40": {material: TOTEM_OF_UNDYING, amount: 1}
+
   spear_mace:
     items:
       "0": {material: NETHERITE_SWORD, amount: 1, enchants: {SHARPNESS: 5, DURABILITY: 3}}
