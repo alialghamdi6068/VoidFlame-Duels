@@ -116,17 +116,35 @@ public final class LobbyItemsManager implements Listener {
     private void openTargetKit(Player p,Player target){targetByViewer.put(p.getUniqueId(),target.getUniqueId());openKitMenu(p,TARGET_PREFIX+target.getName(),target.getUniqueId());}
 
     private void openKitMenu(Player p,String title,UUID target) {
-        Inventory inv=Bukkit.createInventory(null,27,title);
+        Inventory inv=Bukkit.createInventory(null,45,title);
         fill(inv);
-        int[] slots={10,11,12,13,14,15,16,19};
+        inv.setItem(4,item(Material.NETHER_STAR,"§d§lCHOOSE A KIT",
+                "§7Select the kit you want to play.",
+                "",
+                "§aClick a kit §8» §fContinue"));
+        int[] slots={10,11,12,13,14,15,16,19,20,21,22};
         KitType[] kits=KitType.values();
         for(int i=0;i<Math.min(slots.length,kits.length);i++) {
             KitType k=kits[i];
-            Material icon=switch(k){case SWORD->Material.DIAMOND_SWORD;case AXE->Material.DIAMOND_AXE;case UHC->Material.GOLDEN_APPLE;case MACE->Material.MACE;case SPEAR_MACE->Material.TRIDENT;case CRYSTAL->Material.END_CRYSTAL;};
-            inv.setItem(slots[i],item(icon,"§d§l"+pretty(k),"§7Click to "+(target==null?"play":"send a duel request")));
+            Material icon=switch(k){
+                case SWORD -> Material.DIAMOND_SWORD;
+                case AXE -> Material.DIAMOND_AXE;
+                case UHC -> Material.GOLDEN_APPLE;
+                case MACE -> Material.MACE;
+                case SPEAR_MACE -> Material.TRIDENT;
+                case CRYSTAL -> Material.END_CRYSTAL;
+                case NETHERITE_POT -> Material.SPLASH_POTION;
+                case SMP -> Material.TOTEM_OF_UNDYING;
+                case DIAMOND_SMP -> Material.DIAMOND_CHESTPLATE;
+                case TNT_MINECART_LT, TNT_MINECART_HT -> Material.TNT_MINECART;
+            };
+            inv.setItem(slots[i],item(icon,"§d§l"+pretty(k),
+                    "§7Kit: §f"+pretty(k),
+                    "",
+                    "§aLeft-click §8» §f"+(target==null?"join unranked queue":"send duel request")));
         }
-        inv.setItem(18,item(Material.ARROW,"§7§lBack"));
-        inv.setItem(26,item(Material.BARRIER,"§c§lClose"));
+        inv.setItem(37,item(Material.ARROW,"§b§lBack","§7Return to the previous menu."));
+        inv.setItem(43,item(Material.BARRIER,"§c§lClose","§7Close this menu."));
         p.openInventory(inv);
     }
 
@@ -208,10 +226,10 @@ public final class LobbyItemsManager implements Listener {
                 }
                 return;
             }
-            if(s>=27)return;
-            if(s==26){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
-            if(s==18){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
-            int[] slots={10,11,12,13,14,15,16,19};
+            if(s>=45)return;
+            if(s==43){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
+            if(s==37){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
+            int[] slots={10,11,12,13,14,15,16,19,20,21,22};
             for(int i=0;i<slots.length&&i<KitType.values().length;i++) if(s==slots[i]){
                 KitType kit=KitType.values()[i];
                 UUID target=targetByViewer.get(p.getUniqueId());
@@ -256,7 +274,18 @@ public final class LobbyItemsManager implements Listener {
     private boolean isType(ItemStack x,String type){if(!is(x))return false;return type.equals(x.getItemMeta().getPersistentDataContainer().get(key,PersistentDataType.STRING));}
     private void mark(ItemStack x,String type){if(x==null||x.getItemMeta()==null)return;ItemMeta m=x.getItemMeta();m.getPersistentDataContainer().set(key,PersistentDataType.STRING,type);x.setItemMeta(m);}
     private ItemStack item(Material m,String name,String... lore){ItemStack x=new ItemStack(m);ItemMeta meta=x.getItemMeta();if(meta!=null){meta.setDisplayName(name);meta.setLore(List.of(lore));x.setItemMeta(meta);}return x;}
-    private void fill(Inventory inv){ItemStack x=item(Material.GRAY_STAINED_GLASS_PANE," ");for(int i=0;i<27;i++)inv.setItem(i,x.clone());}
+    private void fill(Inventory inv){
+        ItemStack border=item(Material.BLACK_STAINED_GLASS_PANE," ");
+        ItemStack accent=item(Material.PURPLE_STAINED_GLASS_PANE," ");
+        for(int slot=0;slot<inv.getSize();slot++){
+            int row=slot/9,col=slot%9;
+            if(row==0||row==inv.getSize()/9-1||col==0||col==8)inv.setItem(slot,border.clone());
+        }
+        for(int col:new int[]{1,2,3,5,6,7}){
+            inv.setItem(col,accent.clone());
+            inv.setItem(inv.getSize()-9+col,accent.clone());
+        }
+    }
     private String pretty(KitType k){return k==KitType.SPEAR_MACE?"Spear & Mace":k.name().replace('_',' ');}
 
     public enum PartyMode {
