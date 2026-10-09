@@ -199,48 +199,42 @@ gui:
 
   netherite_pot:
     items:
-      "0": {material: NETHERITE_SWORD, amount: 1, enchants: {DAMAGE_ALL: 5, SWEEPING_EDGE: 3, DURABILITY: 3}}
+      "0": {material: NETHERITE_SWORD, amount: 1, enchants: {SHARPNESS: 5, SWEEPING_EDGE: 3, DURABILITY: 3}}
       "1": {material: SPLASH_POTION, potion: STRONG_HEALING}
       "2": {material: SPLASH_POTION, potion: STRONG_HEALING}
       "3": {material: SPLASH_POTION, potion: STRONG_HEALING}
       "4": {material: SPLASH_POTION, potion: STRONG_HEALING}
       "5": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "6": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "7": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "8": {material: TOTEM_OF_UNDYING}
-      "9": {material: TOTEM_OF_UNDYING}
-      "10": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "11": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "12": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "13": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "14": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "15": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "16": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "17": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "18": {material: EXPERIENCE_BOTTLE, amount: 64}
-      "19": {material: EXPERIENCE_BOTTLE, amount: 64}
-      "20": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "21": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "22": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "23": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "24": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "25": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "26": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "27": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "28": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "29": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "30": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "31": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "32": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "33": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "34": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "35": {material: SPLASH_POTION, potion: STRONG_HEALING}
-      "36": {material: NETHERITE_BOOTS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, PROTECTION_FIRE: 4, PROTECTION_FALL: 4, PROTECTION_EXPLOSIONS: 4, PROTECTION_PROJECTILE: 4, SOUL_SPEED: 3, DEPTH_STRIDER: 3, SWIFT_SNEAK: 3, DURABILITY: 3, MENDING: 1}}
-      "37": {material: NETHERITE_LEGGINGS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, PROTECTION_FIRE: 4, PROTECTION_EXPLOSIONS: 4, PROTECTION_PROJECTILE: 4, SWIFT_SNEAK: 3, DURABILITY: 3, MENDING: 1}}
-      "38": {material: NETHERITE_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, PROTECTION_FIRE: 4, PROTECTION_EXPLOSIONS: 4, PROTECTION_PROJECTILE: 4, DURABILITY: 3, MENDING: 1}}
-      "39": {material: NETHERITE_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, PROTECTION_FIRE: 4, PROTECTION_EXPLOSIONS: 4, PROTECTION_PROJECTILE: 4, OXYGEN: 3, WATER_WORKER: 1, DURABILITY: 3, MENDING: 1}}
+      "6": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "7": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "8": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "9": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "10": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "11": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "12": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "13": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "14": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "15": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "16": {material: SPLASH_POTION, potion: LONG_FIRE_RESISTANCE}
+      "17": {material: SPLASH_POTION, potion: LONG_FIRE_RESISTANCE}
+      "18": {material: SPLASH_POTION, potion: LONG_FIRE_RESISTANCE}
+      "19": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "20": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "21": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "22": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "23": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "24": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "25": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "26": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "27": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "28": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "29": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "30": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "36": {material: NETHERITE_BOOTS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, FEATHER_FALLING: 4, DURABILITY: 3, MENDING: 1}}
+      "37": {material: NETHERITE_LEGGINGS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, DURABILITY: 3, MENDING: 1}}
+      "38": {material: NETHERITE_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, DURABILITY: 3, MENDING: 1}}
+      "39": {material: NETHERITE_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, DURABILITY: 3, MENDING: 1}}
     offhand: {material: GOLDEN_APPLE, amount: 64}
-
   smp:
     items:
       "0": {material: NETHERITE_SWORD, amount: 1, enchants: {DAMAGE_ALL: 5, DURABILITY: 3, SWEEPING_EDGE: 3, FIRE_ASPECT: 1}}
