@@ -237,28 +237,32 @@ gui:
     offhand: {material: GOLDEN_APPLE, amount: 64}
   smp:
     items:
-      "0": {material: NETHERITE_SWORD, amount: 1, enchants: {DAMAGE_ALL: 5, DURABILITY: 3, SWEEPING_EDGE: 3, FIRE_ASPECT: 1}}
-      "1": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "0": {material: NETHERITE_SWORD, amount: 1, enchants: {DAMAGE_ALL: 5, DURABILITY: 3, SWEEPING_EDGE: 3, FIRE_ASPECT: 2, MENDING: 1}}
+      "1": {material: POTION, potion: STRONG_STRENGTH}
       "2": {material: GOLDEN_APPLE, amount: 64}
       "3": {material: ENDER_PEARL, amount: 16}
-      "4": {material: NETHERITE_AXE, amount: 1, enchants: {DAMAGE_ALL: 5, DURABILITY: 3}}
-      "5": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
-      "6": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
-      "7": {material: SPLASH_POTION, potion: WATER, custom-potion-effect: FIRE_RESISTANCE, custom-potion-duration-ticks: 9600}
+      "4": {material: NETHERITE_AXE, amount: 1, enchants: {DAMAGE_ALL: 5, DIG_SPEED: 5, DURABILITY: 3, MENDING: 1}}
+      "5": {material: POTION, potion: STRONG_STRENGTH}
+      "6": {material: POTION, potion: STRONG_SWIFTNESS}
+      "7": {material: POTION, potion: LONG_FIRE_RESISTANCE}
       "8": {material: TOTEM_OF_UNDYING}
       "9": {material: ENDER_PEARL, amount: 16}
       "10": {material: ENDER_PEARL, amount: 16}
       "11": {material: EXPERIENCE_BOTTLE, amount: 64}
       "12": {material: EXPERIENCE_BOTTLE, amount: 64}
-      "13": {material: NETHERITE_SWORD, amount: 1, enchants: {DAMAGE_ALL: 5, DURABILITY: 3, SWEEPING_EDGE: 3, FIRE_ASPECT: 1, KNOCKBACK: 1}}
-      "14": {material: SPLASH_POTION, potion: WATER, custom-potion-effect: FIRE_RESISTANCE, custom-potion-duration-ticks: 9600}
-      "15": {material: SPLASH_POTION, potion: WATER, custom-potion-effect: FIRE_RESISTANCE, custom-potion-duration-ticks: 9600}
-      "36": {material: NETHERITE_BOOTS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, PROTECTION_FIRE: 4, PROTECTION_FALL: 4, PROTECTION_EXPLOSIONS: 4, PROTECTION_PROJECTILE: 4, SOUL_SPEED: 3, DEPTH_STRIDER: 3, DURABILITY: 3, MENDING: 1}}
-      "37": {material: NETHERITE_LEGGINGS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, PROTECTION_FIRE: 4, PROTECTION_EXPLOSIONS: 4, PROTECTION_PROJECTILE: 4, SWIFT_SNEAK: 3, DURABILITY: 3, MENDING: 1}}
-      "38": {material: NETHERITE_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, PROTECTION_FIRE: 4, PROTECTION_EXPLOSIONS: 4, PROTECTION_PROJECTILE: 4, DURABILITY: 3, MENDING: 1}}
-      "39": {material: NETHERITE_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, PROTECTION_FIRE: 4, PROTECTION_FALL: 4, PROTECTION_EXPLOSIONS: 4, PROTECTION_PROJECTILE: 4, OXYGEN: 3, WATER_WORKER: 1, DURABILITY: 3, MENDING: 1}}
+      "13": {material: NETHERITE_SWORD, amount: 1, enchants: {DAMAGE_ALL: 5, DURABILITY: 3, SWEEPING_EDGE: 3, FIRE_ASPECT: 2, KNOCKBACK: 1, MENDING: 1}}
+      "14": {material: POTION, potion: LONG_FIRE_RESISTANCE}
+      "15": {material: POTION, potion: STRONG_SWIFTNESS}
+      "16": {material: ENDER_PEARL, amount: 16}
+      "17": {material: GOLDEN_APPLE, amount: 64}
+      "18": {material: POTION, potion: STRONG_STRENGTH}
+      "19": {material: POTION, potion: STRONG_SWIFTNESS}
+      "20": {material: POTION, potion: LONG_FIRE_RESISTANCE}
+      "36": {material: NETHERITE_BOOTS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, PROTECTION_FALL: 4, SOUL_SPEED: 3, DEPTH_STRIDER: 3, DURABILITY: 3, MENDING: 1}}
+      "37": {material: NETHERITE_LEGGINGS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, SWIFT_SNEAK: 3, DURABILITY: 3, MENDING: 1}}
+      "38": {material: NETHERITE_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, DURABILITY: 3, MENDING: 1}}
+      "39": {material: NETHERITE_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, OXYGEN: 3, WATER_WORKER: 1, DURABILITY: 3, MENDING: 1}}
     offhand: {material: SHIELD, amount: 1, enchants: {DURABILITY: 3, MENDING: 1}}
-
   spear_mace:
     items:
       "0": {material: NETHERITE_SWORD, amount: 1, enchants: {SHARPNESS: 5, DURABILITY: 3}}
