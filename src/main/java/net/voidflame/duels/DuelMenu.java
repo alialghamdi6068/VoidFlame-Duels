@@ -84,7 +84,7 @@ public final class DuelMenu implements Listener {
 
         int backSlot = inv.getSize() - 8;
         int closeSlot = inv.getSize() - 2;
-        inv.setItem(backSlot, item(Material.ARROW, "&b&lBACK", "&7Return to the previous menu."));
+        inv.setItem(backSlot, item(Material.ARROW, "&b&lBACK", "&7Close the queue menu."));
         inv.setItem(closeSlot, item(Material.BARRIER, "&c&lCLOSE", "&7Close the queue menu."));
         player.openInventory(inv);
     }
