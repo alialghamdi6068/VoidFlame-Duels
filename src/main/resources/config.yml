@@ -364,8 +364,8 @@ gui:
       "33": {material: TNT_MINECART, amount: 1}
       "34": {material: TNT_MINECART, amount: 1}
       "35": {material: TNT_MINECART, amount: 1}
-      "36": {material: DIAMOND_BOOTS, amount: 1, enchants: {PROTECTION: 4, BLAST_PROTECTION: 4, FEATHER_FALLING: 4, UNBREAKING: 3}}
-      "37": {material: DIAMOND_LEGGINGS, amount: 1, enchants: {BLAST_PROTECTION: 4, UNBREAKING: 3}}
+      "36": {material: DIAMOND_BOOTS, amount: 1, enchants: {PROTECTION: 4, PROTECTION_EXPLOSIONS: 4, FEATHER_FALLING: 4, UNBREAKING: 3}}
+      "37": {material: DIAMOND_LEGGINGS, amount: 1, enchants: {PROTECTION_EXPLOSIONS: 4, UNBREAKING: 3}}
       "38": {material: DIAMOND_CHESTPLATE, amount: 1, enchants: {PROTECTION: 4, UNBREAKING: 3}}
       "39": {material: DIAMOND_HELMET, amount: 1, enchants: {PROTECTION: 4, UNBREAKING: 3}}
     offhand: {material: TOTEM_OF_UNDYING, amount: 1}
@@ -409,8 +409,8 @@ gui:
       "33": {material: TNT_MINECART, amount: 1}
       "34": {material: TNT_MINECART, amount: 1}
       "35": {material: TNT_MINECART, amount: 1}
-      "36": {material: NETHERITE_BOOTS, amount: 1, enchants: {PROTECTION: 4, BLAST_PROTECTION: 4, FEATHER_FALLING: 4, UNBREAKING: 3, MENDING: 1}}
-      "37": {material: NETHERITE_LEGGINGS, amount: 1, enchants: {BLAST_PROTECTION: 4, UNBREAKING: 3, MENDING: 1}}
+      "36": {material: NETHERITE_BOOTS, amount: 1, enchants: {PROTECTION: 4, PROTECTION_EXPLOSIONS: 4, FEATHER_FALLING: 4, UNBREAKING: 3, MENDING: 1}}
+      "37": {material: NETHERITE_LEGGINGS, amount: 1, enchants: {PROTECTION_EXPLOSIONS: 4, UNBREAKING: 3, MENDING: 1}}
       "38": {material: NETHERITE_CHESTPLATE, amount: 1, enchants: {PROTECTION: 4, UNBREAKING: 3, MENDING: 1}}
       "39": {material: NETHERITE_HELMET, amount: 1, enchants: {PROTECTION: 4, RESPIRATION: 3, AQUA_AFFINITY: 1, UNBREAKING: 3, MENDING: 1}}
     offhand: {material: TOTEM_OF_UNDYING, amount: 1}
