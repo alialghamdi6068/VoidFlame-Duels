@@ -154,10 +154,13 @@ public final class DuelMenu implements Listener {
     }
 
     private boolean isKitEnabled(KitType kit) {
+        String key = kit.name().toLowerCase(Locale.ROOT);
+        if (plugin.getConfig().getConfigurationSection("kits." + key + ".items") != null) {
+            return true;
+        }
         RegisteredServiceProvider<KitService> registration =
                 Bukkit.getServicesManager().getRegistration(KitService.class);
-        return registration == null || registration.getProvider().isEnabled(
-                kit.name().toLowerCase(Locale.ROOT));
+        return registration != null && registration.getProvider().isEnabled(key);
     }
 
     private Material material(String path, Material fallback) {
