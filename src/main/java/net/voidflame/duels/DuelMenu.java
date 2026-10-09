@@ -1,5 +1,6 @@
 package net.voidflame.duels;
 
+import net.voidflame.core.api.KitService;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -7,114 +8,162 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.plugin.RegisteredServiceProvider;
-import net.voidflame.core.api.KitService;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.util.List;
 import java.util.Locale;
 
 public final class DuelMenu implements Listener {
+    private static final int[] KIT_SLOTS = {
+            10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25,
+            28, 29, 30, 31, 32, 33, 34
+    };
+
     private final VoidFlameDuelsPlugin plugin;
-    public DuelMenu(VoidFlameDuelsPlugin plugin) { this.plugin = plugin; }
+
+    public DuelMenu(VoidFlameDuelsPlugin plugin) {
+        this.plugin = plugin;
+    }
 
     public void open(Player player) {
-        int rows = Math.max(1, Math.min(6, plugin.getConfig().getInt("gui.rows", 6)));
+        int rows = Math.max(5, Math.min(6, plugin.getConfig().getInt("gui.rows", 5)));
         Inventory inv = Bukkit.createInventory(null, rows * 9,
                 color(plugin.getConfig().getString("gui.title", "&8VoidFlame &7• &fQueue")));
 
-        ItemStack border = item(Material.GRAY_STAINED_GLASS_PANE, " ");
-        ItemStack accent = item(Material.PURPLE_STAINED_GLASS_PANE, " ");
+        Material fillerMaterial = material("gui.filler-item", Material.GRAY_STAINED_GLASS_PANE);
+        Material accentMaterial = material("gui.accent-item", Material.PURPLE_STAINED_GLASS_PANE);
+        ItemStack filler = item(fillerMaterial, " ");
+        ItemStack accent = item(accentMaterial, " ");
+
         for (int slot = 0; slot < inv.getSize(); slot++) {
-            int row = slot / 9, col = slot % 9;
-            if (row == 0 || row == 2 || col == 0 || col == 8) inv.setItem(slot, border.clone());
+            int row = slot / 9;
+            int column = slot % 9;
+            if (row == 0 || row == rows - 1 || column == 0 || column == 8) {
+                inv.setItem(slot, filler.clone());
+            }
         }
-        for (int slot : new int[]{1,2,3,5,6,7,19,21,23,25}) inv.setItem(slot, accent.clone());
+        for (int column : new int[]{1, 2, 3, 5, 6, 7}) {
+            inv.setItem(column, accent.clone());
+            inv.setItem((rows - 1) * 9 + column, accent.clone());
+        }
 
-        inv.setItem(4, item(Material.NETHER_STAR, color("&d&lQUEUE"),
-                color("&7Choose your kit and queue mode."),
-                color("&fLeft-click &8» &aUnranked"),
-                color("&fRight-click &8» &dRanked")));
+        inv.setItem(4, item(Material.NETHER_STAR, "&d&lVOIDFLAME QUEUE",
+                "&7Choose a kit and queue type.",
+                "",
+                "&aLeft-click &8» &fUnranked",
+                "&dRight-click &8» &fRanked"));
 
-        int[] fallbackSlots = {10,11,12,13,14,15};
-        int fallbackIndex = 0;
         for (KitType kit : KitType.values()) {
             if (!isKitEnabled(kit)) continue;
             String key = kit.name().toLowerCase(Locale.ROOT);
-            var sec = plugin.getConfig().getConfigurationSection("gui.kits." + key);
-            if (sec == null || !sec.getBoolean("enabled", true)) continue;
+            var section = plugin.getConfig().getConfigurationSection("gui.kits." + key);
+            if (section == null || !section.getBoolean("enabled", true)) continue;
 
-            int configured = sec.getInt("slot", -1);
-            int slot = configured >= 0 && configured < inv.getSize() ? configured
-                    : (fallbackIndex < fallbackSlots.length ? fallbackSlots[fallbackIndex] : -1);
-            fallbackIndex++;
+            int slot = getKitSlot(kit, inv.getSize());
             if (slot < 0 || slot >= inv.getSize()) continue;
 
-            Material icon;
-            try { icon = Material.valueOf(sec.getString("icon", "STONE").toUpperCase(Locale.ROOT)); }
-            catch (IllegalArgumentException ex) { icon = Material.STONE; }
+            Material icon = material("gui.kits." + key + ".icon", Material.STONE);
+            String displayName = plugin.getConfig().getString(
+                    "gui.kits." + key + ".display-name", "&f" + pretty(kit));
 
-            String display = sec.getString("display-name", kit.name());
-            List<String> lore = List.of(
-                    color("&7" + pretty(kit) + " practice"),
+            ItemStack stack = item(icon, displayName,
+                    "&7Practice kit: &f" + pretty(kit),
                     "",
-                    color("&fUnranked: &a" + plugin.queueManager().queued(kit, false)),
-                    color("&fRanked: &d" + plugin.queueManager().queued(kit, true)),
-                    color("&fIn Match: &e" + plugin.matchManager().playersInMatches(kit)),
+                    "&fUnranked queue: &a" + plugin.queueManager().queued(kit, false),
+                    "&fRanked queue: &d" + plugin.queueManager().queued(kit, true),
+                    "&fPlayers fighting: &e" + plugin.matchManager().playersInMatches(kit),
                     "",
-                    color("&aLeft-click &8» &fUnranked"),
-                    color("&dRight-click &8» &fRanked")
-            );
-            ItemStack stack = new ItemStack(icon);
-            ItemMeta meta = stack.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName(color(display));
-                meta.setLore(lore);
-                stack.setItemMeta(meta);
-            }
+                    "&aLeft-click &8» &fUnranked",
+                    "&dRight-click &8» &fRanked");
             inv.setItem(slot, stack);
         }
 
-        inv.setItem(18, item(Material.ARROW, "&7&lBack", "&7Return to the main menu."));
-        inv.setItem(26, item(Material.BARRIER, "&c&lClose", "&7Close this menu."));
+        int backSlot = inv.getSize() - 8;
+        int closeSlot = inv.getSize() - 2;
+        inv.setItem(backSlot, item(Material.ARROW, "&b&lBACK", "&7Return to the previous menu."));
+        inv.setItem(closeSlot, item(Material.BARRIER, "&c&lCLOSE", "&7Close the queue menu."));
         player.openInventory(inv);
     }
 
     @EventHandler
-    public void click(InventoryClickEvent e) {
-        if (!(e.getWhoClicked() instanceof Player p)) return;
+    public void click(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
         String title = color(plugin.getConfig().getString("gui.title", "&8VoidFlame &7• &fQueue"));
-        if (!e.getView().getTitle().equals(title)) return;
-        e.setCancelled(true);
-        if (e.getRawSlot() == 26) { p.closeInventory(); return; }
-        if (e.getRawSlot() == 18) { p.closeInventory(); return; }
+        if (!event.getView().getTitle().equals(title)) return;
+
+        event.setCancelled(true);
+        if (event.getClickedInventory() == null
+                || event.getClickedInventory() != event.getView().getTopInventory()) return;
+
+        int size = event.getView().getTopInventory().getSize();
+        if (event.getRawSlot() == size - 2) {
+            player.closeInventory();
+            return;
+        }
+        if (event.getRawSlot() == size - 8) {
+            player.closeInventory();
+            return;
+        }
 
         for (KitType kit : KitType.values()) {
             if (!isKitEnabled(kit)) continue;
             String key = kit.name().toLowerCase(Locale.ROOT);
-            var sec = plugin.getConfig().getConfigurationSection("gui.kits." + key);
-            if (sec == null) continue;
-            int configured = sec.getInt("slot", -1);
-            if (configured != e.getRawSlot()) continue;
-            boolean ranked = e.isRightClick();
-            if (plugin.queueManager().join(p, kit, ranked)) {
-                p.sendMessage(plugin.message("joined-queue")
+            var section = plugin.getConfig().getConfigurationSection("gui.kits." + key);
+            if (section == null || !section.getBoolean("enabled", true)) continue;
+            if (getKitSlot(kit, size) != event.getRawSlot()) continue;
+
+            boolean ranked = event.isRightClick();
+            if (plugin.queueManager().join(player, kit, ranked)) {
+                player.sendMessage(plugin.message("joined-queue")
                         .replace("<kit>", pretty(kit))
                         .replace("<type>", ranked ? "Ranked" : "Unranked"));
             } else {
-                p.sendMessage(plugin.message("already-queued"));
+                player.sendMessage(plugin.message("already-queued"));
             }
-            p.closeInventory();
+            player.closeInventory();
             return;
         }
     }
 
+    private int getKitSlot(KitType target, int inventorySize) {
+        String key = target.name().toLowerCase(Locale.ROOT);
+        var section = plugin.getConfig().getConfigurationSection("gui.kits." + key);
+        if (section != null) {
+            int configured = section.getInt("slot", -1);
+            if (configured >= 0 && configured < inventorySize
+                    && configured % 9 != 0 && configured % 9 != 8
+                    && configured / 9 > 0 && configured / 9 < inventorySize / 9 - 1) {
+                return configured;
+            }
+        }
+
+        int index = 0;
+        for (KitType kit : KitType.values()) {
+            String candidateKey = kit.name().toLowerCase(Locale.ROOT);
+            var candidate = plugin.getConfig().getConfigurationSection("gui.kits." + candidateKey);
+            if (candidate == null || !candidate.getBoolean("enabled", true) || !isKitEnabled(kit)) continue;
+            if (kit == target) return index < KIT_SLOTS.length && KIT_SLOTS[index] < inventorySize - 9
+                    ? KIT_SLOTS[index] : -1;
+            index++;
+        }
+        return -1;
+    }
 
     private boolean isKitEnabled(KitType kit) {
-        RegisteredServiceProvider<KitService> reg = Bukkit.getServicesManager().getRegistration(KitService.class);
-        return reg == null || reg.getProvider().isEnabled(kit.name().toLowerCase(Locale.ROOT));
+        RegisteredServiceProvider<KitService> registration =
+                Bukkit.getServicesManager().getRegistration(KitService.class);
+        return registration == null || registration.getProvider().isEnabled(
+                kit.name().toLowerCase(Locale.ROOT));
+    }
+
+    private Material material(String path, Material fallback) {
+        String name = plugin.getConfig().getString(path, fallback.name());
+        Material parsed = Material.matchMaterial(name == null ? "" : name);
+        return parsed == null ? fallback : parsed;
     }
 
     private ItemStack item(Material material, String name, String... lore) {
@@ -122,17 +171,17 @@ public final class DuelMenu implements Listener {
         ItemMeta meta = stack.getItemMeta();
         if (meta != null) {
             meta.setDisplayName(color(name));
-            meta.setLore(List.of(lore));
+            meta.setLore(List.of(lore).stream().map(this::color).toList());
             stack.setItemMeta(meta);
         }
         return stack;
     }
 
-    private String pretty(KitType k) {
-        return k == KitType.SPEAR_MACE ? "Spear & Mace" : k.name().replace('_', ' ');
+    private String pretty(KitType kit) {
+        return kit == KitType.SPEAR_MACE ? "Spear & Mace" : kit.name().replace('_', ' ');
     }
 
-    private String color(String s) {
-        return ChatColor.translateAlternateColorCodes('&', s);
+    private String color(String text) {
+        return ChatColor.translateAlternateColorCodes('&', text);
     }
 }
