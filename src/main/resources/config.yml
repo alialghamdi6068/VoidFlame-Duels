@@ -328,8 +328,8 @@ gui:
       "39": {material: NETHERITE_HELMET, amount: 1, enchants: {PROTECTION: 4, UNBREAKING: 3}}
       "40": {material: TOTEM_OF_UNDYING, amount: 1}
 
-  tnt_minecart_high_tier:
-    # TNT Minecart high-tier practice loadout.
+  tnt_minecart_ht:
+    # TNT Minecart HT practice loadout.
     items:
       "0": {material: CROSSBOW, amount: 1, enchants: {MULTISHOT: 1, QUICK_CHARGE: 3, PIERCING: 4, UNBREAKING: 3}}
       "1": {material: FIREWORK_ROCKET, amount: 64}
