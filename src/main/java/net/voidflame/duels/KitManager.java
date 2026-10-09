@@ -55,6 +55,12 @@ public final class KitManager {
             ItemStack item = readItem(items.getConfigurationSection(key));
             if (item != null) setSlot(player, slot, item);
         }
+
+        ConfigurationSection offhand = root.getConfigurationSection("offhand");
+        if (offhand != null) {
+            ItemStack item = readItem(offhand);
+            if (item != null) player.getInventory().setItemInOffHand(item);
+        }
         return true;
     }
 
