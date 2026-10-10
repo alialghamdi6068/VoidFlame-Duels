@@ -1,7 +1,6 @@
-# Exported from the current VoidFlame-Duels default kit configuration.
-# This is a project preset, not a verified byte-for-byte copy of PvPPrac.
-kit:
-  id: crystal
+# Reference export of the current VoidFlame-Duels preset.
+# Not a verified exact export of PvPPrac.
+kits:
   crystal:
     items:
       "0": {material: NETHERITE_SWORD, amount: 1, enchants: {DAMAGE_ALL: 5, SWEEPING_EDGE: 3, KNOCKBACK: 1, DURABILITY: 3}}
@@ -45,4 +44,3 @@ kit:
       "38": {material: NETHERITE_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, DURABILITY: 3, MENDING: 1}}
       "39": {material: NETHERITE_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, OXYGEN: 3, WATER_WORKER: 1, DURABILITY: 3, MENDING: 1}}
     offhand: {material: TOTEM_OF_UNDYING, amount: 1}
-
