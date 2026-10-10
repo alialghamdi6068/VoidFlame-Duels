@@ -7,7 +7,7 @@ website: https://github.com/alialghamdi6068/VoidFlame-Duels
 api-version: '26.2'
 load: POSTWORLD
 depend: [VoidFlame-Core]
-softdepend: [VoidFlame-Arenas, VoidFlame-Kits]
+softdepend: [VoidFlame-Arenas, VoidFlame-Kits, DonutQuickActions]
 
 commands:
   duel:
@@ -90,6 +90,10 @@ commands:
     description: Open practice settings.
     usage: /settings
     permission: voidflame.duels.settings
+  leaderboard:
+    description: Open the VoidFlame player leaderboard.
+    usage: /leaderboard
+    permission: voidflame.leaderboard
   duelsadmin:
     description: Open the VoidFlame Duels administration GUI.
     usage: /duelsadmin
@@ -154,6 +158,9 @@ permissions:
   voidflame.coins.admin:
     description: Manage practice coins.
     default: op
+  voidflame.leaderboard:
+    description: View the player leaderboard.
+    default: true
   voidflame.duels.admin:
     description: Full administrative access to VoidFlame Duels.
     default: op
