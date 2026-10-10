@@ -1,0 +1,36 @@
+config-version: "1.0"
+
+update-checker: true
+
+# Uses Minecraft's native dialog system; compatible Java clients do not need a client mod.
+pause-screen-button: true
+open-on-join: false
+open-on-join-delay: 40
+
+title: "&5VoidFlame"
+external-title: "&5VoidFlame"
+columns: 2
+width: 180
+can-close-with-escape: true
+body:
+  - "&7Practice • Duels • Stats"
+
+buttons:
+  duels:
+    label: "&dDuels &7- Queue"
+    type: player_command
+    command: "duels"
+  kit-editor:
+    label: "&aKit Editor"
+    type: player_command
+    command: "kiteditor"
+    permission: "voidflame.kits.edit"
+  leaderboard:
+    label: "&eLeaderboard"
+    type: player_command
+    command: "stats"
+  admin-panel:
+    label: "&cAdmin Panel"
+    type: player_command
+    command: "duelsadmin"
+    permission: "voidflame.duels.admin"
