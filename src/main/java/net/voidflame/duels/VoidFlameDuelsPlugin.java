@@ -86,6 +86,11 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(matchExploitGuard, this);
         getServer().getPluginManager().registerEvents(ffaManager, this);
         getServer().getPluginManager().registerEvents(new PlayerSettingsListener(this), this);
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            VoidFlamePlaceholders placeholders = new VoidFlamePlaceholders(this);
+            getServer().getPluginManager().registerEvents(placeholders, this);
+            placeholders.start();
+        }
 
         getServer().getScheduler().runTaskTimer(this, partyManager::expireInvites, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, partyManager::processQueue, 20L, 20L);
