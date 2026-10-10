@@ -1,0 +1,17 @@
+# Exported from the current VoidFlame-Duels default kit configuration.
+# This is a project preset, not a verified byte-for-byte copy of PvPPrac.
+kit:
+  id: axe
+  axe:
+    items:
+      "0": {material: DIAMOND_SWORD, amount: 1}
+      "1": {material: DIAMOND_AXE, amount: 1}
+      "2": {material: BOW, amount: 1}
+      "3": {material: CROSSBOW, amount: 1}
+      "8": {material: ARROW, amount: 6}
+      "36": {material: DIAMOND_BOOTS, amount: 1}
+      "37": {material: DIAMOND_LEGGINGS, amount: 1}
+      "38": {material: DIAMOND_CHESTPLATE, amount: 1}
+      "39": {material: DIAMOND_HELMET, amount: 1}
+    offhand: {material: SHIELD, amount: 1}
+
