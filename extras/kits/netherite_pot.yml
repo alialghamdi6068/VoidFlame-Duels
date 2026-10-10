@@ -1,7 +1,6 @@
-# Exported from the current VoidFlame-Duels default kit configuration.
-# This is a project preset, not a verified byte-for-byte copy of PvPPrac.
-kit:
-  id: netherite_pot
+# Reference export of the current VoidFlame-Duels preset.
+# Not a verified exact export of PvPPrac.
+kits:
   netherite_pot:
     items:
       "0": {material: NETHERITE_SWORD, amount: 1, enchants: {SHARPNESS: 5, SWEEPING_EDGE: 3, DURABILITY: 3}}
