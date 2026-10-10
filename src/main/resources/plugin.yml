@@ -163,7 +163,7 @@ permissions:
     default: true
   voidflame.duels.admin:
     description: Full administrative access to VoidFlame Duels.
-    default: op
+    default: false
   voidflame.report.view:
     description: View reports.
     default: op
