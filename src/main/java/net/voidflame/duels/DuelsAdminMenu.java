@@ -16,6 +16,10 @@ public final class DuelsAdminMenu implements Listener {
     private final VoidFlameDuelsPlugin plugin;
     public DuelsAdminMenu(VoidFlameDuelsPlugin plugin){this.plugin=plugin;}
     public void open(Player p){
+        if (!p.hasPermission("voidflame.duels.admin")) {
+            p.sendMessage("§cYou do not have permission.");
+            return;
+        }
         Inventory i=Bukkit.createInventory(new Holder(),54,"§8VoidFlame §7• §dDuels Admin");
         for(int s=0;s<54;s++)i.setItem(s,item(Material.BLACK_STAINED_GLASS_PANE," "));
         button(i,10,Material.NETHER_STAR,"§d§lQUEUES","§7Total queued: §f"+plugin.queueManager().totalQueued());
@@ -29,7 +33,7 @@ public final class DuelsAdminMenu implements Listener {
     }
     @EventHandler public void click(InventoryClickEvent e){
         if(!(e.getWhoClicked() instanceof Player p)||!(e.getView().getTopInventory().getHolder() instanceof Holder))return;
-        e.setCancelled(true); if(e.getRawSlot()==49){p.closeInventory();return;}
+        e.setCancelled(true); if(!p.hasPermission("voidflame.duels.admin")){p.closeInventory();p.sendMessage("§cYou do not have permission.");return;} if(e.getRawSlot()==49){p.closeInventory();return;}
         String c=switch(e.getRawSlot()){case 12->"ffa";case 13->"reports";case 14->"coins";case 15->"settings";default->null;};
         if(c!=null){p.closeInventory();p.performCommand(c);}
     }
