@@ -1,0 +1,49 @@
+# Exported from the current VoidFlame-Duels default kit configuration.
+# This is a project preset, not a verified byte-for-byte copy of PvPPrac.
+kit:
+  id: smp
+  smp:
+    # Community MCTiers-style SMP kit mapping from the referenced Minecraft-PVP-Kits repository.
+    items:
+      "0": {material: NETHERITE_SWORD, amount: 1, enchants: {SHARPNESS: 5, KNOCKBACK: 1, SWEEPING_EDGE: 3, FIRE_ASPECT: 2, UNBREAKING: 3}}
+      "1": {material: ENDER_PEARL, amount: 16}
+      "2": {material: GOLDEN_APPLE, amount: 64}
+      "3": {material: NETHERITE_AXE, amount: 1, enchants: {SHARPNESS: 5, EFFICIENCY: 5, UNBREAKING: 3}}
+      "4": {material: EXPERIENCE_BOTTLE, amount: 64}
+      "5": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "6": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "7": {material: SPLASH_POTION, potion: LONG_FIRE_RESISTANCE}
+      "8": {material: TOTEM_OF_UNDYING, amount: 1}
+      "9": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "10": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "11": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "12": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "13": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "14": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "15": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "16": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "17": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "18": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "19": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "20": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "21": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "22": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "23": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "24": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "25": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "26": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "27": {material: NETHERITE_SWORD, amount: 1, enchants: {SHARPNESS: 5, SWEEPING_EDGE: 3, FIRE_ASPECT: 2, UNBREAKING: 3}}
+      "28": {material: ENDER_PEARL, amount: 16}
+      "29": {material: GOLDEN_APPLE, amount: 64}
+      "30": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "31": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "32": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "33": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "34": {material: SPLASH_POTION, potion: LONG_FIRE_RESISTANCE}
+      "35": {material: SPLASH_POTION, potion: LONG_FIRE_RESISTANCE}
+      "36": {material: NETHERITE_BOOTS, amount: 1, enchants: {PROTECTION: 4, FEATHER_FALLING: 4, MENDING: 1, SOUL_SPEED: 3, DEPTH_STRIDER: 3, UNBREAKING: 3}}
+      "37": {material: NETHERITE_LEGGINGS, amount: 1, enchants: {PROTECTION: 4, MENDING: 1, SWIFT_SNEAK: 3, UNBREAKING: 3}}
+      "38": {material: NETHERITE_CHESTPLATE, amount: 1, enchants: {PROTECTION: 4, MENDING: 1, UNBREAKING: 3}}
+      "39": {material: NETHERITE_HELMET, amount: 1, enchants: {PROTECTION: 4, RESPIRATION: 3, AQUA_AFFINITY: 1, MENDING: 1, UNBREAKING: 3}}
+      "40": {material: SHIELD, amount: 1, enchants: {MENDING: 1, UNBREAKING: 3}}
+
