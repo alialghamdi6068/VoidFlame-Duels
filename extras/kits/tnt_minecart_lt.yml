@@ -1,0 +1,49 @@
+# Exported from the current VoidFlame-Duels default kit configuration.
+# This is a project preset, not a verified byte-for-byte copy of PvPPrac.
+kit:
+  id: tnt_minecart_lt
+  tnt_minecart_lt:
+    # Cart LT: Insta-cart style with Flame bow; no crossbow/fireworks.
+    items:
+      "0": {material: BOW, amount: 1, enchants: {POWER: 5, FLAME: 1, UNBREAKING: 3, MENDING: 1}}
+      "1": {material: TNT_MINECART, amount: 1}
+      "2": {material: RAIL, amount: 64}
+      "3": {material: FLINT_AND_STEEL, amount: 1, enchants: {UNBREAKING: 3, MENDING: 1}}
+      "4": {material: ENDER_PEARL, amount: 16}
+      "5": {material: GOLDEN_APPLE, amount: 64}
+      "6": {material: ARROW, amount: 64}
+      "7": {material: ACTIVATOR_RAIL, amount: 64}
+      "8": {material: REDSTONE_BLOCK, amount: 64}
+      "9": {material: TNT_MINECART, amount: 1}
+      "10": {material: TNT_MINECART, amount: 1}
+      "11": {material: TNT_MINECART, amount: 1}
+      "12": {material: TNT_MINECART, amount: 1}
+      "13": {material: TNT_MINECART, amount: 1}
+      "14": {material: TNT_MINECART, amount: 1}
+      "15": {material: TNT_MINECART, amount: 1}
+      "16": {material: TNT_MINECART, amount: 1}
+      "17": {material: TNT_MINECART, amount: 1}
+      "18": {material: TNT_MINECART, amount: 1}
+      "19": {material: TNT_MINECART, amount: 1}
+      "20": {material: TNT_MINECART, amount: 1}
+      "21": {material: ACTIVATOR_RAIL, amount: 64}
+      "22": {material: RAIL, amount: 64}
+      "23": {material: ENDER_PEARL, amount: 16}
+      "24": {material: GOLDEN_APPLE, amount: 64}
+      "25": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "26": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "27": {material: SPLASH_POTION, potion: LONG_FIRE_RESISTANCE}
+      "28": {material: TOTEM_OF_UNDYING, amount: 1}
+      "29": {material: TOTEM_OF_UNDYING, amount: 1}
+      "30": {material: TOTEM_OF_UNDYING, amount: 1}
+      "31": {material: TOTEM_OF_UNDYING, amount: 1}
+      "32": {material: TNT_MINECART, amount: 1}
+      "33": {material: TNT_MINECART, amount: 1}
+      "34": {material: TNT_MINECART, amount: 1}
+      "35": {material: TNT_MINECART, amount: 1}
+      "36": {material: DIAMOND_BOOTS, amount: 1, enchants: {PROTECTION: 4, PROTECTION_EXPLOSIONS: 4, FEATHER_FALLING: 4, UNBREAKING: 3}}
+      "37": {material: DIAMOND_LEGGINGS, amount: 1, enchants: {PROTECTION_EXPLOSIONS: 4, UNBREAKING: 3}}
+      "38": {material: DIAMOND_CHESTPLATE, amount: 1, enchants: {PROTECTION: 4, UNBREAKING: 3}}
+      "39": {material: DIAMOND_HELMET, amount: 1, enchants: {PROTECTION: 4, UNBREAKING: 3}}
+    offhand: {material: TOTEM_OF_UNDYING, amount: 1}
+
