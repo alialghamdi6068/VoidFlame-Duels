@@ -30,7 +30,7 @@ settings:
   countdown-title: "&b&l<seconds>"
 
 messages:
-  prefix: "&8[&bVoidFlame&8] "
+  prefix: "&8[<#8B5CF6>VoidFlame&8] "
   no-permission: "&cYou do not have permission."
   player-not-found: "&cPlayer not found."
   already-queued: "&cYou are already in a queue."
@@ -90,26 +90,26 @@ messages:
   kit-editor-failed: "&cThe kit editor could not be opened."
 
 gui:
-  title: "&8VoidFlame &7• &fQueue"
+  title: "&8VoidFlame &7• &dQueue"
   rows: 5
-  filler-item: GRAY_STAINED_GLASS_PANE
+  filler-item: BLACK_STAINED_GLASS_PANE
   accent-item: PURPLE_STAINED_GLASS_PANE
   kits:
     sword:
       enabled: true
       slot: 10
       icon: DIAMOND_SWORD
-      display-name: "&b&lSWORD"
+      display-name: "&d&lSWORD"
     axe:
       enabled: true
       slot: 11
       icon: DIAMOND_AXE
-      display-name: "&6&lAXE"
+      display-name: "&d&lAXE"
     uhc:
       enabled: true
       slot: 12
       icon: GOLDEN_APPLE
-      display-name: "&a&lUHC"
+      display-name: "&d&lUHC"
     mace:
       enabled: true
       slot: 13
@@ -119,22 +119,22 @@ gui:
       enabled: true
       slot: 14
       icon: TRIDENT
-      display-name: "&3&lSPEAR & MACE"
+      display-name: "&d&lSPEAR & MACE"
     crystal:
       enabled: true
       slot: 15
       icon: END_CRYSTAL
-      display-name: "&5&lCRYSTAL"
+      display-name: "&d&lCRYSTAL"
     netherite_pot:
       enabled: true
       slot: 16
       icon: SPLASH_POTION
-      display-name: "&c&lNETHERITE POT"
+      display-name: "&d&lNETHERITE POT"
     smp:
       enabled: true
       slot: 19
       icon: TOTEM_OF_UNDYING
-      display-name: "&e&lSMP"
+      display-name: "&d&lSMP"
     diamond_smp:
       enabled: true
       slot: 20
@@ -144,12 +144,12 @@ gui:
       enabled: true
       slot: 21
       icon: TNT_MINECART
-      display-name: "&6&lCART LT"
+      display-name: "&6&lTNT MINECART LT"
     tnt_minecart_ht:
       enabled: true
       slot: 22
       icon: TNT_MINECART
-      display-name: "&c&lCART HT"
+      display-name: "&c&lTNT MINECART HT"
 
 kits:
   sword:
