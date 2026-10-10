@@ -1,0 +1,24 @@
+# Exported from the current VoidFlame-Duels default kit configuration.
+# This is a project preset, not a verified byte-for-byte copy of PvPPrac.
+kit:
+  id: spear_mace
+  spear_mace:
+    items:
+      "0": {material: NETHERITE_SWORD, amount: 1, enchants: {SHARPNESS: 5, DURABILITY: 3}}
+      "1": {material: NETHERITE_AXE, amount: 1, enchants: {SHARPNESS: 5, DURABILITY: 3}}
+      "2": {material: ENDER_PEARL, amount: 16}
+      "3": {material: GOLDEN_APPLE, amount: 64}
+      "4": {material: WIND_CHARGE, amount: 64}
+      "5": {material: NETHERITE_SPEAR, amount: 1, enchants: {LUNGE: 3, SHARPNESS: 5, DURABILITY: 3, MENDING: 1}}
+      "6": {material: MACE, amount: 1, enchants: {BREACH: 4, DURABILITY: 3}}
+      "7": {material: MACE, amount: 1, enchants: {DENSITY: 5, WIND_BURST: 1, DURABILITY: 3}}
+      "8": {material: SHIELD, amount: 1, enchants: {MENDING: 1, DURABILITY: 3}}
+      "9": {material: WIND_CHARGE, amount: 64}
+      "10": {material: WIND_CHARGE, amount: 64}
+      "11": {material: ENDER_PEARL, amount: 16}
+      "12": {material: COOKED_BEEF, amount: 64}
+      "36": {material: NETHERITE_BOOTS, amount: 1, enchants: {FEATHER_FALLING: 4, PROTECTION_ENVIRONMENTAL: 4}}
+      "37": {material: NETHERITE_LEGGINGS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4}}
+      "38": {material: NETHERITE_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4}}
+      "39": {material: NETHERITE_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4}}
+    offhand: {material: TOTEM_OF_UNDYING, amount: 1}
