@@ -28,6 +28,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     private MatchExploitGuard matchExploitGuard;
     private FfaManager ffaManager;
     private DuelsAdminMenu duelsAdminMenu;
+    private PracticeScoreboard scoreboardManager;
 
     @Override
     public void onEnable() {
@@ -65,6 +66,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         ffaManager = new FfaManager(this);
         settingsMenu = new SettingsMenu(this);
         duelsAdminMenu = new DuelsAdminMenu(this);
+        scoreboardManager = new PracticeScoreboard(this);
 
         coreServices.register(QueueManager.class, queueManager);
         coreServices.register(MatchManager.class, matchManager);
@@ -86,6 +88,8 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(matchExploitGuard, this);
         getServer().getPluginManager().registerEvents(ffaManager, this);
         getServer().getPluginManager().registerEvents(new PlayerSettingsListener(this), this);
+        getServer().getPluginManager().registerEvents(scoreboardManager, this);
+        scoreboardManager.start();
 
         getServer().getScheduler().runTaskTimer(this, partyManager::expireInvites, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, partyManager::processQueue, 20L, 20L);
@@ -238,4 +242,5 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     public PlayerSettings playerSettings() { return playerSettings; }
     public CombatTagManager combatTagManager() { return combatTagManager; }
     public FfaManager ffaManager() { return ffaManager; }
+    public PracticeScoreboard scoreboardManager() { return scoreboardManager; }
 }
