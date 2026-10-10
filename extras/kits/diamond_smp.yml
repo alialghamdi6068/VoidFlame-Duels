@@ -1,7 +1,6 @@
-# Exported from the current VoidFlame-Duels default kit configuration.
-# This is a project preset, not a verified byte-for-byte copy of PvPPrac.
-kit:
-  id: diamond_smp
+# Reference export of the current VoidFlame-Duels preset.
+# Not a verified exact export of PvPPrac.
+kits:
   diamond_smp:
     # Diamond SMP loadout based on the Diamond SMP preset shown in PvPPrac's Arsenal.
     items:
@@ -46,4 +45,3 @@ kit:
       "38": {material: DIAMOND_CHESTPLATE, amount: 1, enchants: {PROTECTION: 4, MENDING: 1, UNBREAKING: 3}}
       "39": {material: DIAMOND_HELMET, amount: 1, enchants: {PROTECTION: 4, RESPIRATION: 3, AQUA_AFFINITY: 1, MENDING: 1, UNBREAKING: 3}}
     offhand: {material: TOTEM_OF_UNDYING, amount: 1}
-
