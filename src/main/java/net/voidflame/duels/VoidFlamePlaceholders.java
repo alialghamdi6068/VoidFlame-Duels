@@ -84,6 +84,10 @@ public final class VoidFlamePlaceholders extends PlaceholderExpansion implements
             case "elo" -> String.valueOf(p.elo());
             case "coins" -> String.valueOf(p.coins());
             case "rank" -> p.rank();
+            case "mode", "status" -> {
+                Player online = Bukkit.getPlayer(player.getUniqueId());
+                yield online != null && plugin.matchManager() != null && plugin.matchManager().isInMatch(online.getUniqueId()) ? "§cIn Duel" : "§aPractice";
+            }
             default -> null;
         };
     }
