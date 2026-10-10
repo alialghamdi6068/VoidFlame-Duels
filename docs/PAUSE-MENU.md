@@ -1,9 +1,30 @@
-# Native ESC menu compatibility
+# VoidFlame Practice scoreboard and native ESC menu
 
-VoidFlame-Duels exposes permission-protected commands that can be called from a native Minecraft dialog. For the actual button inside the vanilla ESC/pause screen, install a dialog-compatible menu plugin such as [DonutQuickActions](https://modrinth.com/plugin/donutquickactions) on Paper 1.21.7–1.21.11 / 26.2, then copy `extras/DonutQuickActions/config.yml` into its generated config and restart the server.
+## TAB scoreboard
 
-The template adds a **VoidFlame** entry to the native pause screen. The **Admin Panel** action is permission-gated by `voidflame.duels.admin`; the command itself is also permission-protected by VoidFlame-Duels, so manually typing it does not bypass authorization.
+The repository includes `extras/TAB/scoreboard-section.yml`. Merge its `scoreboard:` section into `plugins/TAB/config.yml`; do not overwrite the rest of your TAB configuration. Then run `/tab reload` or restart.
 
-This is a server-side dialog integration: players do not need a client mod. All clients must support Minecraft's native dialog/pause-screen additions (introduced in 1.21.6); older clients may not show the pause-screen entry. Keep ViaVersion/client compatibility limitations in mind.
+If PlaceholderAPI is installed, VoidFlame-Duels registers these cached placeholders:
+- `%voidflame_rank%`
+- `%voidflame_wins%`
+- `%voidflame_losses%`
+- `%voidflame_streak%`
+- `%voidflame_beststreak%`
+- `%voidflame_elo%`
+- `%voidflame_coins%`
+- `%voidflame_mode%`
 
-The Kit Editor action is restricted by `voidflame.kits.edit`. If your kit editor is provided by VoidFlame-Kits rather than this plugin, ensure that plugin is installed and grants the same permission.
+The scoreboard uses VoidFlame's purple/cyan/gold palette and leaves TAB in control of the sidebar and scoreboard teams, avoiding interference with rank prefixes and nametags.
+
+## Native ESC menu and admin visibility
+
+Install DonutQuickActions on a compatible Paper server, then copy `extras/DonutQuickActions/config.yml` into its generated config and restart. The admin action uses `voidflame.duels.admin`; the command and admin GUI independently enforce the same permission.
+
+Set the permission on the intended staff group through LuckPerms, without granting OP:
+`/lp group admin permission set voidflame.duels.admin true`
+
+Replace `admin` with the exact LuckPerms group name you use. This permission is not granted by VoidFlame-Duels by default. Test the dialog as both a staff account and a normal account after installing/restarting the menu plugin.
+
+## Kits
+
+The built-in config includes Sword, Axe, UHC, Mace, Spear Mace, Crystal, Netherite Pot, SMP, Diamond SMP, TNT Minecart LT and TNT Minecart HT. Kits are defined in `src/main/resources/config.yml`; when VoidFlame-Kits is installed and provides the KitService, its editor is used for saved layouts.
