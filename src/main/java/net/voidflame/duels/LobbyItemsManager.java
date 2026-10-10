@@ -151,7 +151,7 @@ public final class LobbyItemsManager implements Listener {
         };
     }
 
-    private void openLeaderboard(Player player) {
+    public void openLeaderboard(Player player) {
         Inventory inventory = Bukkit.createInventory(null, 54, LEADERBOARD_MENU);
         fill(inventory);
         inventory.setItem(4, item(Material.NETHER_STAR, "§e§lPLAYER LEADERBOARD",
