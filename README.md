@@ -18,3 +18,9 @@ Professional practice and duels foundation for VoidFlame MC.
 
 ## Architecture
 Queue, matchmaking and matches live in this plugin. Shared infrastructure is provided by VoidFlame-Core.
+
+## Native ESC menu
+- Compatibility template: `extras/DonutQuickActions/config.yml`.
+- Setup notes: `docs/PAUSE-MENU.md`.
+- The template opens a native VoidFlame dialog from the pause screen and includes an Admin Panel action gated by `voidflame.duels.admin`.
+- `/leaderboard` opens the same player leaderboard as hotbar slot 9.
