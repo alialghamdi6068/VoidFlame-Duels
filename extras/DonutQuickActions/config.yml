@@ -28,7 +28,7 @@ buttons:
   leaderboard:
     label: "&eLeaderboard"
     type: player_command
-    command: "stats"
+    command: "leaderboard"
   admin-panel:
     label: "&cAdmin Panel"
     type: player_command
