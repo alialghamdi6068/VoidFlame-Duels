@@ -127,13 +127,29 @@ public final class LobbyItemsManager implements Listener {
         KitType[] kits = KitType.values();
         for (int index = 0; index < Math.min(slots.length, kits.length); index++) {
             KitType kit = kits[index];
-            inventory.setItem(slots[index], item(iconFor(kit), "§a§l" + pretty(kit),
+            inventory.setItem(slots[index], item(iconFor(kit), kitColor(kit) + "§l" + pretty(kit),
                     "§7Customize your inventory layout.",
                     "§eClick to edit"));
         }
         inventory.setItem(37, item(Material.ARROW, "§7Back", "§7Close this menu."));
         inventory.setItem(43, item(Material.BARRIER, "§cClose"));
         player.openInventory(inventory);
+    }
+
+    private String kitColor(KitType kit) {
+        return switch (kit) {
+            case SWORD -> "§b";
+            case AXE -> "§6";
+            case UHC -> "§a";
+            case MACE -> "§d";
+            case SPEAR_MACE -> "§3";
+            case CRYSTAL -> "§5";
+            case NETHERITE_POT -> "§c";
+            case SMP -> "§e";
+            case DIAMOND_SMP -> "§b";
+            case TNT_MINECART_LT -> "§6";
+            case TNT_MINECART_HT -> "§c";
+        };
     }
 
     private Material iconFor(KitType kit) {
@@ -230,7 +246,7 @@ public final class LobbyItemsManager implements Listener {
                 case DIAMOND_SMP -> Material.DIAMOND_CHESTPLATE;
                 case TNT_MINECART_LT, TNT_MINECART_HT -> Material.TNT_MINECART;
             };
-            inv.setItem(slots[i],item(icon,"§d§l"+pretty(k),
+            inv.setItem(slots[i],item(icon,kitColor(k)+"§l"+pretty(k),
                     "§7Kit: §f"+pretty(k),
                     "",
                     "§aLeft-click §8» §f"+(target==null?"join unranked queue":"send duel request")));
