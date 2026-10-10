@@ -1,0 +1,25 @@
+# Merge this section into plugins/TAB/config.yml (do not replace your whole TAB config).
+# TAB owns the sidebar so rank prefixes / nametag teams keep working.
+scoreboard:
+  enabled: true
+  toggle-command: /sb
+  remember-toggle-choice: true
+  hidden-by-default: false
+  delay-on-join-milliseconds: 500
+  scoreboards:
+    voidflame-practice:
+      title: "<#8B5CF6><bold>VOIDFLAME</bold></#8B5CF6>"
+      lines:
+        - "&8&m----------------"
+        - "&7Mode: %voidflame_mode%"
+        - "&dRank: &f%voidflame_rank%"
+        - "&7Player: &f%player%"
+        - ""
+        - "&aWins: &f%voidflame_wins%"
+        - "&cLosses: &f%voidflame_losses%"
+        - "&bStreak: &f%voidflame_streak%"
+        - "&eELO: &f%voidflame_elo%"
+        - "&6Coins: &f%voidflame_coins%"
+        - ""
+        - "&7Online: &f%online%"
+        - "&dplay.VoidFlame.net"
