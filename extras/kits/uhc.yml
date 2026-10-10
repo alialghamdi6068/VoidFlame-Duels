@@ -1,0 +1,25 @@
+# Exported from the current VoidFlame-Duels default kit configuration.
+# This is a project preset, not a verified byte-for-byte copy of PvPPrac.
+kit:
+  id: uhc
+  uhc:
+    items:
+      "0": {material: DIAMOND_SWORD, amount: 1, enchants: {DAMAGE_ALL: 3}}
+      "1": {material: DIAMOND_AXE, amount: 1, enchants: {EFFICIENCY: 3}}
+      "2": {material: GOLDEN_APPLE, amount: 8}
+      "3": {material: PLAYER_HEAD, amount: 2, golden-head: true}
+      "4": {material: OAK_PLANKS, amount: 64}
+      "5": {material: WATER_BUCKET, amount: 1}
+      "6": {material: LAVA_BUCKET, amount: 1}
+      "7": {material: CROSSBOW, amount: 1, enchants: {PIERCING: 1}, charged-projectile: {material: ARROW, amount: 1}}
+      "8": {material: COBWEB, amount: 8}
+      "13": {material: LAVA_BUCKET, amount: 1}
+      "17": {material: BOW, amount: 1, enchants: {ARROW_DAMAGE: 1}}
+      "22": {material: DIAMOND_PICKAXE, amount: 1, enchants: {EFFICIENCY: 3}}
+      "26": {material: OAK_PLANKS, amount: 64}
+      "36": {material: DIAMOND_BOOTS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3}}
+      "37": {material: DIAMOND_LEGGINGS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 2}}
+      "38": {material: DIAMOND_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 2}}
+      "39": {material: DIAMOND_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3}}
+    offhand: {material: SHIELD, amount: 1}
+
