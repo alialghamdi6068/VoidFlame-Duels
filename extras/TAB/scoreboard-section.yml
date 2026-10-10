@@ -1,5 +1,5 @@
-# Merge this section into plugins/TAB/config.yml (do not replace your whole TAB config).
-# TAB owns the sidebar so rank prefixes / nametag teams keep working.
+# VoidFlame branded TAB sidebar. Merge this section into plugins/TAB/config.yml.
+# Keep TAB as the only scoreboard owner so prefixes and nametag teams remain intact.
 scoreboard:
   enabled: true
   toggle-command: /sb
@@ -8,18 +8,18 @@ scoreboard:
   delay-on-join-milliseconds: 500
   scoreboards:
     voidflame-practice:
-      title: "<#8B5CF6><bold>VOIDFLAME</bold></#8B5CF6>"
+      title: "<gradient:#7C3AED:#22D3EE><bold>VOIDFLAME</bold></gradient>"
       lines:
-        - "&8&m----------------"
-        - "&7Mode: %voidflame_mode%"
-        - "&dRank: &f%voidflame_rank%"
-        - "&7Player: &f%player%"
-        - ""
-        - "&aWins: &f%voidflame_wins%"
-        - "&cLosses: &f%voidflame_losses%"
-        - "&bStreak: &f%voidflame_streak%"
-        - "&eELO: &f%voidflame_elo%"
-        - "&6Coins: &f%voidflame_coins%"
-        - ""
-        - "&7Online: &f%online%"
-        - "&dplay.VoidFlame.net"
+        - "&8&m--------------------"
+        - "<#A78BFA>◆ &7MODE &8» <#F8FAFC>%voidflame_mode%"
+        - "<#A78BFA>◆ &7RANK &8» <#F8FAFC>%voidflame_rank%"
+        - "<#A78BFA>◆ &7PLAYER &8» <#F8FAFC>%player%"
+        - "&r"
+        - "<#22D3EE>✦ &7WINS &8» <#F8FAFC>%voidflame_wins%"
+        - "<#F87171>✦ &7LOSSES &8» <#F8FAFC>%voidflame_losses%"
+        - "<#22D3EE>✦ &7STREAK &8» <#F8FAFC>%voidflame_streak%"
+        - "<#FBBF24>✦ &7ELO &8» <#F8FAFC>%voidflame_elo%"
+        - "<#A78BFA>✦ &7COINS &8» <#F8FAFC>%voidflame_coins%"
+        - "&r "
+        - "&8Online &7» <#F8FAFC>%online%"
+        - "<gradient:#7C3AED:#22D3EE>play.VoidFlame.net</gradient>"
