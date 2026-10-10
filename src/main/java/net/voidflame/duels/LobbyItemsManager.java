@@ -21,6 +21,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import net.voidflame.core.storage.StorageService;
 
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,8 @@ public final class LobbyItemsManager implements Listener {
     private static final String PARTY_MENU = "§8VoidFlame §7• §bParty";
     private static final String TARGET_PREFIX = "§8VoidFlame §7• §dDuel ";
     private static final String PARTY_GUI = "§8VoidFlame §7• §bParty";
+    private static final String EDITOR_MENU = "§8VoidFlame §7• §aKit Editor";
+    private static final String LEADERBOARD_MENU = "§8VoidFlame §7• §eLeaderboard";
     private final VoidFlameDuelsPlugin plugin;
     private final NamespacedKey key;
     private final Map<UUID, UUID> targetByViewer = new ConcurrentHashMap<>();
@@ -52,8 +55,9 @@ public final class LobbyItemsManager implements Listener {
         inv.setItem(0, item(Material.DIAMOND_SWORD,"§d§lDuel","§7Right-click §8» §fChoose a kit and play","§7Left-click a player §8» §fChoose a kit and duel"));
         inv.setItem(1, item(Material.GOAT_HORN,"§b§lParty +","§7Right-click §8» §fOpen Party"));
         for(int i=2;i<=7;i++) inv.setItem(i,null);
-        inv.setItem(8, item(Material.BOOK,"§e§lKit Editor","§7Right-click §8» §fOpen Kit Editor"));
-        mark(inv.getItem(0),"duel"); mark(inv.getItem(1),"party"); mark(inv.getItem(8),"editor");
+        inv.setItem(7, item(Material.BOOK,"§a§lKit Editor","§7Right-click §8» §fChoose a kit layout to edit"));
+        inv.setItem(8, item(Material.NETHER_STAR,"§e§lLeaderboard","§7Right-click §8» §fView top players"));
+        mark(inv.getItem(0),"duel"); mark(inv.getItem(1),"party"); mark(inv.getItem(7),"editor"); mark(inv.getItem(8),"leaderboard");
         p.updateInventory();
     }
 
@@ -89,7 +93,8 @@ public final class LobbyItemsManager implements Listener {
         else if("party-invite".equals(type)) p.sendMessage("§bParty §7» §fUse §e/party invite <player> §fto invite someone.");
         else if("party-info".equals(type)) showMembers(p);
         else if("party-leave".equals(type)) leaveParty(p);
-        else if("editor".equals(type)) plugin.kitManager().openEditor(p,KitType.SWORD);
+        else if("editor".equals(type)) openKitEditorMenu(p);
+        else if("leaderboard".equals(type)) openLeaderboard(p);
     }
 
     @EventHandler public void onInteractEntity(PlayerInteractEntityEvent e) {
@@ -110,6 +115,93 @@ public final class LobbyItemsManager implements Listener {
         if (!isType(held, "duel")) return;
         e.setCancelled(true);
         openTargetKit(p, target);
+    }
+
+    private void openKitEditorMenu(Player player) {
+        Inventory inventory = Bukkit.createInventory(null, 45, EDITOR_MENU);
+        fill(inventory);
+        inventory.setItem(4, item(Material.BOOK, "§a§lKIT EDITOR",
+                "§7Choose the kit layout you want to customize.",
+                "§7Your layout is saved by the kit service."));
+        int[] slots = {10,11,12,13,14,15,16,19,20,21,22};
+        KitType[] kits = KitType.values();
+        for (int index = 0; index < Math.min(slots.length, kits.length); index++) {
+            KitType kit = kits[index];
+            inventory.setItem(slots[index], item(iconFor(kit), "§a§l" + pretty(kit),
+                    "§7Customize your inventory layout.",
+                    "§eClick to edit"));
+        }
+        inventory.setItem(37, item(Material.ARROW, "§7Back", "§7Close this menu."));
+        inventory.setItem(43, item(Material.BARRIER, "§cClose"));
+        player.openInventory(inventory);
+    }
+
+    private Material iconFor(KitType kit) {
+        return switch (kit) {
+            case SWORD -> Material.DIAMOND_SWORD;
+            case AXE -> Material.DIAMOND_AXE;
+            case UHC -> Material.GOLDEN_APPLE;
+            case MACE -> Material.MACE;
+            case SPEAR_MACE -> Material.TRIDENT;
+            case CRYSTAL -> Material.END_CRYSTAL;
+            case NETHERITE_POT -> Material.SPLASH_POTION;
+            case SMP -> Material.TOTEM_OF_UNDYING;
+            case DIAMOND_SMP -> Material.DIAMOND_CHESTPLATE;
+            case TNT_MINECART_LT, TNT_MINECART_HT -> Material.TNT_MINECART;
+        };
+    }
+
+    private void openLeaderboard(Player player) {
+        Inventory inventory = Bukkit.createInventory(null, 54, LEADERBOARD_MENU);
+        fill(inventory);
+        inventory.setItem(4, item(Material.NETHER_STAR, "§e§lPLAYER LEADERBOARD",
+                "§7Ranked by wins, then ELO.",
+                "§8Top players from VoidFlame-Core"));
+        inventory.setItem(49, item(Material.ARROW, "§7Back", "§7Close this menu."));
+        inventory.setItem(53, item(Material.BARRIER, "§cClose"));
+        player.openInventory(inventory);
+
+        var registration = Bukkit.getServicesManager().getRegistration(StorageService.class);
+        if (registration == null || registration.getProvider() == null) {
+            player.sendMessage("§cLeaderboard data service is unavailable.");
+            return;
+        }
+        registration.getProvider().query(
+                "SELECT name, wins, losses, elo, winstreak FROM player_profiles ORDER BY wins DESC, elo DESC LIMIT 28"
+        ).whenComplete((rows, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+            if (error != null) {
+                if (player.isOnline()) player.sendMessage("§cCould not load the leaderboard.");
+                plugin.getLogger().warning("Unable to load leaderboard: " + error.getMessage());
+                return;
+            }
+            int[] slots = {10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,31,32,33,34,37,38,39,40,41,42,43};
+            for (int index = 0; index < Math.min(slots.length, rows.size()); index++) {
+                var row = rows.get(index);
+                String name = String.valueOf(row.getOrDefault("name", "Unknown"));
+                int wins = number(row.get("wins"));
+                int losses = number(row.get("losses"));
+                int streak = number(row.get("winstreak"));
+                Object eloValue = row.get("elo");
+                String elo = eloValue instanceof Number n ? String.format(java.util.Locale.ROOT, "%.0f", n.doubleValue()) : "1000";
+                ItemStack head = item(Material.PLAYER_HEAD, "§e#" + (index + 1) + " §f" + name,
+                        "§7Wins: §a" + wins,
+                        "§7Losses: §c" + losses,
+                        "§7ELO: §d" + elo,
+                        "§7Winstreak: §b" + streak);
+                inventory.setItem(slots[index], head);
+            }
+            if (rows.isEmpty()) {
+                inventory.setItem(22, item(Material.BARRIER, "§cNo player stats yet",
+                        "§7Leaderboard entries appear after stats are recorded."));
+            }
+            if (player.isOnline() && player.getOpenInventory().getTopInventory() == inventory) {
+                player.updateInventory();
+            }
+        }));
+    }
+
+    private int number(Object value) {
+        return value instanceof Number number ? number.intValue() : 0;
     }
 
     private void openSelfKit(Player p){openKitMenu(p,DUEL_MENU,null);}
@@ -209,6 +301,28 @@ public final class LobbyItemsManager implements Listener {
     @EventHandler public void onClick(InventoryClickEvent e){
         if(!(e.getWhoClicked() instanceof Player p))return;
         String title=e.getView().getTitle();
+        if (title.equals(LEADERBOARD_MENU)) {
+            e.setCancelled(true);
+            if (e.getRawSlot() == 49 || e.getRawSlot() == 53) p.closeInventory();
+            return;
+        }
+        if (title.equals(EDITOR_MENU)) {
+            e.setCancelled(true);
+            int raw = e.getRawSlot();
+            if (raw == 37 || raw == 43) { p.closeInventory(); return; }
+            int[] slots = {10,11,12,13,14,15,16,19,20,21,22};
+            for (int index = 0; index < slots.length && index < KitType.values().length; index++) {
+                if (raw == slots[index]) {
+                    KitType kit = KitType.values()[index];
+                    p.closeInventory();
+                    if (!plugin.kitManager().openEditor(p, kit)) {
+                        p.sendMessage("§cThe kit editor is unavailable for " + pretty(kit) + ".");
+                    }
+                    return;
+                }
+            }
+            return;
+        }
         if(title.equals(DUEL_MENU)||title.startsWith(TARGET_PREFIX)||title.equals(PARTY_MENU)||title.equals(PARTY_GUI)){
             e.setCancelled(true);
             int s=e.getRawSlot();
