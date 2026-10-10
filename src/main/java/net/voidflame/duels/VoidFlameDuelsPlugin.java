@@ -102,7 +102,18 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         register("accept", duelCommand);
         register("deny", duelCommand);
         register("leave", duelCommand);
-        if (getCommand("duelsadmin") != null) getCommand("duelsadmin").setExecutor((sender, command, label, args) -> { if (sender instanceof Player p && p.hasPermission("voidflame.duels.admin")) duelsAdminMenu.open(p); return true; });
+        if (getCommand("duelsadmin") != null) getCommand("duelsadmin").setExecutor((sender, command, label, args) -> {
+            if (!(sender instanceof Player p)) {
+                sender.sendMessage("Players only.");
+                return true;
+            }
+            if (!p.hasPermission("voidflame.duels.admin")) {
+                p.sendMessage(ChatColor.RED + "You do not have permission.");
+                return true;
+            }
+            duelsAdminMenu.open(p);
+            return true;
+        });
 
         AdvancedCommand advancedCommand = new AdvancedCommand(this);
         getServer().getPluginManager().registerEvents(advancedCommand, this);
