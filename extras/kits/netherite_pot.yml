@@ -1,0 +1,42 @@
+# Exported from the current VoidFlame-Duels default kit configuration.
+# This is a project preset, not a verified byte-for-byte copy of PvPPrac.
+kit:
+  id: netherite_pot
+  netherite_pot:
+    items:
+      "0": {material: NETHERITE_SWORD, amount: 1, enchants: {SHARPNESS: 5, SWEEPING_EDGE: 3, DURABILITY: 3}}
+      "1": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "2": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "3": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "4": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "5": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "6": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "7": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "8": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "9": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "10": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "11": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "12": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "13": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "14": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "15": {material: SPLASH_POTION, potion: STRONG_HEALING}
+      "16": {material: SPLASH_POTION, potion: LONG_FIRE_RESISTANCE}
+      "17": {material: SPLASH_POTION, potion: LONG_FIRE_RESISTANCE}
+      "18": {material: SPLASH_POTION, potion: LONG_FIRE_RESISTANCE}
+      "19": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "20": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "21": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "22": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "23": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "24": {material: SPLASH_POTION, potion: STRONG_STRENGTH}
+      "25": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "26": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "27": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "28": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "29": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "30": {material: SPLASH_POTION, potion: STRONG_SWIFTNESS}
+      "36": {material: NETHERITE_BOOTS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, FEATHER_FALLING: 4, DURABILITY: 3, MENDING: 1}}
+      "37": {material: NETHERITE_LEGGINGS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, DURABILITY: 3, MENDING: 1}}
+      "38": {material: NETHERITE_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, DURABILITY: 3, MENDING: 1}}
+      "39": {material: NETHERITE_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, DURABILITY: 3, MENDING: 1}}
+    offhand: {material: GOLDEN_APPLE, amount: 64}
