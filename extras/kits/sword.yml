@@ -1,0 +1,12 @@
+# Exported from the current VoidFlame-Duels default kit configuration.
+# This is a project preset, not a verified byte-for-byte copy of PvPPrac.
+kit:
+  id: sword
+  sword:
+    items:
+      "0": {material: DIAMOND_SWORD, amount: 1, enchants: {DURABILITY: 3}}
+      "36": {material: DIAMOND_BOOTS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3, DURABILITY: 3}}
+      "37": {material: DIAMOND_LEGGINGS, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 3, DURABILITY: 3}}
+      "38": {material: DIAMOND_CHESTPLATE, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, DURABILITY: 3}}
+      "39": {material: DIAMOND_HELMET, amount: 1, enchants: {PROTECTION_ENVIRONMENTAL: 4, DURABILITY: 3}}
+
