@@ -29,9 +29,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class LobbyItemsManager implements Listener {
-    private static final String DUEL_MENU = "§8VoidFlame §7• §dDuel";
+    private static final String DUEL_MENU = "§8VoidFlame §7• §5Duel";
     private static final String PARTY_MENU = "§8VoidFlame §7• §bParty";
-    private static final String TARGET_PREFIX = "§8VoidFlame §7• §dDuel ";
+    private static final String TARGET_PREFIX =  "§8VoidFlame §7• §5Duel ";
     private static final String PARTY_GUI = "§8VoidFlame §7• §bParty";
     private static final String EDITOR_MENU = "§8VoidFlame §7• §aKit Editor";
     private static final String LEADERBOARD_MENU = "§8VoidFlame §7• §eLeaderboard";
@@ -52,11 +52,11 @@ public final class LobbyItemsManager implements Listener {
         if(plugin.matchManager().isInMatch(p.getUniqueId()) || plugin.matchManager().isDisconnected(p.getUniqueId())
                 || plugin.spectatorManager().isSpectating(p.getUniqueId())) return;
         PlayerInventory inv=p.getInventory();
-        inv.setItem(0, item(Material.DIAMOND_SWORD,"§d§lDuel","§7Right-click §8» §fChoose a kit and play","§7Left-click a player §8» §fChoose a kit and duel"));
-        inv.setItem(1, item(Material.GOAT_HORN,"§b§lParty +","§7Right-click §8» §fOpen Party"));
+        inv.setItem(0, item(Material.DIAMOND_SWORD,"§5§lDUEL","§7Right-click §8» §fChoose a kit and play","§7Left-click a player §8» §fChoose a kit and duel"));
+        inv.setItem(1, item(Material.GOAT_HORN,"§b§lPARTY +","§7Right-click §8» §fOpen Party"));
         for(int i=2;i<=7;i++) inv.setItem(i,null);
-        inv.setItem(7, item(Material.BOOK,"§a§lKit Editor","§7Right-click §8» §fChoose a kit layout to edit"));
-        inv.setItem(8, item(Material.NETHER_STAR,"§e§lLeaderboard","§7Right-click §8» §fView top players"));
+        inv.setItem(7, item(Material.BOOK,"§d§lKIT EDITOR","§7Right-click §8» §fChoose a kit layout to edit"));
+        inv.setItem(8, item(Material.NETHER_STAR,"§6§lLEADERBOARD","§7Right-click §8» §fView top players"));
         mark(inv.getItem(0),"duel"); mark(inv.getItem(1),"party"); mark(inv.getItem(7),"editor"); mark(inv.getItem(8),"leaderboard");
         p.updateInventory();
     }
@@ -120,7 +120,7 @@ public final class LobbyItemsManager implements Listener {
     private void openKitEditorMenu(Player player) {
         Inventory inventory = Bukkit.createInventory(null, 45, EDITOR_MENU);
         fill(inventory);
-        inventory.setItem(4, item(Material.BOOK, "§a§lKIT EDITOR",
+        inventory.setItem(4, item(Material.BOOK, "§d§lKIT EDITOR",
                 "§7Choose the kit layout you want to customize.",
                 "§7Your layout is saved by the kit service."));
         int[] slots = {10,11,12,13,14,15,16,19,20,21,22};
@@ -138,17 +138,10 @@ public final class LobbyItemsManager implements Listener {
 
     private String kitColor(KitType kit) {
         return switch (kit) {
-            case SWORD -> "§b";
-            case AXE -> "§6";
-            case UHC -> "§a";
-            case MACE -> "§d";
-            case SPEAR_MACE -> "§3";
-            case CRYSTAL -> "§5";
-            case NETHERITE_POT -> "§c";
-            case SMP -> "§e";
-            case DIAMOND_SMP -> "§b";
             case TNT_MINECART_LT -> "§6";
             case TNT_MINECART_HT -> "§c";
+            case DIAMOND_SMP -> "§b";
+            default -> "§d";
         };
     }
 
@@ -170,7 +163,7 @@ public final class LobbyItemsManager implements Listener {
     public void openLeaderboard(Player player) {
         Inventory inventory = Bukkit.createInventory(null, 54, LEADERBOARD_MENU);
         fill(inventory);
-        inventory.setItem(4, item(Material.NETHER_STAR, "§e§lPLAYER LEADERBOARD",
+        inventory.setItem(4, item(Material.NETHER_STAR, "§6§lPLAYER LEADERBOARD",
                 "§7Ranked by wins, then ELO.",
                 "§8Top players from VoidFlame-Core"));
         inventory.setItem(49, item(Material.ARROW, "§7Back", "§7Close this menu."));
