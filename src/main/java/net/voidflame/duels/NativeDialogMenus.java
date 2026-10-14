@@ -3,6 +3,7 @@ package net.voidflame.duels;
 import io.papermc.paper.dialog.Dialog;
 import io.papermc.paper.registry.data.dialog.ActionButton;
 import io.papermc.paper.registry.data.dialog.DialogBase;
+import io.papermc.paper.registry.data.dialog.input.DialogInput;
 import io.papermc.paper.registry.data.dialog.action.DialogAction;
 import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import io.papermc.paper.registry.data.dialog.type.DialogType;
@@ -213,6 +214,46 @@ public final class NativeDialogMenus {
         show(player, "VoidFlame • Kit Editor", body, buttons, 2);
     }
 
+    public void openParty(Player player) {
+        PartyManager.Party party = plugin.partyManager().partyOf(player.getUniqueId());
+        List<DialogBody> body = new ArrayList<>();
+        body.add(DialogBody.item(new ItemStack(Material.GOAT_HORN),
+                DialogBody.plainMessage(Component.text("PARTY SYSTEM", NamedTextColor.AQUA), 200),
+                true, true, 48, 48));
+        if (party == null) {
+            body.add(DialogBody.plainMessage(Component.text("You are not currently in a party. Create one or accept an invite.", NamedTextColor.GRAY), 300));
+        } else {
+            String members = party.members().stream().map(id -> {
+                Player online = plugin.getServer().getPlayer(id);
+                String name = online == null ? plugin.getServer().getOfflinePlayer(id).getName() : online.getName();
+                return name == null ? id.toString().substring(0, 8) : name;
+            }).reduce((a, b) -> a + ", " + b).orElse("-");
+            body.add(DialogBody.plainMessage(Component.text("Leader: " + memberName(party.leader()) + "  •  Members: " + members, NamedTextColor.GRAY), 300));
+        }
+        List<ActionButton> actions = List.of(
+                button("Create Party", "Create a new party.", "/party create", NamedTextColor.AQUA),
+                button("Accept Invite", "Accept a pending party invitation.", "/party accept", NamedTextColor.GREEN),
+                button("Invite Player", "Invite the name entered above.", "/party invite $(target)", NamedTextColor.LIGHT_PURPLE),
+                button("Queue 1v1", "Queue your party for 1v1.", "/party queue 1v1", NamedTextColor.GOLD),
+                button("Queue 2v2", "Queue your party for 2v2.", "/party queue 2v2", NamedTextColor.AQUA),
+                button("Queue FFA", "Queue your party for Free For All.", "/party queue ffa", NamedTextColor.RED),
+                button("Party Info", "Show current party members.", "/party info", NamedTextColor.WHITE),
+                button("Leave Party", "Leave your current party.", "/party leave", NamedTextColor.RED),
+                button("Main Menu", "Return to VoidFlame navigation.", "/vfmenu", NamedTextColor.GRAY)
+        );
+        show(player, "VoidFlame • Party", body, actions, 2, List.of(
+                DialogInput.text("target", Component.text("Player name", NamedTextColor.GRAY))
+                        .initial("").maxLength(16).width(240).build()
+        ));
+    }
+
+    private String memberName(java.util.UUID uuid) {
+        Player online = plugin.getServer().getPlayer(uuid);
+        if (online != null) return online.getName();
+        String name = plugin.getServer().getOfflinePlayer(uuid).getName();
+        return name == null ? uuid.toString().substring(0, 8) : name;
+    }
+
     public void openAdmin(Player player) {
         if (!player.hasPermission("voidflame.duels.admin")) {
             player.sendMessage(Component.text("You do not have permission.", NamedTextColor.RED));
@@ -239,6 +280,7 @@ public final class NativeDialogMenus {
             case "leaderboard" -> openLeaderboard(player);
             case "tiers" -> openTiersInfo(player);
             case "editor" -> openEditorChoice(player);
+            case "party" -> openParty(player);
             case "admin" -> openAdmin(player);
             default -> openMain(player);
         }
@@ -246,11 +288,16 @@ public final class NativeDialogMenus {
     }
 
     private void show(Player player, String title, List<DialogBody> body, List<ActionButton> buttons, int columns) {
+        show(player, title, body, buttons, columns, List.of());
+    }
+
+    private void show(Player player, String title, List<DialogBody> body, List<ActionButton> buttons, int columns, List<DialogInput> inputs) {
         Dialog dialog = Dialog.create(builder -> builder.empty()
                 .base(DialogBase.builder(Component.text(title, NamedTextColor.WHITE))
                         .externalTitle(Component.text("VoidFlame", NamedTextColor.LIGHT_PURPLE))
                         .canCloseWithEscape(true)
                         .body(body)
+                        .inputs(inputs)
                         .build())
                 .type(DialogType.multiAction(buttons).columns(columns).build()));
         player.showDialog(dialog);
