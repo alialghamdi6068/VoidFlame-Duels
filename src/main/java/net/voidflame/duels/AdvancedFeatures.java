@@ -1,6 +1,14 @@
 package net.voidflame.duels;
 
 import org.bukkit.Bukkit;
+import io.papermc.paper.dialog.Dialog;
+import io.papermc.paper.registry.data.dialog.ActionButton;
+import io.papermc.paper.registry.data.dialog.DialogBase;
+import io.papermc.paper.registry.data.dialog.action.DialogAction;
+import io.papermc.paper.registry.data.dialog.body.DialogBody;
+import io.papermc.paper.registry.data.dialog.type.DialogType;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.voidflame.core.storage.StorageService;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -279,41 +287,45 @@ public final class AdvancedFeatures implements Listener {
         storagePut(REPLAY_MODULE, match.second() + ":" + match.matchId(), value);
     }
 
+    private void showNative(Player player, String title, List<DialogBody> body, List<ActionButton> actions, int columns) {
+        Dialog dialog = Dialog.create(builder -> builder.empty()
+                .base(DialogBase.builder(Component.text(title, NamedTextColor.WHITE))
+                        .externalTitle(Component.text("VoidFlame", NamedTextColor.LIGHT_PURPLE))
+                        .canCloseWithEscape(true)
+                        .body(body)
+                        .build())
+                .type(DialogType.multiAction(actions).columns(columns).build()));
+        player.showDialog(dialog);
+    }
+
+    private ActionButton nativeButton(String label, String tooltip, String command, NamedTextColor color) {
+        return ActionButton.create(Component.text(label, color), Component.text(tooltip, NamedTextColor.GRAY),
+                180, DialogAction.commandTemplate(command));
+    }
+
     public void openHistory(Player player) {
         storage.database().query(
-                "SELECT data_key,data_value FROM module_data WHERE module=? AND data_key LIKE ? ORDER BY updated_at DESC LIMIT 45",
+                "SELECT data_key,data_value FROM module_data WHERE module=? AND data_key LIKE ? ORDER BY updated_at DESC LIMIT 10",
                 "stats", "history:" + player.getUniqueId() + ":%")
             .thenAccept(rows -> Bukkit.getScheduler().runTask(plugin, () -> {
-                Inventory inv = Bukkit.createInventory(null, 54, color("&8VoidFlame Match History"));
-                int slot = 0;
+                List<DialogBody> body = new ArrayList<>();
+                body.add(DialogBody.plainMessage(Component.text("RECENT MATCH HISTORY", NamedTextColor.AQUA), 300));
                 for (var row : rows) {
-                    if (slot >= 45) break;
                     String value = String.valueOf(row.get("data_value"));
-                    String[] parts = value.split("\\|", -1);
+                    String[] parts = value.split("\\\\|", -1);
                     String outcome = parts.length > 0 ? parts[0] : "MATCH";
                     String kit = parts.length > 1 ? parts[1].replace('_', ' ') : "Unknown";
                     String mode = parts.length > 2 ? parts[2] : "Duel";
                     String arena = parts.length > 3 ? parts[3] : "Unknown";
-                    Material icon = outcome.equalsIgnoreCase("WIN") ? Material.EMERALD : outcome.equalsIgnoreCase("LOSS") ? Material.REDSTONE : Material.PAPER;
-                    ItemStack item = new ItemStack(icon);
-                    ItemMeta meta = item.getItemMeta();
-                    if (meta != null) {
-                        meta.setDisplayName(color((outcome.equalsIgnoreCase("WIN") ? "&a" : outcome.equalsIgnoreCase("LOSS") ? "&c" : "&e") + outcome));
-                        meta.setLore(List.of(
-                                color("&7Kit: &f" + kit),
-                                color("&7Mode: &f" + mode),
-                                color("&7Arena: &f" + arena),
-                                color("&8Match history")
-                        ));
-                        item.setItemMeta(meta);
-                    }
-                    inv.setItem(slot++, item);
+                    NamedTextColor color = outcome.equalsIgnoreCase("WIN") ? NamedTextColor.GREEN
+                            : outcome.equalsIgnoreCase("LOSS") ? NamedTextColor.RED : NamedTextColor.WHITE;
+                    body.add(DialogBody.plainMessage(Component.text(outcome + "  •  " + kit + "  •  " + mode + "  •  " + arena, color), 320));
                 }
-                if (rows.isEmpty()) {
-                    ItemStack empty = item(Material.BARRIER, "&cNo match history", "&7Complete a duel to see it here.");
-                    inv.setItem(22, empty);
-                }
-                player.openInventory(inv);
+                if (rows.isEmpty()) body.add(DialogBody.plainMessage(Component.text("No match history yet. Complete a duel to populate this screen.", NamedTextColor.GRAY), 300));
+                showNative(player, "VoidFlame • Match History", body, List.of(
+                        nativeButton("Refresh", "Reload recent matches.", "/history", NamedTextColor.AQUA),
+                        nativeButton("Main Menu", "Return to VoidFlame navigation.", "/vfmenu", NamedTextColor.GRAY)
+                ), 1);
             }))
             .exceptionally(error -> {
                 plugin.getLogger().warning("Could not load match history: " + error.getMessage());
@@ -327,23 +339,55 @@ public final class AdvancedFeatures implements Listener {
             return;
         }
         storage.database().query(
-                "SELECT report_id, reporter, target, reason, status, timestamp FROM reports ORDER BY CASE status WHEN 'OPEN' THEN 0 WHEN 'CLAIMED' THEN 1 ELSE 2 END, timestamp DESC LIMIT 45")
+                "SELECT report_id, reporter, target, reason, status, timestamp FROM reports ORDER BY CASE status WHEN 'OPEN' THEN 0 WHEN 'CLAIMED' THEN 1 ELSE 2 END, timestamp DESC LIMIT 10")
             .thenAccept(rows -> Bukkit.getScheduler().runTask(plugin, () -> {
-                Inventory inv = Bukkit.createInventory(null, 54, color("&8VoidFlame Reports"));
-                int slot = 0;
+                List<DialogBody> body = new ArrayList<>();
+                List<ActionButton> actions = new ArrayList<>();
+                body.add(DialogBody.plainMessage(Component.text("STAFF REPORT QUEUE", NamedTextColor.RED), 300));
                 for (var row : rows) {
-                    if (slot >= 45) break;
+                    String id = String.valueOf(row.get("report_id"));
                     String status = String.valueOf(row.get("status"));
                     String reason = String.valueOf(row.get("reason"));
                     String target = String.valueOf(row.get("target"));
-                    Material icon = status.equals("OPEN") ? Material.REDSTONE : status.equals("CLAIMED") ? Material.GOLD_INGOT : Material.EMERALD;
-                    inv.setItem(slot++, item(icon, "&cReport &7" + target,
-                            "&7Status: &f" + status + " &8| &7" + reason,
-                            "&eLeft-click: claim", "&aRight-click: resolve"));
+                    body.add(DialogBody.plainMessage(Component.text("#" + id.substring(0, Math.min(8, id.length()))
+                            + "  •  " + target + "  •  " + status + "  •  " + reason, status.equals("OPEN") ? NamedTextColor.RED
+                            : status.equals("CLAIMED") ? NamedTextColor.GOLD : NamedTextColor.GREEN), 320));
+                    if (!status.equals("RESOLVED")) {
+                        actions.add(nativeButton("Claim " + id.substring(0, Math.min(6, id.length())), "Claim this report.", "/reports claim " + id, NamedTextColor.GOLD));
+                        actions.add(nativeButton("Resolve " + id.substring(0, Math.min(6, id.length())), "Resolve this report.", "/reports resolve " + id, NamedTextColor.GREEN));
+                    } else {
+                        actions.add(nativeButton("Reopen " + id.substring(0, Math.min(6, id.length())), "Reopen this report.", "/reports reopen " + id, NamedTextColor.AQUA));
+                    }
                 }
-                if (rows.isEmpty()) inv.setItem(22, item(Material.BARRIER, "&aNo reports", "&7There are no stored reports."));
-                staff.openInventory(inv);
+                if (rows.isEmpty()) body.add(DialogBody.plainMessage(Component.text("There are no stored reports.", NamedTextColor.GRAY), 300));
+                actions.add(nativeButton("Refresh", "Reload report queue.", "/reports", NamedTextColor.AQUA));
+                actions.add(nativeButton("Back", "Return to staff panel.", "/vfui admin", NamedTextColor.GRAY));
+                showNative(staff, "VoidFlame • Reports", body, actions, 2);
             }));
+    }
+
+    public void updateReportStatus(Player staff, String reportId, String requestedStatus) {
+        if (!staff.hasPermission("voidflame.report.handle") && !staff.isOp()) {
+            staff.sendMessage(plugin.message("no-permission"));
+            return;
+        }
+        String status = requestedStatus.toUpperCase(Locale.ROOT);
+        if (!List.of("CLAIMED", "RESOLVED", "OPEN").contains(status) || reportId == null || reportId.isBlank()) {
+            staff.sendMessage(color("&cInvalid report action."));
+            return;
+        }
+        storage.database().execute("UPDATE reports SET status=?, staff=? WHERE report_id=?",
+                status, staff.getUniqueId().toString(), reportId)
+            .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                if (staff.isOnline()) openReports(staff);
+            }))
+            .exceptionally(error -> {
+                plugin.getLogger().warning("Could not update report " + reportId + ": " + error.getMessage());
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (staff.isOnline()) staff.sendMessage(color("&cCould not update the report."));
+                });
+                return null;
+            });
     }
 
     @EventHandler
@@ -433,19 +477,65 @@ public final class AdvancedFeatures implements Listener {
     }
 
     public void openCoinShop(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 54, color("&8VoidFlame CoinShop"));
         List<Map<?, ?>> catalog = shopProducts();
-        for (int i = 0; i < Math.min(45, catalog.size()); i++) {
+        List<DialogBody> body = new ArrayList<>();
+        List<ActionButton> actions = new ArrayList<>();
+        body.add(DialogBody.plainMessage(Component.text("COIN SHOP  •  BALANCE: " + coinBalance(player.getUniqueId()), NamedTextColor.GOLD), 300));
+        for (int i = 0; i < Math.min(20, catalog.size()); i++) {
             Map<?, ?> entry = catalog.get(i);
             String name = String.valueOf(entry.containsKey("name") ? entry.get("name") : "Product");
+            String id = String.valueOf(entry.containsKey("id") ? entry.get("id") : name);
             int price = Math.max(0, parseInt(entry.get("price"), 0));
             Material material = Material.matchMaterial(String.valueOf(entry.containsKey("material") ? entry.get("material") : "NAME_TAG"));
             if (material == null) material = Material.NAME_TAG;
-            String color = String.valueOf(entry.containsKey("color") ? entry.get("color") : "&b");
-            inv.setItem(i, item(material, color + name, "&7Cost: &e" + price + " coins"));
+            body.add(DialogBody.item(new ItemStack(material),
+                    DialogBody.plainMessage(Component.text(name + "  •  " + price + " coins", NamedTextColor.AQUA), 220),
+                    true, true, 36, 36));
+            actions.add(nativeButton(name, "Purchase for " + price + " coins.", "/coinshop buy " + id, NamedTextColor.AQUA));
         }
-        inv.setItem(49, item(Material.GOLD_NUGGET, "&eYour Coins: &f" + coinBalance(player.getUniqueId()), "&7Click a product to purchase."));
-        player.openInventory(inv);
+        if (catalog.isEmpty()) body.add(DialogBody.plainMessage(Component.text("The shop has no products configured.", NamedTextColor.GRAY), 300));
+        actions.add(nativeButton("Refresh", "Reload the shop.", "/coinshop", NamedTextColor.GOLD));
+        actions.add(nativeButton("Main Menu", "Return to VoidFlame navigation.", "/vfmenu", NamedTextColor.GRAY));
+        showNative(player, "VoidFlame • Coin Shop", body, actions, 2);
+    }
+
+    public void purchaseShopProduct(Player player, String productId) {
+        if (productId == null || productId.isBlank()) {
+            player.sendMessage(color("&cUnknown product."));
+            return;
+        }
+        Map<?, ?> entry = shopProducts().stream().filter(product -> {
+            String id = String.valueOf(product.containsKey("id") ? product.get("id") : product.get("name"));
+            return id.equalsIgnoreCase(productId);
+        }).findFirst().orElse(null);
+        if (entry == null) {
+            player.sendMessage(color("&cUnknown product."));
+            return;
+        }
+        String tag = String.valueOf(entry.containsKey("id") ? entry.get("id") : entry.get("name"));
+        int cost = Math.max(0, parseInt(entry.get("price"), 0));
+        storage.database().query("SELECT 1 FROM player_shop_purchases WHERE uuid=? AND product_id=?",
+                player.getUniqueId().toString(), tag).thenAccept(rows -> Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!rows.isEmpty()) {
+                player.sendMessage(color("&eYou already own this product."));
+                openCoinShop(player);
+                return;
+            }
+            if (!takeCoins(player.getUniqueId(), cost)) {
+                player.sendMessage(color("&cYou do not have enough coins."));
+                openCoinShop(player);
+                return;
+            }
+            storage.database().execute("INSERT INTO player_shop_purchases(uuid, product_id, purchased_at) VALUES (?, ?, ?)",
+                    player.getUniqueId().toString(), tag, System.currentTimeMillis());
+            storagePut(TAG_MODULE, player.getUniqueId().toString(), tag);
+            player.sendMessage(color("&aPurchased &f" + tag + " &afor &e" + cost + " coins&a."));
+            openCoinShop(player);
+        })).exceptionally(error -> {
+            plugin.getLogger().warning("Shop purchase failed: " + error.getMessage());
+            Bukkit.getScheduler().runTask(plugin, () -> player.sendMessage(color("&cPurchase failed. Try again.")));
+            return null;
+        });
     }
 
     private ItemStack item(Material material, String name, String lore) {
@@ -521,11 +611,27 @@ public final class AdvancedFeatures implements Listener {
     }
 
     public void openPractice(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, color("&8TotalPractice"));
-        inv.setItem(10, item(Material.FEATHER, "&bMovement", "&7Speed, jumps and strafing drills."));
-        inv.setItem(13, item(Material.SLIME_BLOCK, "&aStrafing", "&7Movement timing drill."));
-        inv.setItem(16, item(Material.TARGET, "&cAim", "&7Hit the target dummy."));
-        player.openInventory(inv);
+        List<DialogBody> body = List.of(
+                DialogBody.plainMessage(Component.text("TOTAL PRACTICE  •  TRAINING", NamedTextColor.LIGHT_PURPLE), 300),
+                DialogBody.item(new ItemStack(Material.FEATHER), DialogBody.plainMessage(Component.text("Movement • speed and jump control", NamedTextColor.AQUA), 220), true, true, 48, 48),
+                DialogBody.item(new ItemStack(Material.SLIME_BLOCK), DialogBody.plainMessage(Component.text("Strafing • movement timing", NamedTextColor.GREEN), 220), true, true, 48, 48),
+                DialogBody.item(new ItemStack(Material.TARGET), DialogBody.plainMessage(Component.text("Aim • target practice", NamedTextColor.RED), 220), true, true, 48, 48)
+        );
+        showNative(player, "VoidFlame • Total Practice", body, List.of(
+                nativeButton("Movement Drill", "Start movement training.", "/practice start movement", NamedTextColor.AQUA),
+                nativeButton("Strafing Drill", "Start strafing training.", "/practice start strafing", NamedTextColor.GREEN),
+                nativeButton("Aim Drill", "Start aim training.", "/practice start aim", NamedTextColor.RED),
+                nativeButton("Main Menu", "Return to VoidFlame navigation.", "/vfmenu", NamedTextColor.GRAY)
+        ), 2);
+    }
+
+    public void startTrainingCommand(Player player, String drill) {
+        if (!List.of("movement", "strafing", "aim").contains(drill.toLowerCase(Locale.ROOT))) {
+            player.sendMessage(color("&cUnknown training drill."));
+            openPractice(player);
+            return;
+        }
+        startTraining(player, drill.toLowerCase(Locale.ROOT));
     }
 
     @EventHandler
