@@ -21,7 +21,7 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         return switch (command.getName().toLowerCase(Locale.ROOT)) {
-            case "duels" -> { plugin.menu().open(p); yield true; }
+            case "duels" -> { plugin.nativeMenus().openQueue(p); yield true; }
             case "queue" -> queue(p, args);
             case "duel" -> duel(p, args);
             case "accept" -> accept(p, args);
