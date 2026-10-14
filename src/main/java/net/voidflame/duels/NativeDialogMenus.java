@@ -8,6 +8,7 @@ import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -155,11 +156,33 @@ public final class NativeDialogMenus {
     }
 
     public void openTiersInfo(Player player) {
-        show(player, "VoidFlame • Tiers", List.of(
+        String tiersUrl = plugin.getConfig().getString("integrations.tiers-url", "").trim();
+        boolean validUrl = tiersUrl.startsWith("https://") || tiersUrl.startsWith("http://");
+        List<ActionButton> actions = new ArrayList<>();
+        if (validUrl) {
+            actions.add(ActionButton.create(
+                    Component.text("Open Tiers Website", NamedTextColor.AQUA),
+                    Component.text("Open the configured VoidFlame Tiers website.", NamedTextColor.GRAY),
+                    180,
+                    DialogAction.staticAction(ClickEvent.openUrl(tiersUrl))
+            ));
+        } else {
+            actions.add(ActionButton.create(
+                    Component.text("Website Not Configured", NamedTextColor.GRAY),
+                    Component.text("Set integrations.tiers-url after deployment.", NamedTextColor.GRAY),
+                    180,
+                    null
+            ));
+        }
+        actions.add(button("Back to Rankings", "Return to the ranking choices.", "/vfui leaderboard-choice", NamedTextColor.LIGHT_PURPLE));
+        List<DialogBody> body = List.of(
                 DialogBody.plainMessage(Component.text("VOIDFLAME TIERS", NamedTextColor.AQUA), 300),
-                DialogBody.plainMessage(Component.text("This entry is reserved for the VoidFlame Tiers website integration. The site has no configured public URL/API endpoint in the server config yet, so no fake ranking data or broken link is shown.", NamedTextColor.GRAY), 300),
-                DialogBody.plainMessage(Component.text("Once deployed, configure integrations.tiers-url and the API endpoint to connect verified tier data.", NamedTextColor.GRAY), 300)
-        ), List.of(button("Back to Rankings", "Return to the ranking choices.", "/vfui leaderboard-choice", NamedTextColor.LIGHT_PURPLE)), 1);
+                DialogBody.plainMessage(Component.text("This section is reserved for verified competitive tier placements from the VoidFlame Tiers website.", NamedTextColor.GRAY), 300),
+                DialogBody.plainMessage(Component.text(validUrl
+                        ? "Use the button below to open the configured site. Live in-game tier data requires the site API endpoint and identity mapping to be configured."
+                        : "The site has not been configured with a public URL yet. No fake tier data or broken links will be displayed.", NamedTextColor.GRAY), 300)
+        );
+        show(player, "VoidFlame • Tiers", body, actions, 1);
     }
 
     public void openLeaderboard(Player player) {
