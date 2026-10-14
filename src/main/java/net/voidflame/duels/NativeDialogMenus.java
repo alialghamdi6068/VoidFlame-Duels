@@ -74,7 +74,7 @@ public final class NativeDialogMenus {
         for (KitCard kit : KITS) {
             buttons.add(button(kit.name(), "Open ranked, unranked and layout options.", "/vfui kit " + kit.id(), kit.color()));
         }
-        buttons.add(button("Back to Main Menu", "Return to the main navigation screen.", "/menu", NamedTextColor.GRAY));
+        buttons.add(button("Back to Main Menu", "Return to the main navigation screen.", "/vfmenu", NamedTextColor.GRAY));
         show(player, "VoidFlame • Choose Kit", body, buttons, 2);
     }
 
@@ -150,7 +150,7 @@ public final class NativeDialogMenus {
         show(player, "VoidFlame • Rankings", body, List.of(
                 button("Tiers", "Open the VoidFlame Tiers section.", "/vfui tiers", NamedTextColor.AQUA),
                 button("Leaderboards", "Open the in-server player leaderboard.", "/vfui leaderboard", NamedTextColor.LIGHT_PURPLE),
-                button("Back", "Return to main menu.", "/menu", NamedTextColor.GRAY)
+                button("Back", "Return to main menu.", "/vfmenu", NamedTextColor.GRAY)
         ), 2);
     }
 
@@ -186,7 +186,7 @@ public final class NativeDialogMenus {
         for (KitCard kit : KITS) {
             buttons.add(button(kit.name(), "Edit this kit's layout.", "/kiteditor " + kit.id(), kit.color()));
         }
-        buttons.add(button("Back", "Return to main menu.", "/menu", NamedTextColor.GRAY));
+        buttons.add(button("Back", "Return to main menu.", "/vfmenu", NamedTextColor.GRAY));
         show(player, "VoidFlame • Kit Editor", body, buttons, 2);
     }
 
@@ -202,7 +202,7 @@ public final class NativeDialogMenus {
                 button("Duels Administration", "Manage practice and duel systems.", "/duelsadmin", NamedTextColor.RED),
                 button("Kit Administration", "Manage kit definitions and availability.", "/kitadmin", NamedTextColor.GOLD),
                 button("Reports", "Review player reports.", "/reports", NamedTextColor.AQUA),
-                button("Back", "Return to main menu.", "/menu", NamedTextColor.GRAY)
+                button("Back", "Return to main menu.", "/vfmenu", NamedTextColor.GRAY)
         ), 2);
     }
 
