@@ -119,7 +119,7 @@ public final class LobbyItemsManager implements Listener {
 
     private void openKitEditorMenu(Player player) {
         plugin.nativeMenus().openEditorChoice(player);
-    
+    }
 
     private String kitColor(KitType kit) {
         return switch (kit) {
@@ -147,7 +147,7 @@ public final class LobbyItemsManager implements Listener {
 
     public void openLeaderboard(Player player) {
         plugin.nativeMenus().openLeaderboardChoice(player);
-    
+    }
 
     private int number(Object value) {
         return value instanceof Number number ? number.intValue() : 0;
@@ -155,10 +155,11 @@ public final class LobbyItemsManager implements Listener {
 
     private void openSelfKit(Player p){
         plugin.nativeMenus().openQueue(p);
-    
+    }
+
     private void openTargetKit(Player p,Player target){
         plugin.nativeMenus().openTargetKit(p, target);
-    
+    }
 
     private void openKitMenu(Player p,String title,UUID target) {
         Inventory inv=Bukkit.createInventory(null,45,title);
