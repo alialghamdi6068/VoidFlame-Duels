@@ -259,14 +259,18 @@ public final class NativeDialogMenus {
             player.sendMessage(Component.text("You do not have permission.", NamedTextColor.RED));
             return;
         }
-        show(player, "VoidFlame • Admin Panel", List.of(
-                DialogBody.plainMessage(Component.text("STAFF TOOLS", NamedTextColor.RED), 300),
-                DialogBody.plainMessage(Component.text("Administrative actions are only visible to authorized staff.", NamedTextColor.GRAY), 300)
-        ), List.of(
-                button("Duels Administration", "Manage practice and duel systems.", "/duelsadmin", NamedTextColor.RED),
-                button("Kit Administration", "Manage kit definitions and availability.", "/kitadmin", NamedTextColor.GOLD),
-                button("Reports", "Review player reports.", "/reports", NamedTextColor.AQUA),
-                button("Back", "Return to main menu.", "/vfmenu", NamedTextColor.GRAY)
+        List<DialogBody> body = List.of(
+                DialogBody.plainMessage(Component.text("VOIDFLAME STAFF CONTROL", NamedTextColor.RED), 300),
+                DialogBody.plainMessage(Component.text("Queued players: " + plugin.queueManager().totalQueued()
+                        + "   •   Active matches: " + plugin.matchManager().activeMatches(), NamedTextColor.GRAY), 300),
+                DialogBody.plainMessage(Component.text("Choose an administrative area. Sensitive actions still enforce their own permissions.", NamedTextColor.GRAY), 300)
+        );
+        show(player, "VoidFlame • Admin Panel", body, List.of(
+                button("FFA Status", "View current FFA status.", "/ffa stats", NamedTextColor.RED),
+                button("Reports", "Open report management.", "/reports", NamedTextColor.AQUA),
+                button("Settings", "Open player preferences.", "/settings", NamedTextColor.GRAY),
+                button("Kit Administration", "Open kit management.", "/kitadmin", NamedTextColor.GOLD),
+                button("Back", "Return to main menu.", "/vfmenu", NamedTextColor.LIGHT_PURPLE)
         ), 2);
     }
 
