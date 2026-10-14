@@ -27,7 +27,7 @@ public final class PartyCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 0) {
-            showHelp(player);
+            plugin.nativeMenus().openParty(player);
             return true;
         }
 
