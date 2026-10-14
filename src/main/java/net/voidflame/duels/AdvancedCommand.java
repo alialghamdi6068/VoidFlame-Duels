@@ -37,10 +37,10 @@ public final class AdvancedCommand implements CommandExecutor, TabCompleter, Lis
 
         return switch (name) {
             case "report" -> report(player, args);
-            case "reports" -> { plugin.advancedFeatures().openReports(player); yield true; }
+            case "reports" -> { if (args.length >= 2 && List.of("claim", "resolve", "reopen").contains(args[0].toLowerCase(Locale.ROOT))) plugin.advancedFeatures().updateReportStatus(player, args[1], switch (args[0].toLowerCase(Locale.ROOT)) { case "claim" -> "CLAIMED"; case "resolve" -> "RESOLVED"; default -> "OPEN"; }); else plugin.advancedFeatures().openReports(player); yield true; }
             case "history" -> { plugin.advancedFeatures().openHistory(player); yield true; }
-            case "coinshop" -> { plugin.advancedFeatures().openCoinShop(player); yield true; }
-            case "practice", "totalpractice" -> { plugin.advancedFeatures().openPractice(player); yield true; }
+            case "coinshop" -> { if (args.length >= 2 && args[0].equalsIgnoreCase("buy")) plugin.advancedFeatures().purchaseShopProduct(player, args[1]); else plugin.advancedFeatures().openCoinShop(player); yield true; }
+            case "practice", "totalpractice" -> { if (args.length >= 2 && args[0].equalsIgnoreCase("start")) plugin.advancedFeatures().startTrainingCommand(player, args[1]); else plugin.advancedFeatures().openPractice(player); yield true; }
             case "settings" -> { plugin.settingsMenu().open(player); yield true; }
             case "goldenhard" -> { plugin.advancedFeatures().toggleGoldenHard(player); yield true; }
             case "ffa" -> ffa(player, args);
