@@ -1,6 +1,15 @@
 package net.voidflame.duels;
 
 import org.bukkit.Bukkit;
+import io.papermc.paper.dialog.Dialog;
+import io.papermc.paper.registry.data.dialog.ActionButton;
+import io.papermc.paper.registry.data.dialog.DialogBase;
+import io.papermc.paper.registry.data.dialog.action.DialogAction;
+import io.papermc.paper.registry.data.dialog.body.DialogBody;
+import io.papermc.paper.registry.data.dialog.input.DialogInput;
+import io.papermc.paper.registry.data.dialog.type.DialogType;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.ChatColor;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
@@ -121,28 +130,34 @@ public final class AdvancedCommand implements CommandExecutor, TabCompleter, Lis
 
 
     private void openReportTargets(Player viewer) {
-        Inventory inventory = Bukkit.createInventory(null, 27, REPORT_GUI);
-        int slot = 0;
-        for (Player target : Bukkit.getOnlinePlayers()) {
-            if (target.equals(viewer)) continue;
-            if (slot >= 18) break;
-            ItemStack item = new ItemStack(Material.PLAYER_HEAD);
-            ItemMeta meta = item.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName("§c" + target.getName());
-                meta.setLore(List.of("§7Click to select this player.", "§8You will enter the reason in chat."));
-                item.setItemMeta(meta);
-            }
-            inventory.setItem(slot++, item);
-        }
-        ItemStack close = new ItemStack(Material.BARRIER);
-        ItemMeta closeMeta = close.getItemMeta();
-        if (closeMeta != null) {
-            closeMeta.setDisplayName("§c§lClose");
-            close.setItemMeta(closeMeta);
-        }
-        inventory.setItem(26, close);
-        viewer.openInventory(inventory);
+        List<DialogBody> body = List.of(
+                DialogBody.item(new ItemStack(Material.WRITABLE_BOOK),
+                        DialogBody.plainMessage(Component.text("Report a player to the VoidFlame staff team.", NamedTextColor.GRAY), 240),
+                        true, true, 48, 48),
+                DialogBody.plainMessage(Component.text("Enter the exact online player name and a short reason.", NamedTextColor.GRAY), 300)
+        );
+        List<ActionButton> actions = List.of(
+                ActionButton.create(Component.text("Submit Report", NamedTextColor.RED),
+                        Component.text("Send the report to authorized staff.", NamedTextColor.GRAY), 180,
+                        DialogAction.commandTemplate("/report $(target) $(reason)")),
+                ActionButton.create(Component.text("Cancel", NamedTextColor.GRAY),
+                        Component.text("Close without submitting.", NamedTextColor.GRAY), 180,
+                        DialogAction.commandTemplate("/vfmenu"))
+        );
+        Dialog dialog = Dialog.create(builder -> builder.empty()
+                .base(DialogBase.builder(Component.text("VoidFlame • Report Player", NamedTextColor.WHITE))
+                        .externalTitle(Component.text("VoidFlame", NamedTextColor.LIGHT_PURPLE))
+                        .canCloseWithEscape(true)
+                        .body(body)
+                        .inputs(List.of(
+                                DialogInput.text("target", Component.text("Player name", NamedTextColor.GRAY))
+                                        .initial("").maxLength(16).width(240).build(),
+                                DialogInput.text("reason", Component.text("Reason", NamedTextColor.GRAY))
+                                        .initial("").maxLength(200).width(300).build()
+                        ))
+                        .build())
+                .type(DialogType.multiAction(actions).columns(2).build()));
+        viewer.showDialog(dialog);
     }
 
     @EventHandler
