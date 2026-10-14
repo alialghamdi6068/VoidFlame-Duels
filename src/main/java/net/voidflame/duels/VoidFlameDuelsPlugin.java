@@ -153,7 +153,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
                 p.sendMessage(ChatColor.RED + "You do not have permission.");
                 return true;
             }
-            duelsAdminMenu.open(p);
+            nativeMenus.openAdmin(p);
             return true;
         });
 
