@@ -3,6 +3,12 @@
 # Paper 26.2 • Java 25
 # ================================================================
 # Matchmaking, GUI, rewards, combat, reports, replay and performance.
+# Optional website/API links. Leave blank until the Tiers site is deployed.
+integrations:
+  tiers-url: ""
+  tiers-api-url: ""
+  tiers-api-key: ""
+
 # Keep all player-facing text and tunables here so gameplay does not
 # require source-code edits.
 
