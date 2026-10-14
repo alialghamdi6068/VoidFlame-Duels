@@ -38,9 +38,16 @@ commands:
     description: Rejoin your disconnected duel.
     permission: voidflame.duel.rejoin
   duels:
-    description: Open the duel queue menu.
+    description: Open the native Minecraft duel queue screen.
     usage: /duels
     permission: voidflame.queue
+  menu:
+    description: Open the native VoidFlame main menu.
+    usage: /menu
+  vfui:
+    description: Open a native VoidFlame dialog screen.
+    usage: /vfui <screen>
+    permission: voidflame.ui
   spectate:
     description: Spectate an active duel.
     usage: /spectate <player>
@@ -104,6 +111,9 @@ commands:
     permission: voidflame.ffa
 
 permissions:
+  voidflame.ui:
+    description: Open VoidFlame native dialog screens.
+    default: true
   voidflame.duel:
     description: Use duel requests.
     default: true
