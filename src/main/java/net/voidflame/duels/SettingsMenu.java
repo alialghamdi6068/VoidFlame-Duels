@@ -1,6 +1,14 @@
 package net.voidflame.duels;
 
 import net.voidflame.core.storage.PlayerSettingsService;
+import io.papermc.paper.dialog.Dialog;
+import io.papermc.paper.registry.data.dialog.ActionButton;
+import io.papermc.paper.registry.data.dialog.DialogBase;
+import io.papermc.paper.registry.data.dialog.action.DialogAction;
+import io.papermc.paper.registry.data.dialog.body.DialogBody;
+import io.papermc.paper.registry.data.dialog.type.DialogType;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -48,18 +56,48 @@ public final class SettingsMenu implements Listener {
 
     public void open(Player player) {
         Map<String, Boolean> values = cache.computeIfAbsent(player.getUniqueId(), id -> new ConcurrentHashMap<>());
-        for (Setting s : SETTINGS) values.putIfAbsent(s.key(), service.getCached(player.getUniqueId(), s.key(), s.defaultValue()));
-        Inventory inv = Bukkit.createInventory(null, 27, TITLE);
-        fill(inv);
-        inv.setItem(4, item(Material.COMPARATOR, "§b§lSettings", "§7Customize your practice experience.", "", "§8Click an option to toggle it."));
-        int[] slots = {10,11,12,13,14,15,16,19,20,21};
-        for (int i=0;i<SETTINGS.size();i++) {
-            Setting s=SETTINGS.get(i); boolean enabled=values.getOrDefault(s.key(),s.defaultValue());
-            button(inv,slots[i],s.material(),(enabled?"§a":"§c")+s.label(),"§7Status: "+(enabled?"§a"+s.on():"§c"+s.off()),"","§dClick §8» §fToggle");
+        for (Setting setting : SETTINGS) {
+            values.putIfAbsent(setting.key(), service.getCached(player.getUniqueId(), setting.key(), setting.defaultValue()));
         }
-        inv.setItem(18,item(Material.ARROW,"§7§lBack","§7Return to spawn."));
-        inv.setItem(26,item(Material.BARRIER,"§c§lClose","§7Close this menu."));
-        player.openInventory(inv);
+        List<DialogBody> body = new java.util.ArrayList<>();
+        body.add(DialogBody.plainMessage(Component.text("CUSTOMIZE YOUR PRACTICE EXPERIENCE", NamedTextColor.AQUA), 300));
+        for (Setting setting : SETTINGS) {
+            boolean enabled = values.getOrDefault(setting.key(), setting.defaultValue());
+            String state = enabled ? setting.on() : setting.off();
+            NamedTextColor stateColor = enabled ? NamedTextColor.GREEN : NamedTextColor.RED;
+            body.add(DialogBody.item(new ItemStack(setting.material()),
+                    DialogBody.plainMessage(Component.text(setting.label() + "  •  " + state, stateColor), 220),
+                    true, true, 36, 36));
+        }
+        List<ActionButton> actions = new java.util.ArrayList<>();
+        for (Setting setting : SETTINGS) {
+            boolean enabled = values.getOrDefault(setting.key(), setting.defaultValue());
+            actions.add(ActionButton.create(
+                    Component.text(setting.label() + ": " + (enabled ? "ON" : "OFF"), enabled ? NamedTextColor.GREEN : NamedTextColor.RED),
+                    Component.text("Toggle this preference and save it.", NamedTextColor.GRAY),
+                    180,
+                    DialogAction.commandTemplate("/settings toggle " + setting.key())
+            ));
+        }
+        actions.add(ActionButton.create(Component.text("Main Menu", NamedTextColor.GRAY), Component.text("Return to VoidFlame navigation.", NamedTextColor.GRAY), 180, DialogAction.commandTemplate("/vfmenu")));
+        Dialog dialog = Dialog.create(builder -> builder.empty()
+                .base(DialogBase.builder(Component.text("VoidFlame • Settings", NamedTextColor.WHITE))
+                        .externalTitle(Component.text("VoidFlame", NamedTextColor.LIGHT_PURPLE))
+                        .canCloseWithEscape(true)
+                        .body(body)
+                        .build())
+                .type(DialogType.multiAction(actions).columns(2).build()));
+        player.showDialog(dialog);
+    }
+
+    public boolean toggleByKey(Player player, String key) {
+        for (Setting setting : SETTINGS) {
+            if (setting.key().equalsIgnoreCase(key)) {
+                toggle(player, setting);
+                return true;
+            }
+        }
+        return false;
     }
 
     private void toggle(Player p, Setting s) {
