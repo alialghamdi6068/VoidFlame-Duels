@@ -118,23 +118,8 @@ public final class LobbyItemsManager implements Listener {
     }
 
     private void openKitEditorMenu(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, 45, EDITOR_MENU);
-        fill(inventory);
-        inventory.setItem(4, item(Material.BOOK, "§d§lKIT EDITOR",
-                "§7Choose the kit layout you want to customize.",
-                "§7Your layout is saved by the kit service."));
-        int[] slots = {10,11,12,13,14,15,16,19,20,21,22};
-        KitType[] kits = KitType.values();
-        for (int index = 0; index < Math.min(slots.length, kits.length); index++) {
-            KitType kit = kits[index];
-            inventory.setItem(slots[index], item(iconFor(kit), kitColor(kit) + "§l" + pretty(kit),
-                    "§7Customize your inventory layout.",
-                    "§eClick to edit"));
-        }
-        inventory.setItem(37, item(Material.ARROW, "§7Back", "§7Close this menu."));
-        inventory.setItem(43, item(Material.BARRIER, "§cClose"));
-        player.openInventory(inventory);
-    }
+        plugin.nativeMenus().openEditorChoice(player);
+    
 
     private String kitColor(KitType kit) {
         return switch (kit) {
@@ -161,60 +146,19 @@ public final class LobbyItemsManager implements Listener {
     }
 
     public void openLeaderboard(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, 54, LEADERBOARD_MENU);
-        fill(inventory);
-        inventory.setItem(4, item(Material.NETHER_STAR, "§6§lPLAYER LEADERBOARD",
-                "§7Ranked by wins, then ELO.",
-                "§8Top players from VoidFlame-Core"));
-        inventory.setItem(49, item(Material.ARROW, "§7Back", "§7Close this menu."));
-        inventory.setItem(53, item(Material.BARRIER, "§cClose"));
-        player.openInventory(inventory);
-
-        var registration = Bukkit.getServicesManager().getRegistration(StorageService.class);
-        if (registration == null || registration.getProvider() == null) {
-            player.sendMessage("§cLeaderboard data service is unavailable.");
-            return;
-        }
-        registration.getProvider().query(
-                "SELECT name, wins, losses, elo, winstreak FROM player_profiles ORDER BY wins DESC, elo DESC LIMIT 28"
-        ).whenComplete((rows, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
-            if (error != null) {
-                if (player.isOnline()) player.sendMessage("§cCould not load the leaderboard.");
-                plugin.getLogger().warning("Unable to load leaderboard: " + error.getMessage());
-                return;
-            }
-            int[] slots = {10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,31,32,33,34,37,38,39,40,41,42,43};
-            for (int index = 0; index < Math.min(slots.length, rows.size()); index++) {
-                var row = rows.get(index);
-                String name = String.valueOf(row.getOrDefault("name", "Unknown"));
-                int wins = number(row.get("wins"));
-                int losses = number(row.get("losses"));
-                int streak = number(row.get("winstreak"));
-                Object eloValue = row.get("elo");
-                String elo = eloValue instanceof Number n ? String.format(java.util.Locale.ROOT, "%.0f", n.doubleValue()) : "1000";
-                ItemStack head = item(Material.PLAYER_HEAD, "§e#" + (index + 1) + " §f" + name,
-                        "§7Wins: §a" + wins,
-                        "§7Losses: §c" + losses,
-                        "§7ELO: §d" + elo,
-                        "§7Winstreak: §b" + streak);
-                inventory.setItem(slots[index], head);
-            }
-            if (rows.isEmpty()) {
-                inventory.setItem(22, item(Material.BARRIER, "§cNo player stats yet",
-                        "§7Leaderboard entries appear after stats are recorded."));
-            }
-            if (player.isOnline() && player.getOpenInventory().getTopInventory() == inventory) {
-                player.updateInventory();
-            }
-        }));
-    }
+        plugin.nativeMenus().openLeaderboardChoice(player);
+    
 
     private int number(Object value) {
         return value instanceof Number number ? number.intValue() : 0;
     }
 
-    private void openSelfKit(Player p){openKitMenu(p,DUEL_MENU,null);}
-    private void openTargetKit(Player p,Player target){targetByViewer.put(p.getUniqueId(),target.getUniqueId());openKitMenu(p,TARGET_PREFIX+target.getName(),target.getUniqueId());}
+    private void openSelfKit(Player p){
+        plugin.nativeMenus().openQueue(p);
+    
+    private void openTargetKit(Player p,Player target){
+        plugin.nativeMenus().openTargetKit(p, target);
+    
 
     private void openKitMenu(Player p,String title,UUID target) {
         Inventory inv=Bukkit.createInventory(null,45,title);
