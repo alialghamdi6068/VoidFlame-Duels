@@ -132,6 +132,18 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
             }
             return nativeMenus.handle(p, args);
         });
+        if (getCommand("settings") != null) getCommand("settings").setExecutor((sender, command, label, args) -> {
+            if (!(sender instanceof Player p)) {
+                sender.sendMessage("Players only.");
+                return true;
+            }
+            if (args.length >= 2 && args[0].equalsIgnoreCase("toggle")) {
+                if (!settingsMenu.toggleByKey(p, args[1])) p.sendMessage(ChatColor.RED + "Unknown setting.");
+                return true;
+            }
+            settingsMenu.open(p);
+            return true;
+        });
         if (getCommand("duelsadmin") != null) getCommand("duelsadmin").setExecutor((sender, command, label, args) -> {
             if (!(sender instanceof Player p)) {
                 sender.sendMessage("Players only.");
