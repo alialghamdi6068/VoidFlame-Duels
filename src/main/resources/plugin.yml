@@ -41,9 +41,9 @@ commands:
     description: Open the native Minecraft duel queue screen.
     usage: /duels
     permission: voidflame.queue
-  menu:
+  vfmenu:
     description: Open the native VoidFlame main menu.
-    usage: /menu
+    usage: /vfmenu
   vfui:
     description: Open a native VoidFlame dialog screen.
     usage: /vfui <screen>
