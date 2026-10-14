@@ -195,32 +195,7 @@ public final class LobbyItemsManager implements Listener {
     }
 
     private void openParty(Player p){
-        if (plugin.partyManager().partyOf(p.getUniqueId()) == null) {
-            plugin.partyManager().create(p);
-            givePartyItems(p);
-        }
-        Inventory inv=Bukkit.createInventory(null,54,PARTY_GUI);
-        fillModern(inv);
-        inv.setItem(4,item(Material.NETHER_STAR,"§b§lYOUR PARTY","§7Manage your party and choose a mode."));
-        PartyManager.Party party=plugin.partyManager().partyOf(p.getUniqueId());
-        if (party != null) {
-            int slot=19;
-            for (UUID id : party.members()) {
-                Player member=Bukkit.getPlayer(id);
-                String name=member==null?Bukkit.getOfflinePlayer(id).getName():""+member.getName();
-                ItemStack head=new ItemStack(Material.PLAYER_HEAD);
-                ItemMeta meta=head.getItemMeta();
-                if(meta!=null){meta.setDisplayName("§f"+name+(id.equals(party.leader())?" §6★":""));meta.setLore(List.of("§7Party member","§7Click for party actions."));head.setItemMeta(meta);}
-                inv.setItem(slot,head); slot += slot%9==7 ? 3 : 1; if(slot>=44) break;
-            }
-        }
-        inv.setItem(45,item(Material.DIAMOND_SWORD,"§d§lParty 1v1","§7Queue your party for 1v1."));
-        inv.setItem(47,item(Material.IRON_SWORD,"§a§lParty 2v2","§7Queue your party for 2v2."));
-        inv.setItem(49,item(Material.TNT,"§c§lParty FFA","§7Queue your party for FFA."));
-        inv.setItem(51,item(Material.NAME_TAG,"§e§lInvite","§7Use /party invite <player>."));
-        inv.setItem(52,item(Material.ARROW,"§7§lBack","§7Return to your lobby items."));
-        inv.setItem(53,item(Material.BARRIER,"§c§lClose","§7Close the menu."));
-        p.openInventory(inv);
+        plugin.nativeMenus().openParty(p);
     }
 
     private void fillModern(Inventory inv){
