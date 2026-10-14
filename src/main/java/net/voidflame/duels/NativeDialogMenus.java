@@ -15,6 +15,9 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Native Minecraft dialog screens for the Paper 26.2 client UI.
@@ -36,6 +39,7 @@ public final class NativeDialogMenus {
     );
 
     private final VoidFlameDuelsPlugin plugin;
+    private final Map<UUID, UUID> duelTargets = new ConcurrentHashMap<>();
 
     public NativeDialogMenus(VoidFlameDuelsPlugin plugin) {
         this.plugin = plugin;
@@ -94,6 +98,43 @@ public final class NativeDialogMenus {
                 button("Edit Layout", "Open your saved inventory layout editor.", "/kiteditor " + kit.id(), NamedTextColor.AQUA),
                 button("Back to Kits", "Return to kit selection.", "/vfui kits", NamedTextColor.GRAY)
         ), 2);
+    }
+
+    public void openTargetKit(Player player, Player target) {
+        duelTargets.put(player.getUniqueId(), target.getUniqueId());
+        List<DialogBody> body = new ArrayList<>();
+        body.add(DialogBody.plainMessage(Component.text("Choose the kit for your duel with " + target.getName() + ".", NamedTextColor.GRAY), 300));
+        for (KitCard kit : KITS) {
+            body.add(DialogBody.item(new ItemStack(kit.icon()),
+                    DialogBody.plainMessage(Component.text(kit.name() + "  •  " + kit.description(), kit.color()), 220),
+                    true, true, 44, 44));
+        }
+        List<ActionButton> buttons = new ArrayList<>();
+        for (KitCard kit : KITS) {
+            buttons.add(button(kit.name(), "Send a duel request using this kit.", "/vfui targetkit " + kit.id(), kit.color()));
+        }
+        buttons.add(button("Cancel", "Cancel the duel request.", "/vfui kits", NamedTextColor.GRAY));
+        show(player, "VoidFlame • Duel " + target.getName(), body, buttons, 2);
+    }
+
+    private void sendTargetDuel(Player player, String id) {
+        UUID targetId = duelTargets.remove(player.getUniqueId());
+        KitCard kit = KITS.stream().filter(value -> value.id().equalsIgnoreCase(id)).findFirst().orElse(null);
+        if (targetId == null || kit == null) {
+            player.sendMessage(Component.text("Duel target expired. Choose a player again.", NamedTextColor.RED));
+            return;
+        }
+        Player target = plugin.getServer().getPlayer(targetId);
+        if (target == null || !target.isOnline()) {
+            player.sendMessage(Component.text(plugin.message("player-not-found"), NamedTextColor.RED));
+            return;
+        }
+        if (!plugin.requests().send(player, target, KitType.fromConfig(kit.id()))) {
+            player.sendMessage(Component.text(plugin.message("duel-unavailable"), NamedTextColor.RED));
+            return;
+        }
+        player.sendMessage(Component.text(plugin.message("duel-sent").replace("<player>", target.getName()), NamedTextColor.GREEN));
+        target.sendMessage(Component.text(plugin.message("duel-received").replace("<player>", player.getName()).replace("<kit>", kit.name()), NamedTextColor.LIGHT_PURPLE));
     }
 
     public void openLeaderboardChoice(Player player) {
@@ -170,6 +211,7 @@ public final class NativeDialogMenus {
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "kits", "queue" -> openQueue(player);
             case "kit" -> { if (args.length < 2) openQueue(player); else openKit(player, args[1]); }
+            case "targetkit" -> { if (args.length < 2) openQueue(player); else sendTargetDuel(player, args[1]); }
             case "leaderboard-choice", "rankings" -> openLeaderboardChoice(player);
             case "leaderboard" -> openLeaderboard(player);
             case "tiers" -> openTiersInfo(player);
