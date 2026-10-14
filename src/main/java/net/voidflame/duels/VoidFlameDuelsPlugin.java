@@ -18,6 +18,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     private DuelRequestManager requests;
     private RematchManager rematches;
     private DuelMenu menu;
+    private NativeDialogMenus nativeMenus;
     private SpectatorManager spectatorManager;
     private PartyManager partyManager;
     private AdvancedFeatures advancedFeatures;
@@ -56,6 +57,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         queueManager = new QueueManager(this);
         matchManager = new MatchManager(this, queueManager, arenaManager, kitManager);
         menu = new DuelMenu(this);
+        nativeMenus = new NativeDialogMenus(this);
         spectatorManager = new SpectatorManager(this);
         partyManager = new PartyManager(this);
         advancedFeatures = new AdvancedFeatures(this);
@@ -112,8 +114,23 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
                 sender.sendMessage("Players only.");
                 return true;
             }
-            lobbyItemsManager.openLeaderboard(p);
+            nativeMenus.openLeaderboardChoice(p);
             return true;
+        });
+        if (getCommand("menu") != null) getCommand("menu").setExecutor((sender, command, label, args) -> {
+            if (!(sender instanceof Player p)) {
+                sender.sendMessage("Players only.");
+                return true;
+            }
+            nativeMenus.openMain(p);
+            return true;
+        });
+        if (getCommand("vfui") != null) getCommand("vfui").setExecutor((sender, command, label, args) -> {
+            if (!(sender instanceof Player p)) {
+                sender.sendMessage("Players only.");
+                return true;
+            }
+            return nativeMenus.handle(p, args);
         });
         if (getCommand("duelsadmin") != null) getCommand("duelsadmin").setExecutor((sender, command, label, args) -> {
             if (!(sender instanceof Player p)) {
@@ -235,6 +252,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     public DuelRequestManager requests() { return requests; }
     public RematchManager rematches() { return rematches; }
     public DuelMenu menu() { return menu; }
+    public NativeDialogMenus nativeMenus() { return nativeMenus; }
     public SettingsMenu settingsMenu() { return settingsMenu; }
     public SpectatorManager spectatorManager() { return spectatorManager; }
     public PartyManager partyManager() { return partyManager; }
