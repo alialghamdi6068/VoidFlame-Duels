@@ -155,11 +155,14 @@ public final class PartyMatch {
             PlayerSnapshot snapshot = snapshots.get(id);
             if (snapshot != null) manager.restorePartySnapshot(id, snapshot);
             Player player = Bukkit.getPlayer(id);
-            if (player != null && player.isOnline()) player.sendMessage(winner == null ? plugin.message("match-draw") :
-                    plugin.message("match-ended").replace("<winner>", name(winner)).replace("<kit>", pretty(kit)));
+            if (player != null && player.isOnline()) {
+                player.sendMessage(winner == null
+                        ? org.bukkit.ChatColor.RED + "Match cancelled. No win or loss was recorded."
+                        : plugin.message("match-ended").replace("<winner>", name(winner)).replace("<kit>", pretty(kit)));
+            }
         }
         var partyResults = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.PartyMatchResultService.class);
-        if (partyResults != null && partyResults.getProvider() != null
+        if (winner != null && partyResults != null && partyResults.getProvider() != null
                 && plugin.getConfig().getBoolean("features.party-stats.enabled", true)) {
             List<UUID> winners = winningPlayers(winner);
             partyResults.getProvider().record(new net.voidflame.core.api.PartyMatchResultService.PartyMatchResult(
@@ -168,9 +171,7 @@ public final class PartyMatch {
             ));
         }
 
-        if (winner == null) {
-            for (UUID id : players) plugin.advancedFeatures().rewardMatch(id, "draw", true);
-        } else if (mode == LobbyItemsManager.PartyMode.TWO_V_TWO) {
+        if (winner != null && mode == LobbyItemsManager.PartyMode.TWO_V_TWO) {
             Set<UUID> winningTeam = firstTeam.contains(winner) ? firstTeam : secondTeam;
             for (UUID id : players) plugin.advancedFeatures().rewardMatch(id, winningTeam.contains(id) ? "win" : "loss", true);
         } else if (mode == LobbyItemsManager.PartyMode.FFA) {
@@ -183,7 +184,7 @@ public final class PartyMatch {
         if (logs != null && logs.getProvider() != null) {
             logs.getProvider().log(
                     winner == null ? "SYSTEM" : winner.toString(),
-                    "PARTY_MATCH_FINISH",
+                    winner == null ? "PARTY_MATCH_CANCEL" : "PARTY_MATCH_FINISH",
                     arena.name(),
                     "mode=" + mode + "|kit=" + kit + "|players=" + players.size()
             );
