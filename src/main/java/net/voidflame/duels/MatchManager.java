@@ -257,6 +257,21 @@ public final class MatchManager implements Listener {
             plugin.rematches().remember(match.second(), match.first(), match.kit());
         }
 
+        // Show a native, color-coded result dialog to each participant still online.
+        String firstName = name(match.first());
+        String secondName = name(match.second());
+        long durationSeconds = match.durationSeconds();
+        if (a != null && a.isOnline()) {
+            String result = winner == null ? "DRAW" : winner.equals(match.first()) ? "VICTORY" : "DEFEAT";
+            plugin.nativeMenus().openMatchResult(a, result, secondName, pretty(match.kit()),
+                    match.arena().name(), durationSeconds);
+        }
+        if (b != null && b.isOnline()) {
+            String result = winner == null ? "DRAW" : winner.equals(match.second()) ? "VICTORY" : "DEFEAT";
+            plugin.nativeMenus().openMatchResult(b, result, firstName, pretty(match.kit()),
+                    match.arena().name(), durationSeconds);
+        }
+
         // Restore the canonical spawn items after the match inventory is restored.
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (a != null && a.isOnline()) plugin.lobbyItemsManager().giveLobbyItems(a);
