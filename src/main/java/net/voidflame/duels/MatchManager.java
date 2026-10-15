@@ -205,10 +205,7 @@ public final class MatchManager implements Listener {
         Player b = Bukkit.getPlayer(match.second());
         plugin.spectatorManager().stopWatching(match);
         match.transition(MatchState.RESULT);
-        if (winner == null) {
-            plugin.advancedFeatures().rewardMatch(match.first(), "draw", false);
-            plugin.advancedFeatures().rewardMatch(match.second(), "draw", false);
-        } else {
+        if (winner != null) {
             plugin.advancedFeatures().rewardMatch(winner, "win", false);
             plugin.advancedFeatures().rewardMatch(match.opponent(winner), "loss", false);
         }
@@ -216,14 +213,19 @@ public final class MatchManager implements Listener {
         match.transition(MatchState.REWARDS);
         // Stats/ELO persistence is owned by the Core service.
         match.transition(MatchState.STATS);
-        recordExternalMatchResult(match, winner);
-        plugin.advancedFeatures().saveReplay(
-                match.matchId(), match.first(), match.second(), match.arena().name(),
-                match.kit().name(), match.durationSeconds() * 1000L);
+        if (winner != null) {
+            recordExternalMatchResult(match, winner);
+            plugin.advancedFeatures().saveReplay(
+                    match.matchId(), match.first(), match.second(), match.arena().name(),
+                    match.kit().name(), match.durationSeconds() * 1000L);
+            plugin.advancedFeatures().saveReplay(match);
+        } else {
+            audit("DUEL_CANCEL", match.matchId().toString(),
+                    "reason=no-winner|kit=" + match.kit() + "|arena=" + match.arena().name());
+        }
         match.transition(MatchState.REPLAY);
-        plugin.advancedFeatures().saveReplay(match);
         match.transition(MatchState.LOG);
-        // recordExternalMatchResult also emits the authoritative duel audit event.
+        // Completed results are recorded only when there is a real winner.
         match.transition(MatchState.RESET);
 
         // The arena remains RESETTING until its template has been restored successfully.
@@ -240,8 +242,9 @@ public final class MatchManager implements Listener {
         );
 
         if (winner == null) {
-            if (a != null) a.sendMessage(plugin.message("match-draw"));
-            if (b != null) b.sendMessage(plugin.message("match-draw"));
+            String cancelled = "Match cancelled. No win or loss was recorded.";
+            if (a != null) a.sendMessage(org.bukkit.ChatColor.RED + cancelled);
+            if (b != null) b.sendMessage(org.bukkit.ChatColor.RED + cancelled);
         } else {
             Player w = Bukkit.getPlayer(winner);
             String winnerName = w == null
@@ -255,21 +258,21 @@ public final class MatchManager implements Listener {
             if (b != null) b.sendMessage(message);
             plugin.rematches().remember(match.first(), match.second(), match.kit());
             plugin.rematches().remember(match.second(), match.first(), match.kit());
-        }
 
-        // Show a native, color-coded result dialog to each participant still online.
-        String firstName = name(match.first());
-        String secondName = name(match.second());
-        long durationSeconds = match.durationSeconds();
-        if (a != null && a.isOnline()) {
-            String result = winner == null ? "DRAW" : winner.equals(match.first()) ? "VICTORY" : "DEFEAT";
-            plugin.nativeMenus().openMatchResult(a, result, secondName, pretty(match.kit()),
-                    match.arena().name(), durationSeconds);
-        }
-        if (b != null && b.isOnline()) {
-            String result = winner == null ? "DRAW" : winner.equals(match.second()) ? "VICTORY" : "DEFEAT";
-            plugin.nativeMenus().openMatchResult(b, result, firstName, pretty(match.kit()),
-                    match.arena().name(), durationSeconds);
+            // Only completed wins/losses show a result screen. A cancellation is not a result.
+            String firstName = name(match.first());
+            String secondName = name(match.second());
+            long durationSeconds = match.durationSeconds();
+            if (a != null && a.isOnline()) {
+                String result = winner.equals(match.first()) ? "VICTORY" : "DEFEAT";
+                plugin.nativeMenus().openMatchResult(a, result, secondName, pretty(match.kit()),
+                        match.arena().name(), durationSeconds);
+            }
+            if (b != null && b.isOnline()) {
+                String result = winner.equals(match.second()) ? "VICTORY" : "DEFEAT";
+                plugin.nativeMenus().openMatchResult(b, result, firstName, pretty(match.kit()),
+                        match.arena().name(), durationSeconds);
+            }
         }
 
         // Restore the canonical spawn items after the match inventory is restored.
@@ -288,7 +291,7 @@ public final class MatchManager implements Listener {
     private void recordExternalMatchResult(Match match, UUID winner) {
         var registration = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.MatchResultService.class);
         if (registration == null || registration.getProvider() == null) return;
-        UUID loser = winner == null ? null : match.opponent(winner);
+        UUID loser = match.opponent(winner);
         registration.getProvider().record(new net.voidflame.core.api.MatchResultService.MatchResult(
                 match.matchId(),
                 match.first(),
@@ -303,9 +306,9 @@ public final class MatchManager implements Listener {
         var logs = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.AuditLogService.class);
         if (logs != null && logs.getProvider() != null) {
             logs.getProvider().log(
-                    winner == null ? "SYSTEM" : winner.toString(),
+                    winner.toString(),
                     "DUEL_FINISH",
-                    match.opponent(winner == null ? match.first() : winner).toString(),
+                    match.opponent(winner).toString(),
                     "kit=" + match.kit() + "|arena=" + match.arena().name() + "|duration_ms=" + (match.durationSeconds() * 1000L)
             );
         }
