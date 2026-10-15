@@ -140,11 +140,11 @@ public final class NativeDialogMenus {
     }
 
     public void openMatchResult(Player player, String result, String opponent, String kit, String arena, long durationSeconds) {
-        NamedTextColor resultColor = switch (result) {
-            case "VICTORY" -> NamedTextColor.GOLD;
-            case "DEFEAT" -> NamedTextColor.RED;
-            default -> NamedTextColor.AQUA;
-        };
+        if (!"VICTORY".equals(result) && !"DEFEAT".equals(result)) {
+            throw new IllegalArgumentException("Match result dialog only supports VICTORY or DEFEAT.");
+        }
+        NamedTextColor resultColor = "VICTORY".equals(result)
+                ? NamedTextColor.GOLD : NamedTextColor.RED;
         String duration = String.format(Locale.ROOT, "%02d:%02d",
                 Math.max(0L, durationSeconds) / 60L, Math.max(0L, durationSeconds) % 60L);
         List<DialogBody> body = List.of(
