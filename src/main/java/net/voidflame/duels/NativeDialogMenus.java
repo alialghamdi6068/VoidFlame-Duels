@@ -139,6 +139,30 @@ public final class NativeDialogMenus {
         target.sendMessage(Component.text(plugin.message("duel-received").replace("<player>", player.getName()).replace("<kit>", kit.name()), NamedTextColor.LIGHT_PURPLE));
     }
 
+    public void openMatchResult(Player player, String result, String opponent, String kit, String arena, long durationSeconds) {
+        NamedTextColor resultColor = switch (result) {
+            case "VICTORY" -> NamedTextColor.GOLD;
+            case "DEFEAT" -> NamedTextColor.RED;
+            default -> NamedTextColor.AQUA;
+        };
+        String duration = String.format(Locale.ROOT, "%02d:%02d",
+                Math.max(0L, durationSeconds) / 60L, Math.max(0L, durationSeconds) % 60L);
+        List<DialogBody> body = List.of(
+                DialogBody.plainMessage(Component.text("✦  " + result + "  ✦", resultColor), 300),
+                DialogBody.plainMessage(Component.text("OPPONENT  •  " + opponent, NamedTextColor.WHITE), 300),
+                DialogBody.plainMessage(Component.text("KIT  •  " + kit, NamedTextColor.LIGHT_PURPLE), 300),
+                DialogBody.plainMessage(Component.text("ARENA  •  " + arena, NamedTextColor.AQUA), 300),
+                DialogBody.plainMessage(Component.text("MATCH TIME  •  " + duration, NamedTextColor.GRAY), 300),
+                DialogBody.plainMessage(Component.text("Queue again, return to spawn, or open the main menu.", NamedTextColor.GRAY), 300)
+        );
+        List<ActionButton> buttons = List.of(
+                button("Rematch", "Challenge your previous opponent again.", "/rematch", NamedTextColor.GREEN),
+                button("Return to Spawn", "Return to the Practice spawn.", "/spawn", NamedTextColor.LIGHT_PURPLE),
+                button("Main Menu", "Open VoidFlameMC Practice.", "/vfmenu", NamedTextColor.AQUA)
+        );
+        show(player, "MATCH COMPLETE", body, buttons, 2);
+    }
+
     public void openLeaderboardChoice(Player player) {
         List<DialogBody> body = List.of(
                 DialogBody.plainMessage(Component.text("Choose which ranking system to open.", NamedTextColor.GRAY), 300),
