@@ -13,11 +13,13 @@ Professional practice and duels foundation for VoidFlame MC.
 
 ## Features
 - Eight canonical practice kits: Sword, Axe, UHC, Mace, Crystal, Netherite Pot, SMP, and Spear & Mace.
-- Queue and direct duel matchmaking.
-- Party matches, FFA, BotDuels, spectators, reconnects, rematches, rewards, and audit integration.
+- Queue and direct duel matchmaking, ranked/unranked queues, parties, FFA, spectators, reconnects, rematches and rewards.
+- Built-in kit definitions and a personal inventory-layout editor persisted through VoidFlame-Core.
+- Built-in arena allocation and bounded region restoration. Each locally configured arena must define `region.min` and `region.max`; arenas without a valid reset region are not allocated.
+- Match result persistence, wins/losses/streaks/ELO updates, replays and shared audit logging through VoidFlame-Core.
 
 ## Architecture
-Queue, matchmaking and matches live in this plugin. Shared infrastructure is provided by VoidFlame-Core.
+Duels owns gameplay, kit editing and local arena lifecycle. VoidFlame-Core owns the single shared SQLite database and registers persistence/audit services; VoidFlame-Admin owns administration and VoidFlame-Security owns security controls. Retired standalone Kits/Arenas plugins are not required.
 
 ## Native ESC menu
 - Compatibility template: `extras/DonutQuickActions/config.yml`.
