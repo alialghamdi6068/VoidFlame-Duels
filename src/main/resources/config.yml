@@ -501,6 +501,18 @@ kits:
     offhand: {material: TOTEM_OF_UNDYING, amount: 1}
 arenas:
   auto-discover-worlds: true
+  # Local arenas are not allocated unless a bounded reset region is configured.
+  # Coordinates are inclusive; set min/max to cover every block that can change during a match.
+  max-reset-blocks: 100000
+  # Example:
+  # list:
+  #   - name: "sword-01"
+  #     world: "duelpvp"
+  #     spawn-a: {x: 100.5, y: 65, z: 100.5, yaw: 90, pitch: 0}
+  #     spawn-b: {x: 120.5, y: 65, z: 100.5, yaw: -90, pitch: 0}
+  #     region:
+  #       min: {x: 90, y: 40, z: 90}
+  #       max: {x: 130, y: 100, z: 110}
   list: []
 
 welcome:
