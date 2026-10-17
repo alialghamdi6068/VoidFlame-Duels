@@ -13,6 +13,7 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
@@ -38,6 +39,22 @@ public final class KitEditorManager implements Listener {
         }
         this.storage = registration.getProvider();
         this.sourceSlotKey = new NamespacedKey(plugin, "kit-source-slot");
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        UUID playerId = event.getPlayer().getUniqueId();
+        for (KitType kit : KitType.values()) {
+            String key = path(kit, playerId);
+            storage.get("kit-layouts", key).thenAccept(raw -> {
+                List<Integer> layout = decode(raw);
+                if (layout != null) layoutCache.put(key, layout);
+            }).exceptionally(error -> {
+                plugin.getLogger().warning("Could not preload kit layout for " + playerId
+                        + " (" + kit.name() + "): " + error.getMessage());
+                return null;
+            });
+        }
     }
 
     public boolean open(Player player, KitType kit) {
