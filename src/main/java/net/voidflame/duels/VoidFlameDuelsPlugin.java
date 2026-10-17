@@ -15,6 +15,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     private MatchManager matchManager;
     private ArenaManager arenaManager;
     private KitManager kitManager;
+    private KitEditorManager kitEditorManager;
     private DuelRequestManager requests;
     private RematchManager rematches;
     private DuelMenu menu;
@@ -52,6 +53,13 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         }
 
         kitManager = new KitManager(this);
+        try {
+            kitEditorManager = new KitEditorManager(this);
+        } catch (IllegalStateException ex) {
+            getLogger().severe(ex.getMessage());
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         requests = new DuelRequestManager(this);
         rematches = new RematchManager(this);
         queueManager = new QueueManager(this);
@@ -78,6 +86,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(queueManager, this);
         getServer().getPluginManager().registerEvents(matchManager, this);
         getServer().getPluginManager().registerEvents(menu, this);
+        getServer().getPluginManager().registerEvents(kitEditorManager, this);
         getServer().getPluginManager().registerEvents(spectatorManager, this);
         getServer().getPluginManager().registerEvents(partyManager, this);
         getServer().getPluginManager().registerEvents(advancedFeatures, this);
@@ -117,7 +126,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
             nativeMenus.openLeaderboardChoice(p);
             return true;
         });
-        if (getCommand("vfmenu") != null) getCommand("menu").setExecutor((sender, command, label, args) -> {
+        if (getCommand("vfmenu") != null) getCommand("vfmenu").setExecutor((sender, command, label, args) -> {
             if (!(sender instanceof Player p)) {
                 sender.sendMessage("Players only.");
                 return true;
@@ -233,6 +242,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         if (advancedFeatures != null) advancedFeatures.shutdown();
+        if (kitEditorManager != null) kitEditorManager.shutdown();
         if (matchManager != null) matchManager.shutdown();
         if (spectatorManager != null) spectatorManager.shutdown();
         if (requests != null) requests.clear();
@@ -261,6 +271,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     public MatchManager matchManager() { return matchManager; }
     public ArenaManager arenaManager() { return arenaManager; }
     public KitManager kitManager() { return kitManager; }
+    public KitEditorManager kitEditorManager() { return kitEditorManager; }
     public DuelRequestManager requests() { return requests; }
     public RematchManager rematches() { return rematches; }
     public DuelMenu menu() { return menu; }
