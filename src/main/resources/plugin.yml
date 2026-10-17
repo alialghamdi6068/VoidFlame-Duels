@@ -123,6 +123,9 @@ permissions:
   voidflame.duel.rejoin:
     description: Rejoin a disconnected duel.
     default: true
+  voidflame.kits.edit:
+    description: Edit and save personal layouts for built-in Duels kits.
+    default: true
   voidflame.queue:
     description: Use duel queues.
     default: true
