@@ -186,14 +186,21 @@ public final class ArenaManager {
 
         void restore() {
             int index = 0;
+            boolean complete = true;
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
                     for (int x = minX; x <= maxX; x++) {
-                        if (!states[index++].update(true, false)) {
-                            throw new IllegalStateException("Block restore failed at " + x + "," + y + "," + z);
+                        try {
+                            if (!states[index].update(true, false)) complete = false;
+                        } catch (RuntimeException ex) {
+                            complete = false;
                         }
+                        index++;
                     }
                 }
+            }
+            if (!complete) {
+                throw new IllegalStateException("One or more arena blocks could not be restored.");
             }
         }
     }
