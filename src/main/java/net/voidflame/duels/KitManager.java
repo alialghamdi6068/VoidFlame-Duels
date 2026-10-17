@@ -1,7 +1,5 @@
 package net.voidflame.duels;
 
-import net.voidflame.core.api.KitService;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -13,7 +11,6 @@ import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
@@ -24,21 +21,21 @@ import java.util.Locale;
 
 public final class KitManager {
     private final VoidFlameDuelsPlugin plugin;
-    private final KitService externalKits;
-
     public KitManager(VoidFlameDuelsPlugin plugin) {
         this.plugin = plugin;
-        RegisteredServiceProvider<KitService> registration =
-                Bukkit.getServicesManager().getRegistration(KitService.class);
-        this.externalKits = registration == null ? null : registration.getProvider();
     }
 
     public boolean apply(Player player, KitType kit) {
-        String id = kit.name().toLowerCase(Locale.ROOT);
-        if (externalKits != null && externalKits.isEnabled(id)) {
-            return externalKits.apply(player, id);
+        boolean applied = applyConfigured(player, kit);
+        if (applied && plugin.kitEditorManager() != null) {
+            plugin.kitEditorManager().applySavedLayout(player, kit);
         }
+        return applied;
+    }
 
+    private boolean applyConfigured(Player player, KitType kit) {
+        if (player == null || kit == null) return false;
+        String id = kit.name().toLowerCase(Locale.ROOT);
         ConfigurationSection root = plugin.getConfig().getConfigurationSection("kits." + id);
         if (root == null) return false;
         player.getInventory().clear();
@@ -65,15 +62,12 @@ public final class KitManager {
     }
 
     public boolean applyBase(Player player, KitType kit) {
-        return apply(player, kit);
+        return applyConfigured(player, kit);
     }
 
     public boolean openEditor(Player player, KitType kit) {
-        if (player == null || kit == null) return false;
-        if (externalKits != null) {
-            return externalKits.openEditor(player, kit.name().toLowerCase(Locale.ROOT), "default");
-        }
-        return false;
+        if (player == null || kit == null || plugin.kitEditorManager() == null) return false;
+        return plugin.kitEditorManager().open(player, kit);
     }
 
     private ItemStack readItem(ConfigurationSection section) {
