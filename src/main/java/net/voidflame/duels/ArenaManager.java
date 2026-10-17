@@ -3,6 +3,8 @@ package net.voidflame.duels;
 import net.voidflame.core.api.ArenaService;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.block.BlockState;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
@@ -12,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
 public final class ArenaManager {
     private final VoidFlameDuelsPlugin plugin;
     private final Set<String> localInUse = new HashSet<>();
+    private final Map<String, RegionSnapshot> localSnapshots = new HashMap<>();
     private ArenaService provider;
 
     public ArenaManager(VoidFlameDuelsPlugin plugin) {
@@ -53,6 +56,12 @@ public final class ArenaManager {
             Location a = location(raw, "spawn-a", worldName);
             Location b = location(raw, "spawn-b", worldName);
             if (a == null || b == null) continue;
+            RegionSnapshot snapshot = snapshot(raw, worldName);
+            if (snapshot == null) {
+                plugin.getLogger().warning("Arena '" + name + "' is missing a valid reset region or exceeds arenas.max-reset-blocks; it will not be allocated.");
+                continue;
+            }
+            localSnapshots.put(name, snapshot);
             localInUse.add(name);
             return new Arena(name, a, b);
         }
@@ -63,12 +72,32 @@ public final class ArenaManager {
         if (arena == null) return CompletableFuture.completedFuture(false);
         ensureConnected();
         if (provider != null) {
-            return provider.reset(arena.name()).whenComplete((ignored, error) -> {
-                synchronized (this) { localInUse.remove(arena.name()); }
+            return provider.reset(arena.name()).thenApply(success -> {
+                if (Boolean.TRUE.equals(success)) {
+                    synchronized (this) {
+                        localInUse.remove(arena.name());
+                        localSnapshots.remove(arena.name());
+                    }
+                }
+                return Boolean.TRUE.equals(success);
             });
         }
-        localInUse.remove(arena.name());
-        return CompletableFuture.completedFuture(true);
+        RegionSnapshot snapshot = localSnapshots.get(arena.name());
+        if (snapshot == null) {
+            plugin.getLogger().severe("Cannot reset arena '" + arena.name()
+                    + "': no safe pre-match region snapshot exists. Arena remains unavailable.");
+            return CompletableFuture.completedFuture(false);
+        }
+        try {
+            snapshot.restore();
+            localSnapshots.remove(arena.name());
+            localInUse.remove(arena.name());
+            return CompletableFuture.completedFuture(true);
+        } catch (RuntimeException ex) {
+            plugin.getLogger().severe("Failed to restore arena '" + arena.name()
+                    + "'. Arena remains unavailable: " + ex.getMessage());
+            return CompletableFuture.completedFuture(false);
+        }
     }
 
     public synchronized int available() {
@@ -95,6 +124,78 @@ public final class ArenaManager {
 
     private void ensureConnected() {
         if (provider == null) connect();
+    }
+
+    private RegionSnapshot snapshot(Map<?, ?> raw, String worldName) {
+        Object value = raw.get("region");
+        if (!(value instanceof Map<?, ?> region)) return null;
+        Object minValue = region.get("min");
+        Object maxValue = region.get("max");
+        if (!(minValue instanceof Map<?, ?> min) || !(maxValue instanceof Map<?, ?> max)) return null;
+        World world = Bukkit.getWorld(worldName);
+        if (world == null) return null;
+        try {
+            int minX = integer(min.get("x")), minY = integer(min.get("y")), minZ = integer(min.get("z"));
+            int maxX = integer(max.get("x")), maxY = integer(max.get("y")), maxZ = integer(max.get("z"));
+            if (minX > maxX || minY > maxY || minZ > maxZ
+                    || minY < world.getMinHeight() || maxY >= world.getMaxHeight()) return null;
+            long volume = (long) (maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1);
+            long limit = Math.max(1L, plugin.getConfig().getLong("arenas.max-reset-blocks", 100_000L));
+            if (volume <= 0 || volume > limit) return null;
+            return RegionSnapshot.capture(world, minX, minY, minZ, maxX, maxY, maxZ, (int) volume);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private static int integer(Object value) {
+        if (value instanceof Number number) return number.intValue();
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (RuntimeException ex) {
+            throw new IllegalArgumentException("Invalid arena region coordinate", ex);
+        }
+    }
+
+    private static final class RegionSnapshot {
+        private final World world;
+        private final int minX, minY, minZ, maxX, maxY, maxZ;
+        private final BlockState[] states;
+
+        private RegionSnapshot(World world, int minX, int minY, int minZ,
+                               int maxX, int maxY, int maxZ, BlockState[] states) {
+            this.world = world;
+            this.minX = minX; this.minY = minY; this.minZ = minZ;
+            this.maxX = maxX; this.maxY = maxY; this.maxZ = maxZ;
+            this.states = states;
+        }
+
+        static RegionSnapshot capture(World world, int minX, int minY, int minZ,
+                                      int maxX, int maxY, int maxZ, int volume) {
+            BlockState[] states = new BlockState[volume];
+            int index = 0;
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    for (int x = minX; x <= maxX; x++) {
+                        states[index++] = world.getBlockAt(x, y, z).getState();
+                    }
+                }
+            }
+            return new RegionSnapshot(world, minX, minY, minZ, maxX, maxY, maxZ, states);
+        }
+
+        void restore() {
+            int index = 0;
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    for (int x = minX; x <= maxX; x++) {
+                        if (!states[index++].update(true, false)) {
+                            throw new IllegalStateException("Block restore failed at " + x + "," + y + "," + z);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private Location location(Map<?, ?> raw, String key, String worldName) {
