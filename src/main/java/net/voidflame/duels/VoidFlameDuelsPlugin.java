@@ -118,6 +118,11 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         register("accept", duelCommand);
         register("deny", duelCommand);
         register("leave", duelCommand);
+        StatsCommand statsCommand = new StatsCommand(this);
+        if (getCommand("stats") != null) {
+            getCommand("stats").setExecutor(statsCommand);
+            getCommand("stats").setTabCompleter(statsCommand);
+        }
         if (getCommand("leaderboard") != null) getCommand("leaderboard").setExecutor((sender, command, label, args) -> {
             if (!(sender instanceof Player p)) {
                 sender.sendMessage("Players only.");
