@@ -171,6 +171,12 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
             return true;
         });
 
+        ArenaSetupCommand arenaSetup = new ArenaSetupCommand(this);
+        if (getCommand("duelarena") != null) {
+            getCommand("duelarena").setExecutor(arenaSetup);
+            getCommand("duelarena").setTabCompleter(arenaSetup);
+        }
+
         AdvancedCommand advancedCommand = new AdvancedCommand(this);
         getServer().getPluginManager().registerEvents(advancedCommand, this);
         registerAdvanced("report", advancedCommand);
