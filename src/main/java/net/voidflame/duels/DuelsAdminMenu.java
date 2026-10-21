@@ -15,20 +15,12 @@ import java.util.List;
 public final class DuelsAdminMenu implements Listener {
     private final VoidFlameDuelsPlugin plugin;
     public DuelsAdminMenu(VoidFlameDuelsPlugin plugin){this.plugin=plugin;}
-    public void open(Player p){
+    public void open(Player p) {
         if (!JavaAdminAccess.hasAdminAccess(p)) {
             p.sendMessage("§cYou do not have permission.");
             return;
         }
-        Inventory i=Bukkit.createInventory(new Holder(),54,"§8VoidFlame §7• §fDuels Admin");
-        button(i,10,Material.NETHER_STAR,"§d§lQUEUES","§7Total queued: §f"+plugin.queueManager().totalQueued());
-        button(i,11,Material.DIAMOND_SWORD,"§d§lMATCHES","§7Active players: §f"+plugin.matchManager().activeMatches());
-        button(i,12,Material.ENDER_PEARL,"§a§lFFA","§7Open FFA controls.");
-        button(i,13,Material.BOOK,"§e§lREPORTS","§7Open report management.");
-        button(i,14,Material.GOLD_INGOT,"§6§lCOINS","§7Open coin administration.");
-        button(i,15,Material.COMPARATOR,"§b§lSETTINGS","§7Open duel settings.");
-        button(i,49,Material.BARRIER,"§c§lCLOSE");
-        p.openInventory(i);
+        plugin.nativeMenus().openAdmin(p);
     }
     @EventHandler public void click(InventoryClickEvent e){
         if(!(e.getWhoClicked() instanceof Player p)||!(e.getView().getTopInventory().getHolder() instanceof Holder))return;
