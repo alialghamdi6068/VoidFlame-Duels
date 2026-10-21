@@ -20,6 +20,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     private RematchManager rematches;
     private DuelMenu menu;
     private NativeDialogMenus nativeMenus;
+    private BedrockFormMenus bedrockMenus;
     private SpectatorManager spectatorManager;
     private PartyManager partyManager;
     private AdvancedFeatures advancedFeatures;
@@ -66,6 +67,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         matchManager = new MatchManager(this, queueManager, arenaManager, kitManager);
         menu = new DuelMenu(this);
         nativeMenus = new NativeDialogMenus(this);
+        bedrockMenus = new BedrockFormMenus(this);
         spectatorManager = new SpectatorManager(this);
         partyManager = new PartyManager(this);
         advancedFeatures = new AdvancedFeatures(this);
@@ -128,7 +130,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
                 sender.sendMessage("Players only.");
                 return true;
             }
-            nativeMenus.openLeaderboard(p);
+            if (JavaAdminAccess.isBedrock(p)) bedrockMenus.openLeaderboard(p); else nativeMenus.openLeaderboard(p);
             return true;
         });
         if (getCommand("vfmenu") != null) getCommand("vfmenu").setExecutor((sender, command, label, args) -> {
@@ -136,7 +138,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
                 sender.sendMessage("Players only.");
                 return true;
             }
-            nativeMenus.openMain(p);
+            if (JavaAdminAccess.isBedrock(p)) bedrockMenus.openMain(p); else nativeMenus.openMain(p);
             return true;
         });
         if (getCommand("vfui") != null) getCommand("vfui").setExecutor((sender, command, label, args) -> {
@@ -287,6 +289,8 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     public RematchManager rematches() { return rematches; }
     public DuelMenu menu() { return menu; }
     public NativeDialogMenus nativeMenus() { return nativeMenus; }
+
+    public BedrockFormMenus bedrockMenus() { return bedrockMenus; }
     public SettingsMenu settingsMenu() { return settingsMenu; }
     public SpectatorManager spectatorManager() { return spectatorManager; }
     public PartyManager partyManager() { return partyManager; }
