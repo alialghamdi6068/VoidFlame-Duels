@@ -82,7 +82,7 @@ public final class SettingsMenu implements Listener {
         actions.add(ActionButton.create(Component.text("Main Menu", NamedTextColor.GRAY), Component.text("Return to VoidFlame navigation.", NamedTextColor.GRAY), 180, DialogAction.commandTemplate("/vfmenu")));
         Dialog dialog = Dialog.create(builder -> builder.empty()
                 .base(DialogBase.builder(Component.text("VoidFlame • Settings", NamedTextColor.WHITE))
-                        .externalTitle(Component.text("VoidFlame", NamedTextColor.LIGHT_PURPLE))
+                        .externalTitle(Component.text("VoidFlame", NamedTextColor.AQUA))
                         .canCloseWithEscape(true)
                         .body(body)
                         .build())
