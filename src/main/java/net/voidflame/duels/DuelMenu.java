@@ -30,10 +30,13 @@ public final class DuelMenu implements Listener {
     }
 
     public void open(Player player) {
-        // Geyser/Bedrock clients do not support Java's native Paper Dialog protocol.
-        // Keep a Bedrock-compatible form of the queue using the existing inventory interaction handler.
+        // Java clients use Paper's native Dialogs; Floodgate Bedrock clients use native Bedrock Forms.
         if (!JavaAdminAccess.isBedrock(player)) {
             plugin.nativeMenus().openQueue(player);
+            return;
+        }
+        if (plugin.bedrockMenus().available()) {
+            plugin.bedrockMenus().openQueue(player);
             return;
         }
 
