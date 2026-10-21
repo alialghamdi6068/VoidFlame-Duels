@@ -10,10 +10,12 @@ repositories {
     mavenCentral()
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://repo.opencollab.dev/maven-snapshots/")
     }
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:26.2.build.129-stable")
+    compileOnly("org.geysermc.floodgate:api:2.2.5-SNAPSHOT")
     compileOnly("net.voidflame:VoidFlame-Core:api")
     compileOnly("me.clip:placeholderapi:2.11.6")
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
