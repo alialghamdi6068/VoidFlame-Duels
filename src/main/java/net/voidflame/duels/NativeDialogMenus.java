@@ -133,7 +133,7 @@ public final class NativeDialogMenus {
 
     private void sendTargetDuel(Player player, String id) {
         UUID targetId = duelTargets.remove(player.getUniqueId());
-        KitCard kit = KITS.stream().filter(value -> value.id().equalsIgnoreCase(id)).findFirst().orElse(null);
+        KitCard kit = enabledKits().stream().filter(value -> value.id().equalsIgnoreCase(id)).findFirst().orElse(null);
         if (targetId == null || kit == null) {
             player.sendMessage(Component.text("Duel target expired. Choose a player again.", NamedTextColor.RED));
             return;
@@ -191,7 +191,7 @@ public final class NativeDialogMenus {
     public void openEditorChoice(Player player) {
         List<DialogBody> body = new ArrayList<>();
         body.add(DialogBody.plainMessage(Component.text("Choose a kit whose saved layout you want to edit.", NamedTextColor.GRAY), 300));
-        for (KitCard kit : KITS) {
+        for (KitCard kit : enabledKits()) {
             body.add(DialogBody.item(new ItemStack(kit.icon()),
                     DialogBody.plainMessage(Component.text(kit.name(), kit.color()), 160), true, true, 36, 36));
         }
