@@ -130,7 +130,9 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
                 sender.sendMessage("Players only.");
                 return true;
             }
-            if (JavaAdminAccess.isBedrock(p)) bedrockMenus.openLeaderboard(p); else nativeMenus.openLeaderboard(p);
+            if (JavaAdminAccess.isBedrock(p)) {
+                if (bedrockMenus.available()) bedrockMenus.openLeaderboard(p); else p.performCommand("stats top elo");
+            } else nativeMenus.openLeaderboard(p);
             return true;
         });
         if (getCommand("vfmenu") != null) getCommand("vfmenu").setExecutor((sender, command, label, args) -> {
@@ -138,7 +140,9 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
                 sender.sendMessage("Players only.");
                 return true;
             }
-            if (JavaAdminAccess.isBedrock(p)) bedrockMenus.openMain(p); else nativeMenus.openMain(p);
+            if (JavaAdminAccess.isBedrock(p)) {
+                if (bedrockMenus.available()) bedrockMenus.openMain(p); else menu.open(p);
+            } else nativeMenus.openMain(p);
             return true;
         });
         if (getCommand("vfui") != null) getCommand("vfui").setExecutor((sender, command, label, args) -> {
