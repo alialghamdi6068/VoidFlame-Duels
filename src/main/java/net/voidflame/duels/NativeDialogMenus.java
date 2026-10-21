@@ -50,6 +50,7 @@ public final class NativeDialogMenus {
     }
 
     public void openMain(Player player) {
+        if (JavaAdminAccess.isBedrock(player)) { plugin.bedrockMenus().openMain(player); return; }
         List<DialogBody> body = List.of(
                 DialogBody.plainMessage(Component.text("VOIDFLAME MC  •  PRACTICE & DUELS", NamedTextColor.AQUA), 300),
                 DialogBody.plainMessage(Component.text("Choose a destination. This screen uses Minecraft's native dialog UI.", NamedTextColor.GRAY), 300),
@@ -67,6 +68,7 @@ public final class NativeDialogMenus {
     }
 
     public void openQueue(Player player) {
+        if (JavaAdminAccess.isBedrock(player)) { plugin.bedrockMenus().openQueue(player); return; }
         List<DialogBody> body = new ArrayList<>();
         body.add(DialogBody.plainMessage(Component.text("Choose a kit to view its queue options.", NamedTextColor.GRAY), 300));
         List<KitCard> enabledKits = enabledKits();
@@ -93,6 +95,11 @@ public final class NativeDialogMenus {
     }
 
     public void openKit(Player player, String id) {
+        if (JavaAdminAccess.isBedrock(player)) {
+            try { plugin.bedrockMenus().openKit(player, KitType.fromConfig(id)); }
+            catch (IllegalArgumentException ex) { player.sendMessage(plugin.message("unknown-kit")); }
+            return;
+        }
         KitCard kit = enabledKits().stream().filter(value -> value.id().equalsIgnoreCase(id)).findFirst().orElse(null);
         if (kit == null) {
             player.sendMessage(Component.text("Unknown kit.", NamedTextColor.RED));
@@ -115,6 +122,7 @@ public final class NativeDialogMenus {
     }
 
     public void openTargetKit(Player player, Player target) {
+        if (JavaAdminAccess.isBedrock(player)) { plugin.bedrockMenus().openTargetKit(player, target); return; }
         duelTargets.put(player.getUniqueId(), target.getUniqueId());
         List<DialogBody> body = new ArrayList<>();
         body.add(DialogBody.plainMessage(Component.text("Choose the kit for your duel with " + target.getName() + ".", NamedTextColor.GRAY), 300));
@@ -152,6 +160,7 @@ public final class NativeDialogMenus {
     }
 
     public void openMatchResult(Player player, String result, String opponent, String kit, String arena, long durationSeconds) {
+        if (JavaAdminAccess.isBedrock(player)) { plugin.bedrockMenus().openMatchResult(player, result, opponent); return; }
         if (!"VICTORY".equals(result) && !"DEFEAT".equals(result)) {
             throw new IllegalArgumentException("Match result dialog only supports VICTORY or DEFEAT.");
         }
@@ -176,6 +185,7 @@ public final class NativeDialogMenus {
     }
 
     public void openLeaderboard(Player player) {
+        if (JavaAdminAccess.isBedrock(player)) { plugin.bedrockMenus().openLeaderboard(player); return; }
         show(player, "VoidFlame • Leaderboards", List.of(
                 DialogBody.plainMessage(Component.text("VOIDFLAME MC PLAYER RANKINGS", NamedTextColor.AQUA), 300),
                 DialogBody.plainMessage(Component.text("The live ELO board is available from the statistics service. Additional ranking categories can be added once their queries are backed by stored data.", NamedTextColor.GRAY), 300),
@@ -189,6 +199,7 @@ public final class NativeDialogMenus {
     }
 
     public void openEditorChoice(Player player) {
+        if (JavaAdminAccess.isBedrock(player)) { plugin.bedrockMenus().openEditorChoice(player); return; }
         List<DialogBody> body = new ArrayList<>();
         body.add(DialogBody.plainMessage(Component.text("Choose a kit whose saved layout you want to edit.", NamedTextColor.GRAY), 300));
         for (KitCard kit : enabledKits()) {
@@ -204,6 +215,7 @@ public final class NativeDialogMenus {
     }
 
     public void openParty(Player player) {
+        if (JavaAdminAccess.isBedrock(player)) { plugin.bedrockMenus().openParty(player); return; }
         PartyManager.Party party = plugin.partyManager().partyOf(player.getUniqueId());
         List<DialogBody> body = new ArrayList<>();
         body.add(DialogBody.item(new ItemStack(Material.GOAT_HORN),
