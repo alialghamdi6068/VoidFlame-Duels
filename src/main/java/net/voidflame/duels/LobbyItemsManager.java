@@ -146,7 +146,7 @@ public final class LobbyItemsManager implements Listener {
     }
 
     public void openLeaderboard(Player player) {
-        plugin.nativeMenus().openLeaderboardChoice(player);
+        plugin.nativeMenus().openLeaderboard(player);
     }
 
     private int number(Object value) {
