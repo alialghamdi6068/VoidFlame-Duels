@@ -3,6 +3,7 @@ package net.voidflame.duels;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.geysermc.cumulus.form.SimpleForm;
+import org.geysermc.cumulus.response.SimpleFormResponse;
 import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.util.ArrayList;
@@ -20,52 +21,53 @@ public final class BedrockFormMenus {
     }
 
     public void openMain(Player player) {
-        SimpleForm.Builder form = SimpleForm.builder()
-                .title("VoidFlameMC")
+        SimpleForm.Builder form = SimpleForm.builder().title("VoidFlameMC")
                 .content("Practice • Duels • Player tools");
-        form.button("Duels & Queues", response -> run(player, () -> openQueue(player)));
-        form.button("My Statistics", response -> run(player, () -> player.performCommand("stats")));
-        form.button("Leaderboard", response -> run(player, () -> player.performCommand("leaderboard")));
-        form.button("Kit Layouts", response -> run(player, () -> openEditorChoice(player)));
-        form.button("Party", response -> run(player, () -> openParty(player)));
-        form.button("Settings", response -> run(player, () -> plugin.settingsMenu().open(player)));
-        form.button("Free For All", response -> run(player, () -> player.performCommand("ffa")));
-        form.button("Spawn", response -> run(player, () -> player.performCommand("spawn")));
-        sendForm(player, form);
+        List<Runnable> actions = new ArrayList<>();
+        add(form, actions, "Duels & Queues", () -> openQueue(player));
+        add(form, actions, "My Statistics", () -> player.performCommand("stats"));
+        add(form, actions, "Leaderboard", () -> openLeaderboard(player));
+        add(form, actions, "Kit Layouts", () -> openEditorChoice(player));
+        add(form, actions, "Party", () -> openParty(player));
+        add(form, actions, "Settings", () -> plugin.settingsMenu().open(player));
+        add(form, actions, "Free For All", () -> player.performCommand("ffa"));
+        add(form, actions, "Spawn", () -> player.performCommand("spawn"));
+        send(player, form, actions);
     }
 
     public void openQueue(Player player) {
         List<KitType> kits = enabledKits();
-        SimpleForm.Builder form = SimpleForm.builder()
-                .title("Duels & Queues")
+        SimpleForm.Builder form = SimpleForm.builder().title("Duels & Queues")
                 .content(kits.isEmpty() ? "No kits are currently enabled." : "Choose a kit to view queue options.");
+        List<Runnable> actions = new ArrayList<>();
         for (KitType kit : kits) {
             String name = pretty(kit);
-            form.button(name + "  •  " + plugin.queueManager().queued(kit, false) + " unranked / "
-                    + plugin.queueManager().queued(kit, true) + " ranked", response -> run(player, () -> openKit(player, kit)));
+            add(form, actions, name + " • " + plugin.queueManager().queued(kit, false)
+                    + " unranked / " + plugin.queueManager().queued(kit, true) + " ranked",
+                    () -> openKit(player, kit));
         }
-        form.button("Main Menu", response -> run(player, () -> openMain(player)));
-        sendForm(player, form);
+        add(form, actions, "Main Menu", () -> openMain(player));
+        send(player, form, actions);
     }
 
     public void openKit(Player player, KitType kit) {
-        SimpleForm.Builder form = SimpleForm.builder()
-                .title(pretty(kit))
+        SimpleForm.Builder form = SimpleForm.builder().title(pretty(kit))
                 .content("Choose a queue type or edit your layout.");
-        form.button("Unranked Queue", response -> run(player, () -> joinQueue(player, kit, false)));
-        form.button("Ranked Queue", response -> run(player, () -> joinQueue(player, kit, true)));
-        form.button("Edit Layout", response -> run(player, () -> player.performCommand("kiteditor " + kit.name().toLowerCase(Locale.ROOT))));
-        form.button("Back to Kits", response -> run(player, () -> openQueue(player)));
-        sendForm(player, form);
+        List<Runnable> actions = new ArrayList<>();
+        add(form, actions, "Unranked Queue", () -> joinQueue(player, kit, false));
+        add(form, actions, "Ranked Queue", () -> joinQueue(player, kit, true));
+        add(form, actions, "Edit Layout", () -> player.performCommand("kiteditor " + kit.name().toLowerCase(Locale.ROOT)));
+        add(form, actions, "Back to Kits", () -> openQueue(player));
+        send(player, form, actions);
     }
 
     public void openTargetKit(Player player, Player target) {
         List<KitType> kits = enabledKits();
-        SimpleForm.Builder form = SimpleForm.builder()
-                .title("Duel " + target.getName())
+        SimpleForm.Builder form = SimpleForm.builder().title("Duel " + target.getName())
                 .content("Choose a kit for your duel request.");
+        List<Runnable> actions = new ArrayList<>();
         for (KitType kit : kits) {
-            form.button(pretty(kit), response -> run(player, () -> {
+            add(form, actions, pretty(kit), () -> {
                 if (!target.isOnline()) {
                     player.sendMessage(plugin.message("player-not-found"));
                     return;
@@ -76,59 +78,61 @@ public final class BedrockFormMenus {
                 }
                 player.sendMessage(plugin.message("duel-sent").replace("<player>", target.getName()));
                 target.sendMessage(plugin.message("duel-received").replace("<player>", player.getName()).replace("<kit>", pretty(kit)));
-            }));
+            });
         }
-        form.button("Cancel", response -> run(player, () -> openMain(player)));
-        sendForm(player, form);
+        add(form, actions, "Cancel", () -> openMain(player));
+        send(player, form, actions);
     }
 
     public void openLeaderboard(Player player) {
-        SimpleForm.Builder form = SimpleForm.builder()
-                .title("Leaderboard")
+        SimpleForm.Builder form = SimpleForm.builder().title("Leaderboard")
                 .content("Choose a ranking category.");
-        form.button("ELO", response -> run(player, () -> player.performCommand("stats top elo")));
-        form.button("Wins", response -> run(player, () -> player.performCommand("stats top wins")));
-        form.button("Losses", response -> run(player, () -> player.performCommand("stats top losses")));
-        form.button("Streak", response -> run(player, () -> player.performCommand("stats top streak")));
-        form.button("Main Menu", response -> run(player, () -> openMain(player)));
-        sendForm(player, form);
+        List<Runnable> actions = new ArrayList<>();
+        add(form, actions, "ELO", () -> player.performCommand("stats top elo"));
+        add(form, actions, "Wins", () -> player.performCommand("stats top wins"));
+        add(form, actions, "Losses", () -> player.performCommand("stats top losses"));
+        add(form, actions, "Streak", () -> player.performCommand("stats top streak"));
+        add(form, actions, "Main Menu", () -> openMain(player));
+        send(player, form, actions);
     }
 
     public void openEditorChoice(Player player) {
         List<KitType> kits = enabledKits();
-        SimpleForm.Builder form = SimpleForm.builder()
-                .title("Kit Layouts")
+        SimpleForm.Builder form = SimpleForm.builder().title("Kit Layouts")
                 .content("Choose a kit whose layout you want to edit.");
+        List<Runnable> actions = new ArrayList<>();
         for (KitType kit : kits) {
-            form.button(pretty(kit), response -> run(player, () -> player.performCommand("kiteditor " + kit.name().toLowerCase(Locale.ROOT))));
+            add(form, actions, pretty(kit),
+                    () -> player.performCommand("kiteditor " + kit.name().toLowerCase(Locale.ROOT)));
         }
-        form.button("Back", response -> run(player, () -> openMain(player)));
-        sendForm(player, form);
+        add(form, actions, "Back", () -> openMain(player));
+        send(player, form, actions);
     }
 
     public void openParty(Player player) {
-        SimpleForm.Builder form = SimpleForm.builder()
-                .title("Party")
-                .content("Party actions");
-        form.button("Create Party", response -> run(player, () -> player.performCommand("party create")));
-        form.button("Accept Invite", response -> run(player, () -> player.performCommand("party accept")));
-        form.button("Party Info", response -> run(player, () -> player.performCommand("party info")));
-        form.button("Queue 1v1", response -> run(player, () -> player.performCommand("party queue 1v1")));
-        form.button("Queue 2v2", response -> run(player, () -> player.performCommand("party queue 2v2")));
-        form.button("Queue FFA", response -> run(player, () -> player.performCommand("party queue ffa")));
-        form.button("Leave Party", response -> run(player, () -> player.performCommand("party leave")));
-        form.button("Main Menu", response -> run(player, () -> openMain(player)));
-        sendForm(player, form);
+        SimpleForm.Builder form = SimpleForm.builder().title("Party").content("Party actions");
+        List<Runnable> actions = new ArrayList<>();
+        add(form, actions, "Create Party", () -> player.performCommand("party create"));
+        add(form, actions, "Accept Invite", () -> player.performCommand("party accept"));
+        add(form, actions, "Party Info", () -> player.performCommand("party info"));
+        add(form, actions, "Queue 1v1", () -> player.performCommand("party queue 1v1"));
+        add(form, actions, "Queue 2v2", () -> player.performCommand("party queue 2v2"));
+        add(form, actions, "Queue FFA", () -> player.performCommand("party queue ffa"));
+        add(form, actions, "Leave Party", () -> player.performCommand("party leave"));
+        add(form, actions, "Main Menu", () -> openMain(player));
+        send(player, form, actions);
     }
 
     public void openMatchResult(Player player, String result, String opponent, String kit, String arena, long durationSeconds) {
-        SimpleForm.Builder form = SimpleForm.builder()
-                .title("Match " + result)
-                .content("Opponent: " + opponent + "\nKit: " + kit + "\nArena: " + arena + "\nDuration: " + String.format(Locale.ROOT, "%02d:%02d", Math.max(0L, durationSeconds) / 60L, Math.max(0L, durationSeconds) % 60L));
-        form.button("Rematch", response -> run(player, () -> player.performCommand("rematch")));
-        form.button("Spawn", response -> run(player, () -> player.performCommand("spawn")));
-        form.button("Main Menu", response -> run(player, () -> openMain(player)));
-        sendForm(player, form);
+        String duration = String.format(Locale.ROOT, "%02d:%02d",
+                Math.max(0L, durationSeconds) / 60L, Math.max(0L, durationSeconds) % 60L);
+        SimpleForm.Builder form = SimpleForm.builder().title("Match " + result)
+                .content("Opponent: " + opponent + "\nKit: " + kit + "\nArena: " + arena + "\nDuration: " + duration);
+        List<Runnable> actions = new ArrayList<>();
+        add(form, actions, "Rematch", () -> player.performCommand("rematch"));
+        add(form, actions, "Spawn", () -> player.performCommand("spawn"));
+        add(form, actions, "Main Menu", () -> openMain(player));
+        send(player, form, actions);
     }
 
     private void joinQueue(Player player, KitType kit, boolean ranked) {
@@ -143,12 +147,13 @@ public final class BedrockFormMenus {
 
     private List<KitType> enabledKits() {
         List<KitType> result = new ArrayList<>();
+        var registration = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.KitService.class);
+        var service = registration == null ? null : registration.getProvider();
         for (KitType kit : KitType.values()) {
             String key = kit.name().toLowerCase(Locale.ROOT);
             if (!plugin.getConfig().getBoolean("gui.kits." + key + ".enabled", true)) continue;
             boolean configured = plugin.getConfig().getConfigurationSection("kits." + key + ".items") != null;
-            var service = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.KitService.class);
-            boolean external = service != null && service.getProvider().isEnabled(key);
+            boolean external = service != null && service.isEnabled(key);
             if (configured || external) result.add(kit);
         }
         return result;
@@ -156,6 +161,19 @@ public final class BedrockFormMenus {
 
     private String pretty(KitType kit) {
         return kit == KitType.SPEAR_MACE ? "Spear & Mace" : kit.name().replace('_', ' ');
+    }
+
+    private void add(SimpleForm.Builder form, List<Runnable> actions, String label, Runnable action) {
+        form.button(label);
+        actions.add(action);
+    }
+
+    private void send(Player player, SimpleForm.Builder form, List<Runnable> actions) {
+        form.validResultHandler((SimpleFormResponse response) -> {
+            int index = response.clickedButtonId();
+            if (index >= 0 && index < actions.size()) run(player, actions.get(index));
+        });
+        sendForm(player, form);
     }
 
     public boolean available() {
@@ -168,8 +186,7 @@ public final class BedrockFormMenus {
                 player.sendMessage("§cBedrock Forms require Floodgate to be installed.");
                 return;
             }
-            SimpleForm built = form.build();
-            boolean sent = FloodgateApi.getInstance().sendForm(player.getUniqueId(), built);
+            boolean sent = FloodgateApi.getInstance().sendForm(player.getUniqueId(), form.build());
             if (!sent) player.sendMessage("§cCould not open the Bedrock form. Please try again.");
         } catch (LinkageError | RuntimeException error) {
             plugin.getLogger().warning("Could not send Bedrock form: " + error.getMessage());
