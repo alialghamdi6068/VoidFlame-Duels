@@ -30,68 +30,7 @@ public final class DuelMenu implements Listener {
     }
 
     public void open(Player player) {
-        int rows = Math.max(5, Math.min(6, plugin.getConfig().getInt("gui.rows", 5)));
-        Inventory inv = Bukkit.createInventory(null, rows * 9,
-                color(plugin.getConfig().getString("gui.title", "&8VoidFlame &7• &fQueue")));
-
-        Material fillerMaterial = material("gui.filler-item", Material.AIR);
-        Material accentMaterial = material("gui.accent-item", Material.AIR);
-
-        // Decorative panes are optional. Empty slots stay empty by default.
-        if (fillerMaterial != Material.AIR) {
-            ItemStack filler = item(fillerMaterial, " ");
-            for (int slot = 0; slot < inv.getSize(); slot++) {
-                int row = slot / 9;
-                int column = slot % 9;
-                if (row == 0 || row == rows - 1 || column == 0 || column == 8) {
-                    inv.setItem(slot, filler.clone());
-                }
-            }
-        }
-        if (accentMaterial != Material.AIR) {
-            ItemStack accent = item(accentMaterial, " ");
-            for (int column : new int[]{1, 2, 3, 5, 6, 7}) {
-                inv.setItem(column, accent.clone());
-                inv.setItem((rows - 1) * 9 + column, accent.clone());
-            }
-        }
-
-        inv.setItem(4, item(Material.NETHER_STAR, "&d&lVOIDFLAME QUEUE",
-                "&7Choose a kit and queue type.",
-                "",
-                "&aLeft-click &8» &fUnranked",
-                "&dRight-click &8» &fRanked"));
-
-        for (KitType kit : KitType.values()) {
-            if (!isKitEnabled(kit)) continue;
-            String key = kit.name().toLowerCase(Locale.ROOT);
-            var section = plugin.getConfig().getConfigurationSection("gui.kits." + key);
-            if (section == null || !section.getBoolean("enabled", true)) continue;
-
-            int slot = getKitSlot(kit, inv.getSize());
-            if (slot < 0 || slot >= inv.getSize()) continue;
-
-            Material icon = material("gui.kits." + key + ".icon", Material.STONE);
-            String displayName = plugin.getConfig().getString(
-                    "gui.kits." + key + ".display-name", "&f" + pretty(kit));
-
-            ItemStack stack = item(icon, displayName,
-                    "&7Practice kit: &f" + pretty(kit),
-                    "",
-                    "&fUnranked queue: &a" + plugin.queueManager().queued(kit, false),
-                    "&fRanked queue: &d" + plugin.queueManager().queued(kit, true),
-                    "&fPlayers fighting: &e" + plugin.matchManager().playersInMatches(kit),
-                    "",
-                    "&aLeft-click &8» &fUnranked",
-                    "&dRight-click &8» &fRanked");
-            inv.setItem(slot, stack);
-        }
-
-        int backSlot = inv.getSize() - 8;
-        int closeSlot = inv.getSize() - 2;
-        inv.setItem(backSlot, item(Material.ARROW, "&b&lBACK", "&7Close the queue menu."));
-        inv.setItem(closeSlot, item(Material.BARRIER, "&c&lCLOSE", "&7Close the queue menu."));
-        player.openInventory(inv);
+        plugin.nativeMenus().openQueue(player);
     }
 
     @EventHandler
