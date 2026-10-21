@@ -128,7 +128,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
                 sender.sendMessage("Players only.");
                 return true;
             }
-            nativeMenus.openLeaderboardChoice(p);
+            nativeMenus.openLeaderboard(p);
             return true;
         });
         if (getCommand("vfmenu") != null) getCommand("vfmenu").setExecutor((sender, command, label, args) -> {
