@@ -16,7 +16,7 @@ public final class DuelsAdminMenu implements Listener {
     private final VoidFlameDuelsPlugin plugin;
     public DuelsAdminMenu(VoidFlameDuelsPlugin plugin){this.plugin=plugin;}
     public void open(Player p){
-        if (!p.hasPermission("voidflame.duels.admin")) {
+        if (!JavaAdminAccess.hasAdminAccess(p)) {
             p.sendMessage("§cYou do not have permission.");
             return;
         }
@@ -33,7 +33,7 @@ public final class DuelsAdminMenu implements Listener {
     }
     @EventHandler public void click(InventoryClickEvent e){
         if(!(e.getWhoClicked() instanceof Player p)||!(e.getView().getTopInventory().getHolder() instanceof Holder))return;
-        e.setCancelled(true); if(!p.hasPermission("voidflame.duels.admin")){p.closeInventory();p.sendMessage("§cYou do not have permission.");return;} if(e.getRawSlot()==49){p.closeInventory();return;}
+        e.setCancelled(true); if(!JavaAdminAccess.hasAdminAccess(p)){p.closeInventory();p.sendMessage("§cYou do not have permission.");return;} if(e.getRawSlot()==49){p.closeInventory();return;}
         String c=switch(e.getRawSlot()){case 12->"ffa";case 13->"reports";case 14->"coins";case 15->"settings";default->null;};
         if(c!=null){p.closeInventory();p.performCommand(c);}
     }
