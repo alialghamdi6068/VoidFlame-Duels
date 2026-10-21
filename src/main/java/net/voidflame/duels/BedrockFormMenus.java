@@ -30,7 +30,7 @@ public final class BedrockFormMenus {
         form.button("Settings", response -> run(player, () -> plugin.settingsMenu().open(player)));
         form.button("Free For All", response -> run(player, () -> player.performCommand("ffa")));
         form.button("Spawn", response -> run(player, () -> player.performCommand("spawn")));
-        send(player, form);
+        sendForm(player, form);
     }
 
     public void openQueue(Player player) {
@@ -44,7 +44,7 @@ public final class BedrockFormMenus {
                     + plugin.queueManager().queued(kit, true) + " ranked", response -> run(player, () -> openKit(player, kit)));
         }
         form.button("Main Menu", response -> run(player, () -> openMain(player)));
-        send(player, form);
+        sendForm(player, form);
     }
 
     public void openKit(Player player, KitType kit) {
@@ -55,7 +55,7 @@ public final class BedrockFormMenus {
         form.button("Ranked Queue", response -> run(player, () -> joinQueue(player, kit, true)));
         form.button("Edit Layout", response -> run(player, () -> player.performCommand("kiteditor " + kit.name().toLowerCase(Locale.ROOT))));
         form.button("Back to Kits", response -> run(player, () -> openQueue(player)));
-        send(player, form);
+        sendForm(player, form);
     }
 
     public void openTargetKit(Player player, Player target) {
@@ -78,7 +78,7 @@ public final class BedrockFormMenus {
             }));
         }
         form.button("Cancel", response -> run(player, () -> openMain(player)));
-        send(player, form);
+        sendForm(player, form);
     }
 
     public void openLeaderboard(Player player) {
@@ -90,7 +90,7 @@ public final class BedrockFormMenus {
         form.button("Losses", response -> run(player, () -> player.performCommand("stats top losses")));
         form.button("Streak", response -> run(player, () -> player.performCommand("stats top streak")));
         form.button("Main Menu", response -> run(player, () -> openMain(player)));
-        send(player, form);
+        sendForm(player, form);
     }
 
     public void openEditorChoice(Player player) {
@@ -102,7 +102,7 @@ public final class BedrockFormMenus {
             form.button(pretty(kit), response -> run(player, () -> player.performCommand("kiteditor " + kit.name().toLowerCase(Locale.ROOT))));
         }
         form.button("Back", response -> run(player, () -> openMain(player)));
-        send(player, form);
+        sendForm(player, form);
     }
 
     public void openParty(Player player) {
@@ -117,7 +117,7 @@ public final class BedrockFormMenus {
         form.button("Queue FFA", response -> run(player, () -> player.performCommand("party queue ffa")));
         form.button("Leave Party", response -> run(player, () -> player.performCommand("party leave")));
         form.button("Main Menu", response -> run(player, () -> openMain(player)));
-        send(player, form);
+        sendForm(player, form);
     }
 
     public void openMatchResult(Player player, String result, String opponent) {
@@ -127,7 +127,7 @@ public final class BedrockFormMenus {
         form.button("Rematch", response -> run(player, () -> player.performCommand("rematch")));
         form.button("Spawn", response -> run(player, () -> player.performCommand("spawn")));
         form.button("Main Menu", response -> run(player, () -> openMain(player)));
-        send(player, form);
+        sendForm(player, form);
     }
 
     private void joinQueue(Player player, KitType kit, boolean ranked) {
