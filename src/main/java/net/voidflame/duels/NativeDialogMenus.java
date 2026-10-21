@@ -254,7 +254,7 @@ public final class NativeDialogMenus {
     }
 
     public void openAdmin(Player player) {
-        if (!player.hasPermission("voidflame.duels.admin")) {
+        if (!JavaAdminAccess.hasAdminAccess(player)) {
             player.sendMessage(Component.text("You do not have permission.", NamedTextColor.RED));
             return;
         }
