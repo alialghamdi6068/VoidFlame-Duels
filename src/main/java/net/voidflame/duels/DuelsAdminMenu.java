@@ -20,8 +20,7 @@ public final class DuelsAdminMenu implements Listener {
             p.sendMessage("§cYou do not have permission.");
             return;
         }
-        Inventory i=Bukkit.createInventory(new Holder(),54,"§8VoidFlame §7• §dDuels Admin");
-        for(int s=0;s<54;s++)i.setItem(s,item(Material.BLACK_STAINED_GLASS_PANE," "));
+        Inventory i=Bukkit.createInventory(new Holder(),54,"§8VoidFlame §7• §fDuels Admin");
         button(i,10,Material.NETHER_STAR,"§d§lQUEUES","§7Total queued: §f"+plugin.queueManager().totalQueued());
         button(i,11,Material.DIAMOND_SWORD,"§d§lMATCHES","§7Active players: §f"+plugin.matchManager().activeMatches());
         button(i,12,Material.ENDER_PEARL,"§a§lFFA","§7Open FFA controls.");
