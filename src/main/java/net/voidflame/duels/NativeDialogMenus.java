@@ -13,6 +13,8 @@ import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import net.voidflame.core.api.KitService;
+import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,13 +69,23 @@ public final class NativeDialogMenus {
     public void openQueue(Player player) {
         List<DialogBody> body = new ArrayList<>();
         body.add(DialogBody.plainMessage(Component.text("Choose a kit to view its queue options.", NamedTextColor.GRAY), 300));
-        for (KitCard kit : KITS) {
+        List<KitCard> enabledKits = enabledKits();
+        if (enabledKits.isEmpty()) {
+            body.add(DialogBody.plainMessage(Component.text("No kits are currently enabled. Please contact staff.", NamedTextColor.RED), 300));
+        }
+        for (KitCard kit : enabledKits) {
+            KitType type = KitType.fromConfig(kit.id());
+            int unranked = plugin.queueManager().queued(type, false);
+            int ranked = plugin.queueManager().queued(type, true);
+            int fighting = plugin.matchManager().playersInMatches(type);
             body.add(DialogBody.item(new ItemStack(kit.icon()),
-                    DialogBody.plainMessage(Component.text(kit.name() + "  •  " + kit.description(), kit.color()), 220),
+                    DialogBody.plainMessage(Component.text(kit.name() + "  •  " + kit.description()
+                            + "  •  Queue: " + unranked + " unranked / " + ranked + " ranked"
+                            + "  •  Fighting: " + fighting, kit.color()), 240),
                     true, true, 44, 44));
         }
         List<ActionButton> buttons = new ArrayList<>();
-        for (KitCard kit : KITS) {
+        for (KitCard kit : enabledKits) {
             buttons.add(button(kit.name(), "Open ranked, unranked and layout options.", "/vfui kit " + kit.id(), kit.color()));
         }
         buttons.add(button("Back to Main Menu", "Return to the main navigation screen.", "/vfmenu", NamedTextColor.GRAY));
@@ -81,7 +93,7 @@ public final class NativeDialogMenus {
     }
 
     public void openKit(Player player, String id) {
-        KitCard kit = KITS.stream().filter(value -> value.id().equalsIgnoreCase(id)).findFirst().orElse(null);
+        KitCard kit = enabledKits().stream().filter(value -> value.id().equalsIgnoreCase(id)).findFirst().orElse(null);
         if (kit == null) {
             player.sendMessage(Component.text("Unknown kit.", NamedTextColor.RED));
             openQueue(player);
@@ -106,13 +118,13 @@ public final class NativeDialogMenus {
         duelTargets.put(player.getUniqueId(), target.getUniqueId());
         List<DialogBody> body = new ArrayList<>();
         body.add(DialogBody.plainMessage(Component.text("Choose the kit for your duel with " + target.getName() + ".", NamedTextColor.GRAY), 300));
-        for (KitCard kit : KITS) {
+        for (KitCard kit : enabledKits()) {
             body.add(DialogBody.item(new ItemStack(kit.icon()),
                     DialogBody.plainMessage(Component.text(kit.name() + "  •  " + kit.description(), kit.color()), 220),
                     true, true, 44, 44));
         }
         List<ActionButton> buttons = new ArrayList<>();
-        for (KitCard kit : KITS) {
+        for (KitCard kit : enabledKits()) {
             buttons.add(button(kit.name(), "Send a duel request using this kit.", "/vfui targetkit " + kit.id(), kit.color()));
         }
         buttons.add(button("Cancel", "Cancel the duel request.", "/vfui kits", NamedTextColor.GRAY));
@@ -184,7 +196,7 @@ public final class NativeDialogMenus {
                     DialogBody.plainMessage(Component.text(kit.name(), kit.color()), 160), true, true, 36, 36));
         }
         List<ActionButton> buttons = new ArrayList<>();
-        for (KitCard kit : KITS) {
+        for (KitCard kit : enabledKits()) {
             buttons.add(button(kit.name(), "Edit this kit's layout.", "/kiteditor " + kit.id(), kit.color()));
         }
         buttons.add(button("Back", "Return to main menu.", "/vfmenu", NamedTextColor.GRAY));
@@ -222,6 +234,16 @@ public final class NativeDialogMenus {
                 DialogInput.text("target", Component.text("Player name", NamedTextColor.GRAY))
                         .initial("").maxLength(16).width(240).build()
         ));
+    }
+
+    private List<KitCard> enabledKits() {
+        return KITS.stream().filter(kit -> {
+            String key = kit.id().toLowerCase(Locale.ROOT);
+            if (plugin.getConfig().getConfigurationSection("kits." + key + ".items") != null) return true;
+            RegisteredServiceProvider<KitService> registration =
+                    plugin.getServer().getServicesManager().getRegistration(KitService.class);
+            return registration != null && registration.getProvider().isEnabled(key);
+        }).toList();
     }
 
     private String memberName(java.util.UUID uuid) {
