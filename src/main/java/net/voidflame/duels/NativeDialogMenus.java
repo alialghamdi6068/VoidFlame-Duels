@@ -29,13 +29,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class NativeDialogMenus {
     private static final List<KitCard> KITS = List.of(
-            new KitCard("sword", "Sword", Material.DIAMOND_SWORD, NamedTextColor.LIGHT_PURPLE, "Classic sword combat"),
-            new KitCard("axe", "Axe", Material.DIAMOND_AXE, NamedTextColor.LIGHT_PURPLE, "Axe and shield combat"),
+            new KitCard("sword", "Sword", Material.DIAMOND_SWORD, NamedTextColor.AQUA, "Classic sword combat"),
+            new KitCard("axe", "Axe", Material.DIAMOND_AXE, NamedTextColor.AQUA, "Axe and shield combat"),
             new KitCard("uhc", "UHC", Material.GOLDEN_APPLE, NamedTextColor.GOLD, "UHC-style healing and combat"),
             new KitCard("mace", "Mace", Material.MACE, NamedTextColor.AQUA, "Mace movement and impact"),
             new KitCard("spear_mace", "Spear & Mace", Material.TRIDENT, NamedTextColor.AQUA, "Spear and mace combat"),
-            new KitCard("crystal", "Crystal", Material.END_CRYSTAL, NamedTextColor.LIGHT_PURPLE, "Crystal PvP"),
-            new KitCard("netherite_pot", "Netherite Pot", Material.SPLASH_POTION, NamedTextColor.DARK_PURPLE, "Netherite potion combat"),
+            new KitCard("crystal", "Crystal", Material.END_CRYSTAL, NamedTextColor.AQUA, "Crystal PvP"),
+            new KitCard("netherite_pot", "Netherite Pot", Material.SPLASH_POTION, NamedTextColor.BLUE, "Netherite potion combat"),
             new KitCard("smp", "SMP", Material.TOTEM_OF_UNDYING, NamedTextColor.GREEN, "SMP-style PvP kit"),
             new KitCard("diamond_smp", "Diamond SMP", Material.DIAMOND_CHESTPLATE, NamedTextColor.AQUA, "Diamond gear PvP"),
             new KitCard("tnt_minecart_lt", "TNT Minecart LT", Material.TNT_MINECART, NamedTextColor.GOLD, "Low-tier TNT minecart combat"),
@@ -51,13 +51,13 @@ public final class NativeDialogMenus {
 
     public void openMain(Player player) {
         List<DialogBody> body = List.of(
-                DialogBody.plainMessage(Component.text("VOIDFLAME MC  •  PRACTICE & DUELS", NamedTextColor.LIGHT_PURPLE), 300),
+                DialogBody.plainMessage(Component.text("VOIDFLAME MC  •  PRACTICE & DUELS", NamedTextColor.AQUA), 300),
                 DialogBody.plainMessage(Component.text("Choose a destination. This screen uses Minecraft's native dialog UI.", NamedTextColor.GRAY), 300),
                 DialogBody.item(new ItemStack(Material.DIAMOND_SWORD), DialogBody.plainMessage(Component.text("Competitive duels and matchmaking", NamedTextColor.GRAY), 180), true, true, 48, 48),
                 DialogBody.item(new ItemStack(Material.NETHER_STAR), DialogBody.plainMessage(Component.text("Wins, ELO, losses and streaks", NamedTextColor.GRAY), 180), true, true, 48, 48)
         );
         show(player, "VoidFlame • Practice", body, List.of(
-                button("Duels & Queues", "Choose a kit and enter ranked or unranked matchmaking.", "/vfui kits", NamedTextColor.LIGHT_PURPLE),
+                button("Duels & Queues", "Choose a kit and enter ranked or unranked matchmaking.", "/vfui kits", NamedTextColor.AQUA),
                 button("Leaderboards", "View competitive ELO and player statistics.", "/vfui leaderboard", NamedTextColor.AQUA),
                 button("My Statistics", "View your practice statistics.", "/stats", NamedTextColor.GREEN),
                 button("Kit Layout Editor", "Choose a kit layout to customize.", "/vfui editor", NamedTextColor.GOLD),
@@ -108,7 +108,7 @@ public final class NativeDialogMenus {
         );
         show(player, "VoidFlame • " + kit.name(), body, List.of(
                 button("Unranked Queue", "Play without rating changes.", "/queue unranked " + kit.id(), NamedTextColor.GREEN),
-                button("Ranked Queue", "Play for competitive ELO.", "/queue ranked " + kit.id(), NamedTextColor.LIGHT_PURPLE),
+                button("Ranked Queue", "Play for competitive ELO.", "/queue ranked " + kit.id(), NamedTextColor.AQUA),
                 button("Edit Layout", "Open your saved inventory layout editor.", "/kiteditor " + kit.id(), NamedTextColor.AQUA),
                 button("Back to Kits", "Return to kit selection.", "/vfui kits", NamedTextColor.GRAY)
         ), 2);
@@ -148,7 +148,7 @@ public final class NativeDialogMenus {
             return;
         }
         player.sendMessage(Component.text(plugin.message("duel-sent").replace("<player>", target.getName()), NamedTextColor.GREEN));
-        target.sendMessage(Component.text(plugin.message("duel-received").replace("<player>", player.getName()).replace("<kit>", kit.name()), NamedTextColor.LIGHT_PURPLE));
+        target.sendMessage(Component.text(plugin.message("duel-received").replace("<player>", player.getName()).replace("<kit>", kit.name()), NamedTextColor.AQUA));
     }
 
     public void openMatchResult(Player player, String result, String opponent, String kit, String arena, long durationSeconds) {
@@ -162,14 +162,14 @@ public final class NativeDialogMenus {
         List<DialogBody> body = List.of(
                 DialogBody.plainMessage(Component.text("✦  " + result + "  ✦", resultColor), 300),
                 DialogBody.plainMessage(Component.text("OPPONENT  •  " + opponent, NamedTextColor.WHITE), 300),
-                DialogBody.plainMessage(Component.text("KIT  •  " + kit, NamedTextColor.LIGHT_PURPLE), 300),
+                DialogBody.plainMessage(Component.text("KIT  •  " + kit, NamedTextColor.AQUA), 300),
                 DialogBody.plainMessage(Component.text("ARENA  •  " + arena, NamedTextColor.AQUA), 300),
                 DialogBody.plainMessage(Component.text("MATCH TIME  •  " + duration, NamedTextColor.GRAY), 300),
                 DialogBody.plainMessage(Component.text("Queue again, return to spawn, or open the main menu.", NamedTextColor.GRAY), 300)
         );
         List<ActionButton> buttons = List.of(
                 button("Rematch", "Challenge your previous opponent again.", "/rematch", NamedTextColor.GREEN),
-                button("Return to Spawn", "Return to the Practice spawn.", "/spawn", NamedTextColor.LIGHT_PURPLE),
+                button("Return to Spawn", "Return to the Practice spawn.", "/spawn", NamedTextColor.AQUA),
                 button("Main Menu", "Open VoidFlameMC Practice.", "/vfmenu", NamedTextColor.AQUA)
         );
         show(player, "MATCH COMPLETE", body, buttons, 2);
@@ -177,7 +177,7 @@ public final class NativeDialogMenus {
 
     public void openLeaderboard(Player player) {
         show(player, "VoidFlame • Leaderboards", List.of(
-                DialogBody.plainMessage(Component.text("VOIDFLAME MC PLAYER RANKINGS", NamedTextColor.LIGHT_PURPLE), 300),
+                DialogBody.plainMessage(Component.text("VOIDFLAME MC PLAYER RANKINGS", NamedTextColor.AQUA), 300),
                 DialogBody.plainMessage(Component.text("The live ELO board is available from the statistics service. Additional ranking categories can be added once their queries are backed by stored data.", NamedTextColor.GRAY), 300),
                 DialogBody.item(new ItemStack(Material.NETHER_STAR),
                         DialogBody.plainMessage(Component.text("ELO • Wins • Losses • Streak", NamedTextColor.AQUA), 220),
@@ -222,7 +222,7 @@ public final class NativeDialogMenus {
         List<ActionButton> actions = List.of(
                 button("Create Party", "Create a new party.", "/party create", NamedTextColor.AQUA),
                 button("Accept Invite", "Accept a pending party invitation.", "/party accept", NamedTextColor.GREEN),
-                button("Invite Player", "Invite the name entered above.", "/party invite $(target)", NamedTextColor.LIGHT_PURPLE),
+                button("Invite Player", "Invite the name entered above.", "/party invite $(target)", NamedTextColor.AQUA),
                 button("Queue 1v1", "Queue your party for 1v1.", "/party queue 1v1", NamedTextColor.GOLD),
                 button("Queue 2v2", "Queue your party for 2v2.", "/party queue 2v2", NamedTextColor.AQUA),
                 button("Queue FFA", "Queue your party for Free For All.", "/party queue ffa", NamedTextColor.RED),
@@ -237,12 +237,21 @@ public final class NativeDialogMenus {
     }
 
     private List<KitCard> enabledKits() {
+        RegisteredServiceProvider<KitService> registration =
+                plugin.getServer().getServicesManager().getRegistration(KitService.class);
+        KitService externalKits = registration == null ? null : registration.getProvider();
+
         return KITS.stream().filter(kit -> {
             String key = kit.id().toLowerCase(Locale.ROOT);
-            if (plugin.getConfig().getConfigurationSection("kits." + key + ".items") != null) return true;
-            RegisteredServiceProvider<KitService> registration =
-                    plugin.getServer().getServicesManager().getRegistration(KitService.class);
-            return registration != null && registration.getProvider().isEnabled(key);
+
+            // Keep Java Dialogs in sync with the same per-kit toggle used by the
+            // Bedrock-compatible queue menu. A configured kit can still be hidden
+            // from matchmaking without deleting its stored kit definition.
+            if (!plugin.getConfig().getBoolean("gui.kits." + key + ".enabled", true)) return false;
+
+            boolean configured = plugin.getConfig().getConfigurationSection("kits." + key + ".items") != null;
+            boolean provided = externalKits != null && externalKits.isEnabled(key);
+            return configured || provided;
         }).toList();
     }
 
@@ -264,13 +273,21 @@ public final class NativeDialogMenus {
                         + "   •   Active matches: " + plugin.matchManager().activeMatches(), NamedTextColor.GRAY), 300),
                 DialogBody.plainMessage(Component.text("Choose an administrative area. Sensitive actions still enforce their own permissions.", NamedTextColor.GRAY), 300)
         );
-        show(player, "VoidFlame • Admin Panel", body, List.of(
-                button("FFA Status", "View current FFA status.", "/ffa stats", NamedTextColor.RED),
-                button("Reports", "Open report management.", "/reports", NamedTextColor.AQUA),
-                button("Settings", "Open player preferences.", "/settings", NamedTextColor.GRAY),
-                button("Kit Administration", "Open kit management.", "/kitadmin", NamedTextColor.GOLD),
-                button("Back", "Return to main menu.", "/vfmenu", NamedTextColor.LIGHT_PURPLE)
-        ), 2);
+        List<ActionButton> actions = new ArrayList<>();
+        actions.add(button("FFA Status", "View current FFA status.", "/ffa stats", NamedTextColor.RED));
+        if (player.hasPermission("voidflame.report.view") || player.hasPermission("voidflame.admin")
+                || player.hasPermission("voidflame.admin.full")) {
+            actions.add(button("Reports", "Open report management.", "/reports", NamedTextColor.AQUA));
+        }
+        if (player.hasPermission("voidflame.duels.admin") || player.hasPermission("voidflame.admin.duels")
+                || player.hasPermission("voidflame.admin.full")) {
+            actions.add(button("Arena Administration", "View and configure duel arenas.", "/duelarena list", NamedTextColor.GOLD));
+        }
+        if (player.hasPermission("voidflame.admin") || player.hasPermission("voidflame.admin.full")) {
+            actions.add(button("Admin Console", "Open the central staff administration panel.", "/vfadmin", NamedTextColor.BLUE));
+        }
+        actions.add(button("Back", "Return to main menu.", "/vfmenu", NamedTextColor.GRAY));
+        show(player, "VoidFlame • Staff", body, actions, 2);
     }
 
     public boolean handle(Player player, String[] args) {
@@ -296,7 +313,7 @@ public final class NativeDialogMenus {
     private void show(Player player, String title, List<DialogBody> body, List<ActionButton> buttons, int columns, List<DialogInput> inputs) {
         Dialog dialog = Dialog.create(builder -> builder.empty()
                 .base(DialogBase.builder(Component.text(title, NamedTextColor.WHITE))
-                        .externalTitle(Component.text("VoidFlame", NamedTextColor.LIGHT_PURPLE))
+                        .externalTitle(Component.text("VoidFlame", NamedTextColor.AQUA))
                         .canCloseWithEscape(true)
                         .body(body)
                         .inputs(inputs)
