@@ -53,7 +53,7 @@ public final class AdvancedCommand implements CommandExecutor, TabCompleter, Lis
             case "settings" -> { plugin.settingsMenu().open(player); yield true; }
             case "goldenhard" -> { plugin.advancedFeatures().toggleGoldenHard(player); yield true; }
             case "ffa" -> ffa(player, args);
-            case "coins" -> coins(sender, args);
+            case "coins" -> { if (!JavaAdminAccess.hasAdminAccess(player)) { player.sendMessage(color("&cJava staff only.")); yield true; } yield coins(sender, args); }
             case "replay" -> replay(player, args);
             default -> true;
         };
