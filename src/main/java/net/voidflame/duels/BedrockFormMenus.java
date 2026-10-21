@@ -26,6 +26,7 @@ public final class BedrockFormMenus {
         form.button("Duels & Queues", response -> run(player, () -> openQueue(player)));
         form.button("My Statistics", response -> run(player, () -> player.performCommand("stats")));
         form.button("Leaderboard", response -> run(player, () -> player.performCommand("leaderboard")));
+        form.button("Kit Layouts", response -> run(player, () -> openEditorChoice(player)));
         form.button("Party", response -> run(player, () -> openParty(player)));
         form.button("Settings", response -> run(player, () -> plugin.settingsMenu().open(player)));
         form.button("Free For All", response -> run(player, () -> player.performCommand("ffa")));
@@ -120,10 +121,10 @@ public final class BedrockFormMenus {
         sendForm(player, form);
     }
 
-    public void openMatchResult(Player player, String result, String opponent) {
+    public void openMatchResult(Player player, String result, String opponent, String kit, String arena, long durationSeconds) {
         SimpleForm.Builder form = SimpleForm.builder()
                 .title("Match " + result)
-                .content("Opponent: " + opponent);
+                .content("Opponent: " + opponent + "\nKit: " + kit + "\nArena: " + arena + "\nDuration: " + String.format(Locale.ROOT, "%02d:%02d", Math.max(0L, durationSeconds) / 60L, Math.max(0L, durationSeconds) % 60L));
         form.button("Rematch", response -> run(player, () -> player.performCommand("rematch")));
         form.button("Spawn", response -> run(player, () -> player.performCommand("spawn")));
         form.button("Main Menu", response -> run(player, () -> openMain(player)));
