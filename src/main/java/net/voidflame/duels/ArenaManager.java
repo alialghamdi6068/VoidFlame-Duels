@@ -139,7 +139,7 @@ public final class ArenaManager {
             int maxX = integer(max.get("x")), maxY = integer(max.get("y")), maxZ = integer(max.get("z"));
             if (minX > maxX || minY > maxY || minZ > maxZ
                     || minY < world.getMinHeight() || maxY >= world.getMaxHeight()) return null;
-            long volume = (long) (maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1);
+            long volume = ((long) maxX - minX + 1L) * ((long) maxY - minY + 1L) * ((long) maxZ - minZ + 1L);
             long limit = Math.max(1L, plugin.getConfig().getLong("arenas.max-reset-blocks", 100_000L));
             if (volume <= 0 || volume > limit) return null;
             return RegionSnapshot.capture(world, minX, minY, minZ, maxX, maxY, maxZ, (int) volume);
