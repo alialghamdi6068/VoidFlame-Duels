@@ -3,13 +3,11 @@ package net.voidflame.duels;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.geysermc.cumulus.form.SimpleForm;
-import org.geysermc.cumulus.response.SimpleFormResponse;
 import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Consumer;
 
 /**
  * Bedrock-native Forms API entry points. Java clients use Paper Dialogs instead.
@@ -159,9 +157,13 @@ public final class BedrockFormMenus {
         return kit == KitType.SPEAR_MACE ? "Spear & Mace" : kit.name().replace('_', ' ');
     }
 
-    private void send(Player player, SimpleForm.Builder form) {
+    public boolean available() {
+        return Bukkit.getPluginManager().isPluginEnabled("floodgate");
+    }
+
+    public void sendForm(Player player, SimpleForm.Builder form) {
         try {
-            if (!Bukkit.getPluginManager().isPluginEnabled("floodgate")) {
+            if (!available()) {
                 player.sendMessage("§cBedrock Forms require Floodgate to be installed.");
                 return;
             }
