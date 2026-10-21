@@ -102,7 +102,11 @@ public final class ArenaSetupCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(ChatColor.RED + "Usage: /duelarena " + (first ? "pos1" : "pos2") + " <name>");
             return;
         }
-        Map<String, Object> point = locationMap(player.getLocation());
+        Map<String, Object> point = new LinkedHashMap<>();
+        point.put("world", player.getWorld().getName());
+        point.put("x", player.getLocation().getBlockX());
+        point.put("y", player.getLocation().getBlockY());
+        point.put("z", player.getLocation().getBlockZ());
         plugin.getConfig().set("arenas.setup." + args[1] + (first ? ".pos1" : ".pos2"), point);
         plugin.saveConfig();
         player.sendMessage(ChatColor.GREEN + (first ? "First" : "Second") + " region corner saved for '" + args[1] + "'.");
@@ -148,7 +152,7 @@ public final class ArenaSetupCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(ChatColor.RED + "Region height is outside the world's build limits.");
             return;
         }
-        long volume = (long) (maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1);
+        long volume = ((long) maxX - minX + 1L) * ((long) maxY - minY + 1L) * ((long) maxZ - minZ + 1L);
         long limit = Math.max(1L, plugin.getConfig().getLong("arenas.max-reset-blocks", 100_000L));
         if (volume <= 0 || volume > limit) {
             player.sendMessage(ChatColor.RED + "Region is too large (" + volume + " blocks). Maximum: " + limit + ".");
