@@ -103,16 +103,22 @@ public final class SettingsMenu implements Listener {
         org.geysermc.cumulus.form.SimpleForm.Builder form = org.geysermc.cumulus.form.SimpleForm.builder()
                 .title("Practice Settings")
                 .content("Choose a preference to toggle. Changes are saved to your profile.");
+        List<Runnable> actions = new java.util.ArrayList<>();
         for (Setting setting : SETTINGS) {
             boolean enabled = values.getOrDefault(setting.key(), setting.defaultValue());
-            form.button(setting.label() + ": " + (enabled ? setting.on() : setting.off()),
-                    response -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        if (player.isOnline()) toggle(player, setting);
-                    }));
+            form.button(setting.label() + ": " + (enabled ? setting.on() : setting.off()));
+            actions.add(() -> toggle(player, setting));
         }
-        form.button("Main Menu", response -> Bukkit.getScheduler().runTask(plugin, () -> {
-            if (player.isOnline()) plugin.bedrockMenus().openMain(player);
-        }));
+        form.button("Main Menu");
+        actions.add(() -> plugin.bedrockMenus().openMain(player));
+        form.validResultHandler((org.geysermc.cumulus.response.SimpleFormResponse response) -> {
+            int index = response.clickedButtonId();
+            if (index >= 0 && index < actions.size()) {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (player.isOnline()) actions.get(index).run();
+                });
+            }
+        });
         plugin.bedrockMenus().sendForm(player, form);
     }
 
