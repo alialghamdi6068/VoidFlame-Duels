@@ -55,6 +55,11 @@ public final class SettingsMenu implements Listener {
     }
 
     public void open(Player player) {
+        if (JavaAdminAccess.isBedrock(player)) {
+            if (plugin.bedrockMenus().available()) openBedrock(player);
+            else openBedrockInventory(player);
+            return;
+        }
         Map<String, Boolean> values = cache.computeIfAbsent(player.getUniqueId(), id -> new ConcurrentHashMap<>());
         for (Setting setting : SETTINGS) {
             values.putIfAbsent(setting.key(), service.getCached(player.getUniqueId(), setting.key(), setting.defaultValue()));
@@ -90,6 +95,45 @@ public final class SettingsMenu implements Listener {
         player.showDialog(dialog);
     }
 
+    private void openBedrock(Player player) {
+        Map<String, Boolean> values = cache.computeIfAbsent(player.getUniqueId(), id -> new ConcurrentHashMap<>());
+        for (Setting setting : SETTINGS) {
+            values.putIfAbsent(setting.key(), service.getCached(player.getUniqueId(), setting.key(), setting.defaultValue()));
+        }
+        org.geysermc.cumulus.form.SimpleForm.Builder form = org.geysermc.cumulus.form.SimpleForm.builder()
+                .title("Practice Settings")
+                .content("Choose a preference to toggle. Changes are saved to your profile.");
+        for (Setting setting : SETTINGS) {
+            boolean enabled = values.getOrDefault(setting.key(), setting.defaultValue());
+            form.button(setting.label() + ": " + (enabled ? setting.on() : setting.off()),
+                    response -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (player.isOnline()) toggle(player, setting);
+                    }));
+        }
+        form.button("Main Menu", response -> Bukkit.getScheduler().runTask(plugin, () -> {
+            if (player.isOnline()) plugin.bedrockMenus().openMain(player);
+        }));
+        plugin.bedrockMenus().sendForm(player, form);
+    }
+
+    private void openBedrockInventory(Player player) {
+        Inventory inventory = Bukkit.createInventory(null, 27, TITLE);
+        int[] slots = {10,11,12,13,14,15,16,19,20,21};
+        Map<String, Boolean> values = cache.computeIfAbsent(player.getUniqueId(), id -> new ConcurrentHashMap<>());
+        for (Setting setting : SETTINGS) {
+            values.putIfAbsent(setting.key(), service.getCached(player.getUniqueId(), setting.key(), setting.defaultValue()));
+        }
+        for (int i = 0; i < SETTINGS.size(); i++) {
+            Setting setting = SETTINGS.get(i);
+            boolean enabled = values.getOrDefault(setting.key(), setting.defaultValue());
+            button(inventory, slots[i], setting.material(), setting.label() + ": " + (enabled ? setting.on() : setting.off()),
+                    "Click to toggle and save.");
+        }
+        button(inventory, 18, Material.ARROW, "Main Menu", "Return to VoidFlame navigation.");
+        button(inventory, 26, Material.BARRIER, "Close", "Close settings.");
+        player.openInventory(inventory);
+    }
+
     public boolean toggleByKey(Player player, String key) {
         for (Setting setting : SETTINGS) {
             if (setting.key().equalsIgnoreCase(key)) {
@@ -121,7 +165,7 @@ public final class SettingsMenu implements Listener {
         e.setCancelled(true);
         int s=e.getRawSlot();
         if(s==26){p.closeInventory();return;}
-        if(s==18){p.closeInventory();return;}
+        if(s==18){p.closeInventory(); if (JavaAdminAccess.isBedrock(p) && plugin.bedrockMenus().available()) plugin.bedrockMenus().openMain(p); return;}
         int[] slots={10,11,12,13,14,15,16,19,20,21};
         for(int i=0;i<slots.length;i++) if(s==slots[i]) { toggle(p,SETTINGS.get(i)); return; }
     }
