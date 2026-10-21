@@ -163,7 +163,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
                 sender.sendMessage("Players only.");
                 return true;
             }
-            if (!p.hasPermission("voidflame.duels.admin")) {
+            if (!JavaAdminAccess.hasAdminAccess(p)) {
                 p.sendMessage(ChatColor.RED + "You do not have permission.");
                 return true;
             }
