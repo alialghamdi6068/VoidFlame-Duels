@@ -34,21 +34,26 @@ public final class DuelMenu implements Listener {
         Inventory inv = Bukkit.createInventory(null, rows * 9,
                 color(plugin.getConfig().getString("gui.title", "&8VoidFlame &7• &fQueue")));
 
-        Material fillerMaterial = material("gui.filler-item", Material.GRAY_STAINED_GLASS_PANE);
-        Material accentMaterial = material("gui.accent-item", Material.PURPLE_STAINED_GLASS_PANE);
-        ItemStack filler = item(fillerMaterial, " ");
-        ItemStack accent = item(accentMaterial, " ");
+        Material fillerMaterial = material("gui.filler-item", Material.AIR);
+        Material accentMaterial = material("gui.accent-item", Material.AIR);
 
-        for (int slot = 0; slot < inv.getSize(); slot++) {
-            int row = slot / 9;
-            int column = slot % 9;
-            if (row == 0 || row == rows - 1 || column == 0 || column == 8) {
-                inv.setItem(slot, filler.clone());
+        // Decorative panes are optional. Empty slots stay empty by default.
+        if (fillerMaterial != Material.AIR) {
+            ItemStack filler = item(fillerMaterial, " ");
+            for (int slot = 0; slot < inv.getSize(); slot++) {
+                int row = slot / 9;
+                int column = slot % 9;
+                if (row == 0 || row == rows - 1 || column == 0 || column == 8) {
+                    inv.setItem(slot, filler.clone());
+                }
             }
         }
-        for (int column : new int[]{1, 2, 3, 5, 6, 7}) {
-            inv.setItem(column, accent.clone());
-            inv.setItem((rows - 1) * 9 + column, accent.clone());
+        if (accentMaterial != Material.AIR) {
+            ItemStack accent = item(accentMaterial, " ");
+            for (int column : new int[]{1, 2, 3, 5, 6, 7}) {
+                inv.setItem(column, accent.clone());
+                inv.setItem((rows - 1) * 9 + column, accent.clone());
+            }
         }
 
         inv.setItem(4, item(Material.NETHER_STAR, "&d&lVOIDFLAME QUEUE",
