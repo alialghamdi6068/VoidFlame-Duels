@@ -93,8 +93,8 @@ messages:
 gui:
   title: "&8VoidFlame &7• &dQueue"
   rows: 5
-  filler-item: BLACK_STAINED_GLASS_PANE
-  accent-item: PURPLE_STAINED_GLASS_PANE
+  filler-item: AIR
+  accent-item: AIR
   kits:
     sword:
       enabled: true
