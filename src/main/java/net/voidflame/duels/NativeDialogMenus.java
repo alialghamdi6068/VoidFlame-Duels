@@ -52,11 +52,11 @@ public final class NativeDialogMenus {
                 DialogBody.plainMessage(Component.text("VOIDFLAME MC  •  PRACTICE & DUELS", NamedTextColor.LIGHT_PURPLE), 300),
                 DialogBody.plainMessage(Component.text("Choose a destination. This screen uses Minecraft's native dialog UI.", NamedTextColor.GRAY), 300),
                 DialogBody.item(new ItemStack(Material.DIAMOND_SWORD), DialogBody.plainMessage(Component.text("Competitive duels and matchmaking", NamedTextColor.GRAY), 180), true, true, 48, 48),
-                DialogBody.item(new ItemStack(Material.NETHER_STAR), DialogBody.plainMessage(Component.text("Player rankings and tier list", NamedTextColor.GRAY), 180), true, true, 48, 48)
+                DialogBody.item(new ItemStack(Material.NETHER_STAR), DialogBody.plainMessage(Component.text("Wins, ELO, losses and streaks", NamedTextColor.GRAY), 180), true, true, 48, 48)
         );
         show(player, "VoidFlame • Practice", body, List.of(
                 button("Duels & Queues", "Choose a kit and enter ranked or unranked matchmaking.", "/vfui kits", NamedTextColor.LIGHT_PURPLE),
-                button("Tiers / Leaderboards", "Open the tier and player ranking choices.", "/vfui leaderboard-choice", NamedTextColor.AQUA),
+                button("Leaderboards", "View competitive ELO and player statistics.", "/vfui leaderboard", NamedTextColor.AQUA),
                 button("My Statistics", "View your practice statistics.", "/stats", NamedTextColor.GREEN),
                 button("Kit Layout Editor", "Choose a kit layout to customize.", "/vfui editor", NamedTextColor.GOLD),
                 button("Practice Settings", "Change your player settings.", "/settings", NamedTextColor.GRAY),
@@ -163,53 +163,6 @@ public final class NativeDialogMenus {
         show(player, "MATCH COMPLETE", body, buttons, 2);
     }
 
-    public void openLeaderboardChoice(Player player) {
-        List<DialogBody> body = List.of(
-                DialogBody.plainMessage(Component.text("Choose which ranking system to open.", NamedTextColor.GRAY), 300),
-                DialogBody.item(new ItemStack(Material.NETHER_STAR),
-                        DialogBody.plainMessage(Component.text("Tiers: competitive player tests and tier placements. Website/API connection will be configured when the site is deployed.", NamedTextColor.GRAY), 240),
-                        true, true, 48, 48),
-                DialogBody.item(new ItemStack(Material.PLAYER_HEAD),
-                        DialogBody.plainMessage(Component.text("Leaderboards: VoidFlameMC wins, ELO, losses and streaks.", NamedTextColor.GRAY), 240),
-                        true, true, 48, 48)
-        );
-        show(player, "VoidFlame • Rankings", body, List.of(
-                button("Tiers", "Open the VoidFlame Tiers section.", "/vfui tiers", NamedTextColor.AQUA),
-                button("Leaderboards", "Open the in-server player leaderboard.", "/vfui leaderboard", NamedTextColor.LIGHT_PURPLE),
-                button("Back", "Return to main menu.", "/vfmenu", NamedTextColor.GRAY)
-        ), 2);
-    }
-
-    public void openTiersInfo(Player player) {
-        String tiersUrl = plugin.getConfig().getString("integrations.tiers-url", "").trim();
-        boolean validUrl = tiersUrl.startsWith("https://") || tiersUrl.startsWith("http://");
-        List<ActionButton> actions = new ArrayList<>();
-        if (validUrl) {
-            actions.add(ActionButton.create(
-                    Component.text("Open Tiers Website", NamedTextColor.AQUA),
-                    Component.text("Open the configured VoidFlame Tiers website.", NamedTextColor.GRAY),
-                    180,
-                    DialogAction.staticAction(ClickEvent.openUrl(tiersUrl))
-            ));
-        } else {
-            actions.add(ActionButton.create(
-                    Component.text("Website Not Configured", NamedTextColor.GRAY),
-                    Component.text("Set integrations.tiers-url after deployment.", NamedTextColor.GRAY),
-                    180,
-                    null
-            ));
-        }
-        actions.add(button("Back to Rankings", "Return to the ranking choices.", "/vfui leaderboard-choice", NamedTextColor.LIGHT_PURPLE));
-        List<DialogBody> body = List.of(
-                DialogBody.plainMessage(Component.text("VOIDFLAME TIERS", NamedTextColor.AQUA), 300),
-                DialogBody.plainMessage(Component.text("This section is reserved for verified competitive tier placements from the VoidFlame Tiers website.", NamedTextColor.GRAY), 300),
-                DialogBody.plainMessage(Component.text(validUrl
-                        ? "Use the button below to open the configured site. Live in-game tier data requires the site API endpoint and identity mapping to be configured."
-                        : "The site has not been configured with a public URL yet. No fake tier data or broken links will be displayed.", NamedTextColor.GRAY), 300)
-        );
-        show(player, "VoidFlame • Tiers", body, actions, 1);
-    }
-
     public void openLeaderboard(Player player) {
         show(player, "VoidFlame • Leaderboards", List.of(
                 DialogBody.plainMessage(Component.text("VOIDFLAME MC PLAYER RANKINGS", NamedTextColor.LIGHT_PURPLE), 300),
@@ -219,7 +172,7 @@ public final class NativeDialogMenus {
                         true, true, 48, 48)
         ), List.of(
                 button("ELO Leaderboard", "Show the current ELO ranking.", "/stats top", NamedTextColor.AQUA),
-                button("Back to Rankings", "Choose Tiers or Leaderboards.", "/vfui leaderboard-choice", NamedTextColor.GRAY)
+                button("Back to Main Menu", "Return to main menu.", "/vfmenu", NamedTextColor.GRAY)
         ), 1);
     }
 
@@ -304,9 +257,8 @@ public final class NativeDialogMenus {
             case "kits", "queue" -> openQueue(player);
             case "kit" -> { if (args.length < 2) openQueue(player); else openKit(player, args[1]); }
             case "targetkit" -> { if (args.length < 2) openQueue(player); else sendTargetDuel(player, args[1]); }
-            case "leaderboard-choice", "rankings" -> openLeaderboardChoice(player);
+            case "leaderboard-choice", "rankings" -> openLeaderboard(player);
             case "leaderboard" -> openLeaderboard(player);
-            case "tiers" -> openTiersInfo(player);
             case "editor" -> openEditorChoice(player);
             case "party" -> openParty(player);
             case "admin" -> openAdmin(player);
