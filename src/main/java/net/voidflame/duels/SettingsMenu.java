@@ -126,7 +126,7 @@ public final class SettingsMenu implements Listener {
         for(int i=0;i<slots.length;i++) if(s==slots[i]) { toggle(p,SETTINGS.get(i)); return; }
     }
 
-    private void fill(Inventory inv){ ItemStack x=item(Material.GRAY_STAINED_GLASS_PANE," "); for(int i=0;i<27;i++)inv.setItem(i,x.clone()); }
+    private void fill(Inventory inv){ /* Intentionally leave unused slots empty for a clean native-style layout. */ }
     private void button(Inventory inv,int slot,Material m,String name,String... lore){inv.setItem(slot,item(m,name,lore));}
     private ItemStack item(Material m,String name,String... lore){ItemStack x=new ItemStack(m);ItemMeta meta=x.getItemMeta();if(meta!=null){meta.setDisplayName(name);meta.setLore(List.of(lore));x.setItemMeta(meta);}return x;}
 }
