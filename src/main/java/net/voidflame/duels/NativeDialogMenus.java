@@ -160,7 +160,7 @@ public final class NativeDialogMenus {
     }
 
     public void openMatchResult(Player player, String result, String opponent, String kit, String arena, long durationSeconds) {
-        if (JavaAdminAccess.isBedrock(player)) { plugin.bedrockMenus().openMatchResult(player, result, opponent); return; }
+        if (JavaAdminAccess.isBedrock(player)) { plugin.bedrockMenus().openMatchResult(player, result, opponent, kit, arena, durationSeconds); return; }
         if (!"VICTORY".equals(result) && !"DEFEAT".equals(result)) {
             throw new IllegalArgumentException("Match result dialog only supports VICTORY or DEFEAT.");
         }
