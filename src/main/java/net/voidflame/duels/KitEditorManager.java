@@ -155,12 +155,28 @@ public final class KitEditorManager implements Listener {
             }
             case "save" -> {
                 List<Integer> layout = captureLayout(player.getInventory());
-                if (layout == null) { player.sendMessage(plugin.message("kit-editor-failed")); openDialog(player); return; }
-                save(session.kit(), player.getUniqueId(), layout);
-                sessions.remove(player.getUniqueId(), session);
-                selectedSlots.remove(player.getUniqueId());
-                session.snapshot().restore(player);
-                player.sendMessage(plugin.message("kit-editor-saved").replace("<kit>", pretty(session.kit())));
+                if (layout == null) {
+                    player.sendMessage(plugin.message("kit-editor-failed"));
+                    openDialog(player);
+                    return;
+                }
+                UUID playerId = player.getUniqueId();
+                save(session.kit(), playerId, layout).whenComplete((ignored, error) ->
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            if (!player.isOnline()) return;
+                            if (error != null) {
+                                plugin.getLogger().warning("Could not save kit layout for " + playerId + ": " + error.getMessage());
+                                if (sessions.get(playerId) == session) {
+                                    player.sendMessage(plugin.message("kit-editor-failed"));
+                                    openDialog(player);
+                                }
+                                return;
+                            }
+                            if (!sessions.remove(playerId, session)) return;
+                            selectedSlots.remove(playerId);
+                            session.snapshot().restore(player);
+                            player.sendMessage(plugin.message("kit-editor-saved").replace("<kit>", pretty(session.kit())));
+                        }));
             }
             case "reset" -> {
                 selectedSlots.remove(player.getUniqueId());
@@ -269,15 +285,11 @@ public final class KitEditorManager implements Listener {
         }
     }
 
-    private void save(KitType kit, UUID player, List<Integer> layout) {
+    private java.util.concurrent.CompletableFuture<Void> save(KitType kit, UUID player, List<Integer> layout) {
         String key = path(kit, player);
         List<Integer> copy = List.copyOf(layout);
-        layoutCache.put(key, copy);
-        storage.put("kit-layouts", key, copy.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",")))
-                .exceptionally(error -> {
-                    plugin.getLogger().warning("Could not save kit layout: " + error.getMessage());
-                    return null;
-                });
+        String encoded = copy.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
+        return storage.put("kit-layouts", key, encoded).thenRun(() -> layoutCache.put(key, copy));
     }
 
     private String path(KitType kit, UUID player) {
