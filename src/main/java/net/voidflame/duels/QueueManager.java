@@ -21,6 +21,7 @@ public final class QueueManager implements Listener {
     private final Map<KitType, LinkedHashMap<UUID, QueueEntry>> queues = new EnumMap<>(KitType.class);
     private final Map<UUID, QueueEntry> playerQueues = new ConcurrentHashMap<>();
     private final Map<UUID, Double> eloCache = new ConcurrentHashMap<>();
+    private final Set<UUID> eloLoading = ConcurrentHashMap.newKeySet();
     private PlayerProfileService profiles;
     private KitService kits;
 
@@ -54,19 +55,23 @@ public final class QueueManager implements Listener {
 
     private void loadElo(UUID id, String name) {
         if (profiles == null) return;
+        eloLoading.add(id);
         profiles.load(id, name).whenComplete((profile, error) -> {
-            if (error != null) {
-                plugin.getLogger().warning("Could not load ELO for queued player " + id + ": " + error.getMessage());
-                return;
-            }
-            if (profile == null || !Double.isFinite(profile.elo()) || profile.elo() < 0.0D) {
-                plugin.getLogger().warning("Ignoring invalid ELO profile for queued player " + id + ".");
-                return;
-            }
-            double elo = profile.elo();
-            eloCache.put(id, elo);
             synchronized (this) {
+                eloLoading.remove(id);
                 QueueEntry current = playerQueues.get(id);
+                if (error != null || profile == null || !Double.isFinite(profile.elo()) || profile.elo() < 0.0D) {
+                    plugin.getLogger().warning("Could not load a valid ELO profile for queued player " + id
+                            + (error == null ? "." : ": " + error.getMessage()));
+                    if (current != null) {
+                        leave(id);
+                        Player player = plugin.getServer().getPlayer(id);
+                        if (player != null && player.isOnline()) player.sendMessage(plugin.message("queue-expired"));
+                    }
+                    return;
+                }
+                double elo = profile.elo();
+                eloCache.put(id, elo);
                 if (current != null) {
                     QueueEntry refreshed = new QueueEntry(current.player(), current.kit(), current.ranked(), current.joinedAt(), elo);
                     LinkedHashMap<UUID, QueueEntry> queue = queues.get(current.kit());
@@ -83,6 +88,7 @@ public final class QueueManager implements Listener {
 
     public synchronized boolean leave(UUID id) {
         QueueEntry entry = playerQueues.remove(id);
+        eloLoading.remove(id);
         return entry != null && queues.get(entry.kit()).remove(id) != null;
     }
 
@@ -100,6 +106,7 @@ public final class QueueManager implements Listener {
         // pollEntry chooses the oldest eligible player. pollRankedPair then
         // searches the remaining queue for the closest ELO-compatible opponent.
         for (QueueEntry entry : queue.values()) {
+            if (eloLoading.contains(entry.player())) continue;
             if (entry.ranked() == ranked) {
                 selected = entry;
                 break;
@@ -120,7 +127,7 @@ public final class QueueManager implements Listener {
         double bestDiff = Double.MAX_VALUE;
         double baseRange = Math.max(1.0, plugin.getConfig().getDouble("queue.ranked.initial-elo-range", 100.0));
         for (QueueEntry candidate : queue.values()) {
-            if (!candidate.ranked()) continue;
+            if (!candidate.ranked() || eloLoading.contains(candidate.player())) continue;
             double range = baseRange + ((now - Math.min(first.joinedAt(), candidate.joinedAt())) / 1000.0)
                     * Math.max(0.0, plugin.getConfig().getDouble("queue.ranked.elo-range-growth-per-second", 10.0));
             double diff = Math.abs(first.elo() - candidate.elo());
@@ -203,6 +210,7 @@ public final class QueueManager implements Listener {
             playerQueues.clear();
         }
         eloCache.clear();
+        eloLoading.clear();
     }
 
     @EventHandler
