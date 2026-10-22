@@ -184,7 +184,6 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         }
 
         AdvancedCommand advancedCommand = new AdvancedCommand(this);
-        getServer().getPluginManager().registerEvents(advancedCommand, this);
         registerAdvanced("report", advancedCommand);
         registerAdvanced("reports", advancedCommand);
         registerAdvanced("coinshop", advancedCommand);
