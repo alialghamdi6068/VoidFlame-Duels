@@ -15,9 +15,6 @@ import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.Material;
@@ -28,8 +25,6 @@ import java.util.Locale;
 import java.util.UUID;
 
 public final class AdvancedCommand implements CommandExecutor, TabCompleter, Listener {
-    private static final String REPORT_GUI = "§8VoidFlame §7• §cReport Player";
-    private final java.util.Map<java.util.UUID, java.util.UUID> pendingReports = new java.util.concurrent.ConcurrentHashMap<>();
     private final VoidFlameDuelsPlugin plugin;
 
     public AdvancedCommand(VoidFlameDuelsPlugin plugin) {
@@ -158,53 +153,6 @@ public final class AdvancedCommand implements CommandExecutor, TabCompleter, Lis
                         .build())
                 .type(DialogType.multiAction(actions).columns(2).build()));
         viewer.showDialog(dialog);
-    }
-
-    @EventHandler
-    public void onReportClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player reporter)) return;
-        if (!REPORT_GUI.equals(event.getView().getTitle())) return;
-        event.setCancelled(true);
-        if (event.getRawSlot() == 26) {
-            reporter.closeInventory();
-            return;
-        }
-        if (event.getRawSlot() < 0 || event.getRawSlot() >= 18) return;
-        ItemStack clicked = event.getCurrentItem();
-        if (clicked == null || !clicked.hasItemMeta() || clicked.getItemMeta().getDisplayName() == null) return;
-        String targetName = ChatColor.stripColor(clicked.getItemMeta().getDisplayName());
-        Player target = Bukkit.getPlayerExact(targetName);
-        if (target == null || target.equals(reporter)) {
-            reporter.sendMessage(color("&cThat player is no longer online."));
-            return;
-        }
-        pendingReports.put(reporter.getUniqueId(), target.getUniqueId());
-        reporter.closeInventory();
-        reporter.sendMessage(color("&eEnter the report reason in chat. Type &ccancel &eto abort."));
-    }
-
-    @EventHandler
-    public void onReportReason(AsyncPlayerChatEvent event) {
-        UUID reporterId = event.getPlayer().getUniqueId();
-        UUID targetId = pendingReports.remove(reporterId);
-        if (targetId == null) return;
-        event.setCancelled(true);
-        String reason = event.getMessage().trim();
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            if (reason.equalsIgnoreCase("cancel")) {
-                event.getPlayer().sendMessage(color("&7Report cancelled."));
-                return;
-            }
-            Player target = Bukkit.getPlayer(targetId);
-            if (target == null) {
-                event.getPlayer().sendMessage(color("&cThat player is no longer online."));
-                return;
-            }
-            boolean sent = plugin.advancedFeatures().report(event.getPlayer(), target, reason);
-            event.getPlayer().sendMessage(sent
-                    ? color("&aReport sent to online staff.")
-                    : color("&cYour report could not be sent right now."));
-        });
     }
 
     private boolean coins(CommandSender sender, String[] args) {
