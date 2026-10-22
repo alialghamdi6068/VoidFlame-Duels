@@ -54,7 +54,15 @@ public final class QueueManager implements Listener {
 
     private void loadElo(UUID id, String name) {
         if (profiles == null) return;
-        profiles.load(id, name).thenAccept(profile -> {
+        profiles.load(id, name).whenComplete((profile, error) -> {
+            if (error != null) {
+                plugin.getLogger().warning("Could not load ELO for queued player " + id + ": " + error.getMessage());
+                return;
+            }
+            if (profile == null || !Double.isFinite(profile.elo()) || profile.elo() < 0.0D) {
+                plugin.getLogger().warning("Ignoring invalid ELO profile for queued player " + id + ".");
+                return;
+            }
             double elo = profile.elo();
             eloCache.put(id, elo);
             synchronized (this) {
@@ -97,13 +105,14 @@ public final class QueueManager implements Listener {
             long now = System.currentTimeMillis();
             double maxRange = Math.max(1.0, plugin.getConfig().getDouble("queue.ranked.initial-elo-range", 100.0));
             double growth = Math.max(0.0, plugin.getConfig().getDouble("queue.ranked.elo-range-growth-per-second", 10.0));
+            double selectedDistance = Double.MAX_VALUE;
             for (QueueEntry entry : queue.values()) {
                 if (!entry.ranked()) continue;
-                double range = maxRange + ((now - entry.joinedAt()) / 1000.0) * growth;
-                if (selected == null) { selected = entry; continue; }
-                if (Math.abs(entry.elo() - selected.elo()) <= range
-                        && Math.abs(entry.elo() - selected.elo()) < Math.abs(selected.elo() - entry.elo())) {
+                double range = maxRange + (Math.max(0L, now - entry.joinedAt()) / 1000.0) * growth;
+                double distanceFromReference = selected == null ? 0.0 : Math.abs(entry.elo() - selected.elo());
+                if (selected == null || (distanceFromReference <= range && distanceFromReference < selectedDistance)) {
                     selected = entry;
+                    selectedDistance = distanceFromReference;
                 }
             }
         }
