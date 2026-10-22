@@ -74,7 +74,9 @@ public final class FfaManager implements Listener {
         String kit = normalizeKit(kitName);
         pendingJoins.add(id);
         loadStatsAsync(id).whenComplete((stats, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
-            pendingJoins.remove(id);
+            // A leave/quit during the asynchronous read cancels this join. Do not
+            // let the late callback create an FFA session after cancellation.
+            if (!pendingJoins.remove(id)) return;
             if (!player.isOnline()) return;
             if (error != null) {
                 plugin.getLogger().warning("Could not load FFA stats for " + id + ": " + error.getMessage());
