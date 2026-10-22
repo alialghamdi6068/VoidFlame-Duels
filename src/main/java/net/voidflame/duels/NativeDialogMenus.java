@@ -188,14 +188,17 @@ public final class NativeDialogMenus {
         if (JavaAdminAccess.isBedrock(player)) { plugin.bedrockMenus().openLeaderboard(player); return; }
         show(player, "VoidFlame • Leaderboards", List.of(
                 DialogBody.plainMessage(Component.text("VOIDFLAME MC PLAYER RANKINGS", NamedTextColor.AQUA), 300),
-                DialogBody.plainMessage(Component.text("The live ELO board is available from the statistics service. Additional ranking categories can be added once their queries are backed by stored data.", NamedTextColor.GRAY), 300),
+                DialogBody.plainMessage(Component.text("Choose a live ranking calculated from saved player statistics.", NamedTextColor.GRAY), 300),
                 DialogBody.item(new ItemStack(Material.NETHER_STAR),
                         DialogBody.plainMessage(Component.text("ELO • Wins • Losses • Streak", NamedTextColor.AQUA), 220),
                         true, true, 48, 48)
         ), List.of(
-                button("ELO Leaderboard", "Show the current ELO ranking.", "/stats top", NamedTextColor.AQUA),
+                button("ELO", "Rank players by competitive rating.", "/stats top elo", NamedTextColor.AQUA),
+                button("Wins", "Rank players by total duel wins.", "/stats top wins", NamedTextColor.GREEN),
+                button("Losses", "Rank players by total duel losses.", "/stats top losses", NamedTextColor.RED),
+                button("Win Streak", "Rank players by current streak.", "/stats top streak", NamedTextColor.GOLD),
                 button("Back to Main Menu", "Return to main menu.", "/vfmenu", NamedTextColor.GRAY)
-        ), 1);
+        ), 2);
     }
 
     public void openEditorChoice(Player player) {
