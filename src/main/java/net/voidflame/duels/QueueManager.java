@@ -43,7 +43,7 @@ public final class QueueManager implements Listener {
         UUID id = player.getUniqueId();
         if (!player.isOnline() || playerQueues.containsKey(id) || plugin.matchManager().isInMatch(id)) return false;
         if (kits != null && !kits.isEnabled(kit.name().toLowerCase(Locale.ROOT))) return false;
-        if (ranked && !plugin.getConfig().getBoolean("queue.ranked.enabled", true)) return false;
+        if (ranked && (!plugin.getConfig().getBoolean("queue.ranked.enabled", true) || profiles == null)) return false;
 
         double elo = eloCache.getOrDefault(id, plugin.getConfig().getDouble("queue.ranked.default-elo", 1000.0));
         QueueEntry entry = new QueueEntry(id, kit, ranked, System.currentTimeMillis(), elo);
@@ -55,30 +55,46 @@ public final class QueueManager implements Listener {
 
     private void loadElo(UUID id, String name) {
         if (profiles == null || !eloLoading.add(id)) return;
-        profiles.load(id, name).whenComplete((profile, error) -> {
-            synchronized (this) {
-                eloLoading.remove(id);
-                QueueEntry current = playerQueues.get(id);
-                if (error != null || profile == null || !Double.isFinite(profile.elo()) || profile.elo() < 0.0D) {
-                    plugin.getLogger().warning("Could not load a valid ELO profile for queued player " + id
-                            + (error == null ? "." : ": " + error.getMessage()));
-                    if (current != null) {
-                        leave(id);
+        try {
+            profiles.load(id, name).whenComplete((profile, error) -> {
+                boolean notifyFailure = false;
+                synchronized (this) {
+                    eloLoading.remove(id);
+                    QueueEntry current = playerQueues.get(id);
+                    if (error != null || profile == null || !Double.isFinite(profile.elo()) || profile.elo() < 0.0D) {
+                        plugin.getLogger().warning("Could not load a valid ELO profile for queued player " + id
+                                + (error == null ? "." : ": " + error.getMessage()));
+                        if (current != null) {
+                            leave(id);
+                            notifyFailure = true;
+                        }
+                    } else {
+                        double elo = profile.elo();
+                        eloCache.put(id, elo);
+                        if (current != null) {
+                            QueueEntry refreshed = new QueueEntry(current.player(), current.kit(), current.ranked(), current.joinedAt(), elo);
+                            LinkedHashMap<UUID, QueueEntry> queue = queues.get(current.kit());
+                            if (queue != null && queue.containsKey(id)) queue.put(id, refreshed);
+                            playerQueues.put(id, refreshed);
+                        }
+                    }
+                }
+                if (notifyFailure) {
+                    Bukkit.getScheduler().runTask(plugin, () -> {
                         Player player = plugin.getServer().getPlayer(id);
                         if (player != null && player.isOnline()) player.sendMessage(plugin.message("queue-expired"));
-                    }
-                    return;
+                    });
                 }
-                double elo = profile.elo();
-                eloCache.put(id, elo);
-                if (current != null) {
-                    QueueEntry refreshed = new QueueEntry(current.player(), current.kit(), current.ranked(), current.joinedAt(), elo);
-                    LinkedHashMap<UUID, QueueEntry> queue = queues.get(current.kit());
-                    if (queue != null && queue.containsKey(id)) queue.put(id, refreshed);
-                    playerQueues.put(id, refreshed);
-                }
-            }
-        });
+            });
+        } catch (RuntimeException error) {
+            eloLoading.remove(id);
+            plugin.getLogger().warning("Could not start ELO load for queued player " + id + ": " + error.getMessage());
+            leave(id);
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                Player player = plugin.getServer().getPlayer(id);
+                if (player != null && player.isOnline()) player.sendMessage(plugin.message("queue-expired"));
+            });
+        }
     }
 
     public synchronized boolean leave(Player player) {
