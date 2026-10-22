@@ -42,6 +42,7 @@ messages:
   already-in-match: "&cYou are already in a match."
   ffa-disabled: "&cFFA is currently disabled."
   ffa-world-missing: "&cThe configured FFA world is not loaded."
+  ffa-join-failed: "&cCould not load your FFA data. Please try again."
   ffa-full: "&cFFA is full right now."
   ffa-joined: "&bFFA &7» &fJoined with kit &e<kit>&f."
   ffa-left: "&bFFA &7» &fYou left FFA."
