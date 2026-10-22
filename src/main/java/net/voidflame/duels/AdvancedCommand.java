@@ -13,8 +13,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.ChatColor;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
-import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.Material;
@@ -24,7 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-public final class AdvancedCommand implements CommandExecutor, TabCompleter, Listener {
+public final class AdvancedCommand implements CommandExecutor, TabCompleter {
     private final VoidFlameDuelsPlugin plugin;
 
     public AdvancedCommand(VoidFlameDuelsPlugin plugin) {
