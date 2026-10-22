@@ -47,7 +47,13 @@ public final class PartyMatch {
     public void start() {
         List<Player> online = onlinePlayers();
         if (online.size() != players.size()) { finish(null); return; }
-        for (int i = 0; i < online.size(); i++) prepare(online.get(i), spawnFor(i));
+        for (int i = 0; i < online.size(); i++) {
+            if (!prepare(online.get(i), spawnFor(i))) {
+                plugin.getLogger().warning("Cancelling party match " + matchId + ": teleport or kit preparation failed.");
+                finish(null);
+                return;
+            }
+        }
         int seconds = Math.max(1, plugin.getConfig().getInt("settings.countdown-seconds", 5));
         countdownTask = Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
             int left = seconds;
@@ -67,10 +73,17 @@ public final class PartyMatch {
         }, 0L, 20L).getTaskId();
     }
 
-    private void prepare(Player player, Location spawn) {
-        player.closeInventory(); player.teleport(spawn); player.setGameMode(org.bukkit.GameMode.SURVIVAL);
-        player.setInvulnerable(true); player.setFireTicks(0); player.setFallDistance(0); player.setHealth(player.getMaxHealth());
-        player.setFoodLevel(20); player.setSaturation(20f); plugin.kitManager().apply(player, kit);
+    private boolean prepare(Player player, Location spawn) {
+        player.closeInventory();
+        if (spawn == null || !player.teleport(spawn)) return false;
+        player.setGameMode(org.bukkit.GameMode.SURVIVAL);
+        player.setInvulnerable(true);
+        player.setFireTicks(0);
+        player.setFallDistance(0);
+        player.setHealth(player.getMaxHealth());
+        player.setFoodLevel(20);
+        player.setSaturation(20f);
+        return plugin.kitManager().apply(player, kit);
     }
 
     private Location spawnFor(int index) {
@@ -126,9 +139,12 @@ public final class PartyMatch {
         disconnectedUntil.remove(id);
         disconnectTokens.remove(id);
         player.closeInventory();
-        prepare(player, spawnFor(players.indexOf(id)));
+        if (!prepare(player, spawnFor(players.indexOf(id)))) {
+            PlayerSnapshot snapshot = snapshots.get(id);
+            if (snapshot != null) snapshot.restore(player);
+            return false;
+        }
         player.setInvulnerable(startedAt == 0L);
-        if (startedAt > 0L) player.setInvulnerable(false);
         player.sendMessage(plugin.message("rejoined"));
         return true;
     }
