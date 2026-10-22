@@ -354,17 +354,34 @@ public final class MatchManager implements Listener {
     public boolean rejoin(Player player) {
         if (!plugin.getConfig().getBoolean("settings.reconnect-enabled", true)) return false;
         UUID id = player.getUniqueId();
-        Match match = disconnected.remove(id);
+        Match match = disconnected.get(id);
         if (match == null || match.state() == MatchState.FINISHED) return false;
 
+        try {
+            Location spawn = match.spawnFor(id);
+            player.closeInventory();
+            if (spawn == null || !player.teleport(spawn)) {
+                plugin.getLogger().warning("Cancelling duel " + match.matchId() + ": reconnect teleport failed for " + id + ".");
+                match.finish(null);
+                return false;
+            }
+            player.setGameMode(GameMode.SURVIVAL);
+            player.setInvulnerable(match.state() == MatchState.COUNTDOWN);
+            if (!kits.apply(player, match.kit())) {
+                plugin.getLogger().warning("Cancelling duel " + match.matchId() + ": reconnect kit setup failed for " + id + ".");
+                match.finish(null);
+                return false;
+            }
+        } catch (RuntimeException ex) {
+            plugin.getLogger().warning("Cancelling duel " + match.matchId() + " after reconnect setup failed: " + ex.getMessage());
+            match.finish(null);
+            return false;
+        }
+
+        disconnected.remove(id, match);
         disconnectTokens.remove(id);
         matches.put(id, match);
-        player.setGameMode(GameMode.SURVIVAL);
-        player.setInvulnerable(match.state() == MatchState.COUNTDOWN);
-        player.teleport(match.spawnFor(id));
-        kits.apply(player, match.kit());
         player.sendMessage(plugin.message("rejoined"));
-        
         return true;
     }
 
