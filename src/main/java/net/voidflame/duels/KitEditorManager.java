@@ -50,6 +50,14 @@ public final class KitEditorManager implements Listener {
     }
 
     @EventHandler
+    public void onQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+        UUID id = event.getPlayer().getUniqueId();
+        Session session = sessions.remove(id);
+        selectedSlots.remove(id);
+        if (session != null) session.snapshot().restore(event.getPlayer());
+    }
+
+    @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         UUID playerId = event.getPlayer().getUniqueId();
         for (KitType kit : KitType.values()) {
@@ -116,7 +124,7 @@ public final class KitEditorManager implements Listener {
         Dialog dialog = Dialog.create(builder -> builder.empty()
                 .base(DialogBase.builder(Component.text("Kit Layout • " + pretty(session.kit()), NamedTextColor.WHITE))
                         .externalTitle(Component.text("Kit Editor", NamedTextColor.AQUA))
-                        .canCloseWithEscape(true)
+                        .canCloseWithEscape(false)
                         .body(List.of(
                                 DialogBody.plainMessage(Component.text("Select one slot, then another slot to swap their items.", NamedTextColor.WHITE), 320),
                                 DialogBody.plainMessage(Component.text("The layout is saved only when you choose Save Layout.", NamedTextColor.GRAY), 320)))
