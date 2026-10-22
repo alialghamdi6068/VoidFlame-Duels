@@ -102,11 +102,21 @@ public final class ArenaManager {
 
     public synchronized int available() {
         ensureConnected();
-        if (provider != null) return (int) provider.availableCount();
+        if (provider != null) return (int) Math.max(0L, provider.availableCount());
         ConfigurationSection root = plugin.getConfig().getConfigurationSection("arenas");
         if (root == null) return 0;
-        int total = root.getMapList("list").size();
-        return Math.max(0, total - localInUse.size());
+        int total = 0;
+        Set<String> seen = new HashSet<>();
+        for (Map<?, ?> raw : root.getMapList("list")) {
+            String name = string(raw.get("name"));
+            String worldName = string(raw.get("world"));
+            if (name == null || name.isBlank() || worldName == null || localInUse.contains(name)
+                    || !seen.add(name) || location(raw, "spawn-a", worldName) == null
+                    || location(raw, "spawn-b", worldName) == null
+                    || validRegionVolume(raw, worldName) <= 0) continue;
+            total++;
+        }
+        return total;
     }
 
     public synchronized List<String> allNames() {
@@ -137,14 +147,40 @@ public final class ArenaManager {
         try {
             int minX = integer(min.get("x")), minY = integer(min.get("y")), minZ = integer(min.get("z"));
             int maxX = integer(max.get("x")), maxY = integer(max.get("y")), maxZ = integer(max.get("z"));
-            if (minX > maxX || minY > maxY || minZ > maxZ
+            int volume = validRegionVolume(raw, worldName);
+            if (volume <= 0 || minX > maxX || minY > maxY || minZ > maxZ
                     || minY < world.getMinHeight() || maxY >= world.getMaxHeight()) return null;
-            long volume = ((long) maxX - minX + 1L) * ((long) maxY - minY + 1L) * ((long) maxZ - minZ + 1L);
-            long limit = Math.max(1L, plugin.getConfig().getLong("arenas.max-reset-blocks", 100_000L));
-            if (volume <= 0 || volume > limit) return null;
-            return RegionSnapshot.capture(world, minX, minY, minZ, maxX, maxY, maxZ, (int) volume);
+            return RegionSnapshot.capture(world, minX, minY, minZ, maxX, maxY, maxZ, volume);
         } catch (IllegalArgumentException ex) {
             return null;
+        }
+    }
+
+    // Validate bounds without loading every BlockState; this is used by status/UI queries.
+    private int validRegionVolume(Map<?, ?> raw, String worldName) {
+        Object value = raw.get("region");
+        if (!(value instanceof Map<?, ?> region)) return -1;
+        Object minValue = region.get("min"), maxValue = region.get("max");
+        if (!(minValue instanceof Map<?, ?> min) || !(maxValue instanceof Map<?, ?> max)) return -1;
+        World world = Bukkit.getWorld(worldName);
+        if (world == null) return -1;
+        try {
+            int minX = integer(min.get("x")), minY = integer(min.get("y")), minZ = integer(min.get("z"));
+            int maxX = integer(max.get("x")), maxY = integer(max.get("y")), maxZ = integer(max.get("z"));
+            if (minX > maxX || minY > maxY || minZ > maxZ
+                    || minY < world.getMinHeight() || maxY >= world.getMaxHeight()) return -1;
+            long limit = Math.max(1L, Math.min(Integer.MAX_VALUE,
+                    plugin.getConfig().getLong("arenas.max-reset-blocks", 100_000L)));
+            long sx = (long) maxX - minX + 1L;
+            long sy = (long) maxY - minY + 1L;
+            long sz = (long) maxZ - minZ + 1L;
+            if (sx <= 0 || sy <= 0 || sz <= 0 || sx > limit || sy > limit || sz > limit
+                    || sx > limit / sy) return -1;
+            long xy = sx * sy;
+            if (xy > limit / sz) return -1;
+            return (int) (xy * sz);
+        } catch (IllegalArgumentException ex) {
+            return -1;
         }
     }
 
