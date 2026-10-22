@@ -390,28 +390,6 @@ public final class AdvancedFeatures implements Listener {
             });
     }
 
-    @EventHandler
-    public void onReportsClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player staff)) return;
-        if (!event.getView().getTitle().equals(color("&8VoidFlame Reports"))) return;
-        event.setCancelled(true);
-        if (!staff.hasPermission("voidflame.report.handle") && !staff.isOp()) return;
-        int slot = event.getRawSlot();
-        if (slot < 0 || slot >= 45) return;
-        storage.database().query(
-                "SELECT report_id, status FROM reports ORDER BY CASE status WHEN 'OPEN' THEN 0 WHEN 'CLAIMED' THEN 1 ELSE 2 END, timestamp DESC LIMIT 45")
-            .thenAccept(rows -> {
-                if (slot >= rows.size()) return;
-                String id = String.valueOf(rows.get(slot).get("report_id"));
-                String status = String.valueOf(rows.get(slot).get("status"));
-                String next = event.isRightClick() ? "RESOLVED" : "CLAIMED";
-                if ("RESOLVED".equals(status)) return;
-                storage.database().execute("UPDATE reports SET status=?, staff=? WHERE report_id=?",
-                        next, staff.getUniqueId().toString(), id);
-                Bukkit.getScheduler().runTask(plugin, () -> openReports(staff));
-            });
-    }
-
     public void loadReplay(UUID player, UUID matchId, java.util.function.Consumer<String> consumer) {
         storage.database().query(
                 "SELECT players_json, replay_data FROM replays WHERE match_id=?",
@@ -538,58 +516,6 @@ public final class AdvancedFeatures implements Listener {
         });
     }
 
-    private ItemStack item(Material material, String name, String lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(color(name));
-        meta.setLore(List.of(color(lore)));
-        item.setItemMeta(meta);
-        return item;
-    }
-
-    private ItemStack item(Material material, String name, String... lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) return item;
-        meta.setDisplayName(color(name));
-        meta.setLore(Arrays.stream(lore).map(this::color).toList());
-        item.setItemMeta(meta);
-        return item;
-    }
-
-    @EventHandler
-    public void onShopClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!event.getView().getTitle().equals(color("&8VoidFlame CoinShop"))) return;
-        event.setCancelled(true);
-        List<Map<?, ?>> catalog = shopProducts();
-        int slot = event.getRawSlot();
-        if (slot < 0 || slot >= Math.min(45, catalog.size())) return;
-        Map<?, ?> entry = catalog.get(slot);
-        String tag = String.valueOf(entry.containsKey("id") ? entry.get("id") : entry.containsKey("name") ? entry.get("name") : "product");
-        int cost = Math.max(0, parseInt(entry.get("price"), 0));
-        if (tag.isBlank() || cost < 0) return;
-        storage.database().query(
-                "SELECT 1 FROM player_shop_purchases WHERE uuid=? AND product_id=?",
-                player.getUniqueId().toString(), tag)
-            .thenAccept(rows -> Bukkit.getScheduler().runTask(plugin, () -> {
-                if (!rows.isEmpty()) {
-                    player.sendMessage(color("&eYou already own this product."));
-                    return;
-                }
-                if (!takeCoins(player.getUniqueId(), cost)) {
-                    player.sendMessage(color("&cYou do not have enough coins."));
-                    return;
-                }
-                storage.database().execute(
-                        "INSERT INTO player_shop_purchases(uuid, product_id, purchased_at) VALUES (?, ?, ?)",
-                        player.getUniqueId().toString(), tag, System.currentTimeMillis());
-                storagePut(TAG_MODULE, player.getUniqueId().toString(), tag);
-                player.sendMessage(color("&aPurchased &f" + tag + " &afor &e" + cost + " coins&a."));
-                player.closeInventory();
-            }));
-    }
-
     public void toggleGoldenHard(Player player) {
         if (goldenHard.remove(player.getUniqueId())) {
             player.sendMessage(color("&eGoldenHard disabled."));
@@ -632,21 +558,6 @@ public final class AdvancedFeatures implements Listener {
             return;
         }
         startTraining(player, drill.toLowerCase(Locale.ROOT));
-    }
-
-    @EventHandler
-    public void onPracticeClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!event.getView().getTitle().equals(color("&8TotalPractice"))) return;
-        event.setCancelled(true);
-        if (event.getRawSlot() == 10) {
-            startTraining(player, "movement");
-        } else if (event.getRawSlot() == 13) {
-            startTraining(player, "strafing");
-        } else if (event.getRawSlot() == 16) {
-            startTraining(player, "aim");
-        }
-        player.closeInventory();
     }
 
     @EventHandler
