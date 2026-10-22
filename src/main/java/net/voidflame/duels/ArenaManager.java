@@ -38,8 +38,27 @@ public final class ArenaManager {
                     : provider.acquireHandleForKit(kit.name().toLowerCase(Locale.ROOT));
             if (result.isPresent()) {
                 ArenaService.ArenaHandle handle = result.get();
-                if (handle.spawnA() != null && handle.spawnB() != null) {
+                if (handle.name() != null && !handle.name().isBlank()
+                        && handle.spawnA() != null && handle.spawnB() != null) {
                     return new Arena(handle.name(), handle.spawnA(), handle.spawnB());
+                }
+                // A malformed allocation must not strand the arena in RESERVED/IN_USE.
+                if (handle.name() != null && !handle.name().isBlank()) {
+                    plugin.getLogger().severe("Arena provider returned an invalid handle for '" + handle.name()
+                            + "'; requesting reset to release the allocation.");
+                    try {
+                        provider.reset(handle.name()).whenComplete((success, error) -> {
+                            if (error != null || !Boolean.TRUE.equals(success)) {
+                                plugin.getLogger().severe("Could not release invalid arena handle '"
+                                        + handle.name() + "'. Check the Core arena service logs.");
+                            }
+                        });
+                    } catch (RuntimeException ex) {
+                        plugin.getLogger().severe("Could not request release of invalid arena handle '"
+                                + handle.name() + "': " + ex.getMessage());
+                    }
+                } else {
+                    plugin.getLogger().severe("Arena provider returned a handle without a valid name; it cannot be safely released.");
                 }
             }
         }
