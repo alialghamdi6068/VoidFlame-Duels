@@ -54,8 +54,7 @@ public final class QueueManager implements Listener {
     }
 
     private void loadElo(UUID id, String name) {
-        if (profiles == null) return;
-        eloLoading.add(id);
+        if (profiles == null || !eloLoading.add(id)) return;
         profiles.load(id, name).whenComplete((profile, error) -> {
             synchronized (this) {
                 eloLoading.remove(id);
@@ -88,7 +87,6 @@ public final class QueueManager implements Listener {
 
     public synchronized boolean leave(UUID id) {
         QueueEntry entry = playerQueues.remove(id);
-        eloLoading.remove(id);
         return entry != null && queues.get(entry.kit()).remove(id) != null;
     }
 
