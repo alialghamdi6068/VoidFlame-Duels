@@ -152,7 +152,14 @@ public final class FfaManager implements Listener {
     public int onlineCount() { return sessions.size(); }
 
     public void sendStats(Player player) {
-        loadStatsAsync(player.getUniqueId()).thenAccept(stats -> Bukkit.getScheduler().runTask(plugin, () -> {
+        UUID id = player.getUniqueId();
+        loadStatsAsync(id).whenComplete((stats, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!player.isOnline()) return;
+            if (error != null) {
+                plugin.getLogger().warning("Could not load FFA stats for " + id + ": " + error.getMessage());
+                player.sendMessage(plugin.message("ffa-join-failed"));
+                return;
+            }
             player.sendMessage(color("&8&m--------------------"));
             player.sendMessage(color("&bVoidFlame &fFFA Stats"));
             player.sendMessage(color("&7Kills: &f" + stats.kills));
@@ -165,12 +172,18 @@ public final class FfaManager implements Listener {
     private java.util.concurrent.CompletableFuture<Stats> loadStatsAsync(UUID uuid) {
         return storage.get("duels.ffa", uuid.toString()).thenApply(raw -> {
             if (raw == null) return new Stats(0, 0, 0);
+            String[] p = raw.split(",", -1);
+            if (p.length != 3) throw new IllegalStateException("Stored FFA stats have an invalid format.");
             try {
-                String[] p = raw.split(",", -1);
-                if (p.length != 3) return new Stats(0, 0, 0);
-                return new Stats(Math.max(0, Long.parseLong(p[0])), Math.max(0, Long.parseLong(p[1])), Math.max(0, Long.parseLong(p[2])));
-            } catch (Exception ignored) {
-                return new Stats(0, 0, 0);
+                long kills = Long.parseLong(p[0]);
+                long deaths = Long.parseLong(p[1]);
+                long streak = Long.parseLong(p[2]);
+                if (kills < 0 || deaths < 0 || streak < 0) {
+                    throw new IllegalStateException("Stored FFA stats contain negative values.");
+                }
+                return new Stats(kills, deaths, streak);
+            } catch (NumberFormatException invalid) {
+                throw new IllegalStateException("Stored FFA stats contain non-numeric values.", invalid);
             }
         });
     }
