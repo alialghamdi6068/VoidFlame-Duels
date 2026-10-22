@@ -29,12 +29,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class LobbyItemsManager implements Listener {
-    private static final String DUEL_MENU = "§8VoidFlame §7• §5Duel";
-    private static final String PARTY_MENU = "§8VoidFlame §7• §bParty";
-    private static final String TARGET_PREFIX =  "§8VoidFlame §7• §5Duel ";
-    private static final String PARTY_GUI = "§8VoidFlame §7• §bParty";
-    private static final String EDITOR_MENU = "§8VoidFlame §7• §aKit Editor";
-    private static final String LEADERBOARD_MENU = "§8VoidFlame §7• §eLeaderboard";
     private final VoidFlameDuelsPlugin plugin;
     private final NamespacedKey key;
     private final Map<UUID, UUID> targetByViewer = new ConcurrentHashMap<>();
@@ -161,51 +155,8 @@ public final class LobbyItemsManager implements Listener {
         plugin.nativeMenus().openTargetKit(p, target);
     }
 
-    private void openKitMenu(Player p,String title,UUID target) {
-        Inventory inv=Bukkit.createInventory(null,45,title);
-        fill(inv);
-        inv.setItem(4,item(Material.NETHER_STAR,"§d§lCHOOSE A KIT",
-                "§7Select the kit you want to play.",
-                "",
-                "§aClick a kit §8» §fContinue"));
-        int[] slots={10,11,12,13,14,15,16,19,20,21,22};
-        KitType[] kits=KitType.values();
-        for(int i=0;i<Math.min(slots.length,kits.length);i++) {
-            KitType k=kits[i];
-            Material icon=switch(k){
-                case SWORD -> Material.DIAMOND_SWORD;
-                case AXE -> Material.DIAMOND_AXE;
-                case UHC -> Material.GOLDEN_APPLE;
-                case MACE -> Material.MACE;
-                case SPEAR_MACE -> Material.TRIDENT;
-                case CRYSTAL -> Material.END_CRYSTAL;
-                case NETHERITE_POT -> Material.SPLASH_POTION;
-                case SMP -> Material.TOTEM_OF_UNDYING;
-                case DIAMOND_SMP -> Material.DIAMOND_CHESTPLATE;
-                case TNT_MINECART_LT, TNT_MINECART_HT -> Material.TNT_MINECART;
-            };
-            inv.setItem(slots[i],item(icon,kitColor(k)+"§l"+pretty(k),
-                    "§7Kit: §f"+pretty(k),
-                    "",
-                    "§aLeft-click §8» §f"+(target==null?"join unranked queue":"send duel request")));
-        }
-        inv.setItem(37,item(Material.ARROW,"§b§lBack","§7Close this menu."));
-        inv.setItem(43,item(Material.BARRIER,"§c§lClose","§7Close this menu."));
-        p.openInventory(inv);
-    }
-
     private void openParty(Player p){
         plugin.nativeMenus().openParty(p);
-    }
-
-    private void fillModern(Inventory inv){
-        ItemStack border=item(Material.BLACK_STAINED_GLASS_PANE," ");
-        ItemStack accent=item(Material.PURPLE_STAINED_GLASS_PANE," ");
-        for(int s=0;s<inv.getSize();s++){
-            int r=s/9,c=s%9;
-            if(r==0||r==5||c==0||c==8) inv.setItem(s,border.clone());
-        }
-        for(int s: new int[]{1,2,3,5,6,7,10,11,12,14,15,16,46,48,50}) inv.setItem(s,accent.clone());
     }
 
     private void showMembers(Player p){
@@ -227,79 +178,11 @@ public final class LobbyItemsManager implements Listener {
         p.sendMessage(plugin.message("party-left"));
     }
 
-    @EventHandler public void onClick(InventoryClickEvent e){
-        if(!(e.getWhoClicked() instanceof Player p))return;
-        String title=e.getView().getTitle();
-        if (title.equals(LEADERBOARD_MENU)) {
-            e.setCancelled(true);
-            if (e.getRawSlot() == 49 || e.getRawSlot() == 53) p.closeInventory();
-            return;
-        }
-        if (title.equals(EDITOR_MENU)) {
-            e.setCancelled(true);
-            int raw = e.getRawSlot();
-            if (raw == 37 || raw == 43) { p.closeInventory(); return; }
-            int[] slots = {10,11,12,13,14,15,16,19,20,21,22};
-            for (int index = 0; index < slots.length && index < KitType.values().length; index++) {
-                if (raw == slots[index]) {
-                    KitType kit = KitType.values()[index];
-                    p.closeInventory();
-                    if (!plugin.kitManager().openEditor(p, kit)) {
-                        p.sendMessage("§cThe kit editor is unavailable for " + pretty(kit) + ".");
-                    }
-                    return;
-                }
-            }
-            return;
-        }
-        if(title.equals(DUEL_MENU)||title.startsWith(TARGET_PREFIX)||title.equals(PARTY_MENU)||title.equals(PARTY_GUI)){
-            e.setCancelled(true);
-            int s=e.getRawSlot();
-            if(s<0)return;
-            if(title.equals(PARTY_GUI)){
-                if(s>=54)return;
-                switch(s){
-                    case 45 -> startParty(p,PartyMode.ONE_V_ONE);
-                    case 47 -> startParty(p,PartyMode.TWO_V_TWO);
-                    case 49 -> startParty(p,PartyMode.FFA);
-                    case 51 -> p.sendMessage("§bParty §7» §fUse §e/party invite <player> §fto invite.");
-                    case 52 -> { p.closeInventory(); givePartyItems(p); }
-                    case 53 -> p.closeInventory();
-                    default -> {}
-                }
-                return;
-            }
-            if(s>=45)return;
-            if(s==43){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
-            if(s==37){targetByViewer.remove(p.getUniqueId());p.closeInventory();return;}
-            int[] slots={10,11,12,13,14,15,16,19,20,21,22};
-            for(int i=0;i<slots.length&&i<KitType.values().length;i++) if(s==slots[i]){
-                KitType kit=KitType.values()[i];
-                UUID target=targetByViewer.get(p.getUniqueId());
-                if(title.startsWith(TARGET_PREFIX) && target!=null){
-                    Player t=Bukkit.getPlayer(target);
-                    if(t==null){p.sendMessage(plugin.message("player-not-found"));p.closeInventory();return;}
-                    if(plugin.requests().send(p,t,kit)) p.sendMessage(plugin.message("duel-sent").replace("<player>",t.getName()));
-                    else p.sendMessage(plugin.message("duel-unavailable"));
-                } else if(plugin.queueManager().join(p,kit,false)){
-                    p.sendMessage(plugin.message("joined-queue").replace("<kit>",pretty(kit)).replace("<type>","Unranked"));
-                } else p.sendMessage(plugin.message("already-queued"));
-                targetByViewer.remove(p.getUniqueId());p.closeInventory();return;
-            }
-            if(title.equals(PARTY_MENU)){
-                switch(s){
-                    case 10->startParty(p,PartyMode.ONE_V_ONE);
-                    case 13->startParty(p,PartyMode.TWO_V_TWO);
-                    case 16->startParty(p,PartyMode.FFA);
-                    case 22->showMembers(p);
-                    default->{}
-                }
-            }
-            return;
-        }
-        if(plugin.matchManager().isInMatch(p.getUniqueId()))return;
-        if(e.getRawSlot()<9&&is(e.getCurrentItem()))e.setCancelled(true);
-        if(e.isShiftClick()&&is(e.getCurrentItem()))e.setCancelled(true);
+    @EventHandler public void onClick(InventoryClickEvent e) {
+        if (!(e.getWhoClicked() instanceof Player p)) return;
+        if (plugin.matchManager().isInMatch(p.getUniqueId())) return;
+        if (e.getRawSlot() < 9 && is(e.getCurrentItem())) e.setCancelled(true);
+        if (e.isShiftClick() && is(e.getCurrentItem())) e.setCancelled(true);
     }
 
     private void startParty(Player p,PartyMode mode){
