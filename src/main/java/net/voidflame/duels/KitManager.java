@@ -37,14 +37,21 @@ public final class KitManager {
         if (player == null || kit == null) return false;
         String id = kit.name().toLowerCase(Locale.ROOT);
         ConfigurationSection root = plugin.getConfig().getConfigurationSection("kits." + id);
-        if (root == null) return false;
+        if (root == null) {
+            plugin.getLogger().warning("Cannot apply kit '" + id + "': no kits." + id + " configuration exists.");
+            return false;
+        }
+        ConfigurationSection items = root.getConfigurationSection("items");
+        if (items == null || items.getKeys(false).isEmpty()) {
+            plugin.getLogger().warning("Cannot apply kit '" + id + "': its items section is missing or empty. Player inventory was left untouched.");
+            return false;
+        }
+
+        // Validate the kit structure before clearing the player's inventory.
         player.getInventory().clear();
         player.getInventory().setArmorContents(new ItemStack[4]);
         player.getInventory().setItemInOffHand(new ItemStack(Material.AIR));
         player.setItemOnCursor(new ItemStack(Material.AIR));
-
-        ConfigurationSection items = root.getConfigurationSection("items");
-        if (items == null) return false;
         for (String key : items.getKeys(false)) {
             int slot;
             try { slot = Integer.parseInt(key); } catch (NumberFormatException ignored) { continue; }
