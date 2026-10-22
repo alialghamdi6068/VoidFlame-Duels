@@ -164,6 +164,12 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
             p.sendMessage(ChatColor.YELLOW + "/kiteditor <kit>");
             return true;
         }
+        if (args.length >= 2 && args[1].equalsIgnoreCase("dialog")) {
+            if (args.length < 3) { p.sendMessage(ChatColor.YELLOW + "Usage: /kiteditor <kit> dialog <slot|save|reset|cancel> [slot]"); return true; }
+            String rawSlot = args.length >= 4 ? args[3] : "";
+            plugin.kitEditorManager().dialogAction(p, args[2], rawSlot);
+            return true;
+        }
         KitType kit = parseKit(args[0]);
         if (kit == null) {
             p.sendMessage(plugin.message("unknown-kit"));
