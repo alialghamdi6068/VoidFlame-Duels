@@ -39,9 +39,18 @@ public final class Match {
             finish(a == null ? second : first);
             return;
         }
-        plugin.advancedFeatures().startReplay(matchId, first, second);
-        prepare(a, arena.spawnA());
-        prepare(b, arena.spawnB());
+        try {
+            if (!prepare(a, arena.spawnA()) || !prepare(b, arena.spawnB())) {
+                plugin.getLogger().warning("Cancelling duel " + matchId + ": teleport or kit preparation failed.");
+                finish(null);
+                return;
+            }
+            plugin.advancedFeatures().startReplay(matchId, first, second);
+        } catch (RuntimeException ex) {
+            plugin.getLogger().severe("Cancelling duel " + matchId + " after preparation failed: " + ex.getMessage());
+            finish(null);
+            return;
+        }
         transition(MatchState.COUNTDOWN);
         int seconds = Math.max(1, plugin.getConfig().getInt("settings.countdown-seconds", 5));
         countdownTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new Runnable() {
@@ -80,9 +89,9 @@ public final class Match {
         }, 0L, 20L).getTaskId();
     }
 
-    private void prepare(Player player, Location spawn) {
+    private boolean prepare(Player player, Location spawn) {
         player.closeInventory();
-        player.teleport(spawn);
+        if (spawn == null || !player.teleport(spawn)) return false;
         player.setGameMode(org.bukkit.GameMode.SURVIVAL);
         player.setInvulnerable(true);
         player.setFireTicks(0);
@@ -90,7 +99,7 @@ public final class Match {
         player.setHealth(player.getMaxHealth());
         player.setFoodLevel(20);
         player.setSaturation(20f);
-        plugin.kitManager().apply(player, kit);
+        return plugin.kitManager().apply(player, kit);
     }
 
     private void startLimitTimer() {
