@@ -1,5 +1,13 @@
 package net.voidflame.duels;
 
+import io.papermc.paper.dialog.Dialog;
+import io.papermc.paper.registry.data.dialog.ActionButton;
+import io.papermc.paper.registry.data.dialog.DialogBase;
+import io.papermc.paper.registry.data.dialog.action.DialogAction;
+import io.papermc.paper.registry.data.dialog.body.DialogBody;
+import io.papermc.paper.registry.data.dialog.type.DialogType;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -73,12 +81,8 @@ public final class KitEditorManager implements Listener {
             if (layout != null && validLayout(layout, player.getInventory().getContents())) {
                 applyLayout(player, layout);
             }
-            Inventory editor = Bukkit.createInventory(null, EDITOR_SIZE,
-                    color("&8Kit Editor &7• &b" + pretty(kit)));
-            copyPlayerContents(editor, player);
-            fillLockedRows(editor);
-            sessions.put(id, new Session(kit, snapshot, editor));
-            player.openInventory(editor);
+            sessions.put(id, new Session(kit, snapshot));
+            openDialog(player);
             player.sendMessage(plugin.message("kit-editor-opened").replace("<kit>", pretty(kit)));
         })).exceptionally(error -> {
             Bukkit.getScheduler().runTask(plugin, () -> {
@@ -90,61 +94,99 @@ public final class KitEditorManager implements Listener {
         return true;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
+    private void openDialog(Player player) {
         Session session = sessions.get(player.getUniqueId());
-        if (session == null || event.getView().getTopInventory() != session.inventory()) return;
-
-        event.setCancelled(true);
-        if (event.getRawSlot() < 0 || event.getRawSlot() >= PLAYER_SLOTS) return;
-        if (event.getClick().isShiftClick() || event.getClick().isKeyboardClick()
-                || event.getClick().isCreativeAction()) return;
-        if (event.getClick() != ClickType.LEFT && event.getClick() != ClickType.RIGHT) return;
-
-        int slot = event.getRawSlot();
-        ItemStack current = session.inventory().getItem(slot);
-        ItemStack cursor = event.getCursor();
-
-        if (cursor == null || cursor.getType() == Material.AIR) {
-            event.setCursor(current == null ? null : current.clone());
-            session.inventory().setItem(slot, null);
-        } else {
-            event.setCursor(current == null ? null : current.clone());
-            session.inventory().setItem(slot, cursor.clone());
+        if (session == null) return;
+        List<ActionButton> actions = new ArrayList<>();
+        ItemStack[] contents = player.getInventory().getContents();
+        for (int slot = 0; slot < PLAYER_SLOTS; slot++) {
+            ItemStack item = contents[slot];
+            String itemName = item == null || item.getType() == Material.AIR ? "Empty" : prettyMaterial(item.getType());
+            actions.add(editorButton("Slot " + (slot + 1) + ": " + itemName,
+                    "Select this slot. Select another slot to swap items.",
+                    "/kiteditor " + session.kit().name().toLowerCase(Locale.ROOT) + " dialog slot " + slot,
+                    NamedTextColor.AQUA));
         }
-        player.updateInventory();
+        actions.add(editorButton("Save Layout", "Save this arrangement to your player profile.",
+                "/kiteditor " + session.kit().name().toLowerCase(Locale.ROOT) + " dialog save", NamedTextColor.GREEN));
+        actions.add(editorButton("Reset Layout", "Reset to the kit's default inventory arrangement.",
+                "/kiteditor " + session.kit().name().toLowerCase(Locale.ROOT) + " dialog reset", NamedTextColor.GOLD));
+        actions.add(editorButton("Cancel", "Discard changes and restore your previous inventory.",
+                "/kiteditor " + session.kit().name().toLowerCase(Locale.ROOT) + " dialog cancel", NamedTextColor.RED));
+        Dialog dialog = Dialog.create(builder -> builder.empty()
+                .base(DialogBase.builder(Component.text("Kit Layout • " + pretty(session.kit()), NamedTextColor.WHITE))
+                        .externalTitle(Component.text("Kit Editor", NamedTextColor.AQUA))
+                        .canCloseWithEscape(true)
+                        .body(List.of(
+                                DialogBody.plainMessage(Component.text("Select one slot, then another slot to swap their items.", NamedTextColor.WHITE), 320),
+                                DialogBody.plainMessage(Component.text("The layout is saved only when you choose Save Layout.", NamedTextColor.GRAY), 320)))
+                        .build())
+                .type(DialogType.multiAction(actions).columns(3).build()));
+        player.showDialog(dialog);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onDrag(InventoryDragEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
+    public void dialogAction(Player player, String action, String rawSlot) {
+        if (!player.isOnline()) return;
         Session session = sessions.get(player.getUniqueId());
-        if (session != null && event.getView().getTopInventory() == session.inventory()) {
-            event.setCancelled(true);
-        }
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onClose(InventoryCloseEvent event) {
-        if (!(event.getPlayer() instanceof Player player)) return;
-        Session session = sessions.get(player.getUniqueId());
-        if (session == null || event.getInventory() != session.inventory()) return;
-
-        sessions.remove(player.getUniqueId(), session);
-        List<Integer> layout = captureLayout(event.getInventory());
-        if (layout != null) {
-            save(session.kit(), player.getUniqueId(), layout);
-            var registration = plugin.getServer().getServicesManager().getRegistration(net.voidflame.core.api.AuditLogService.class);
-            if (registration != null && registration.getProvider() != null) {
-                registration.getProvider().log(player.getUniqueId().toString(), "KIT_LAYOUT_CHANGE",
-                        session.kit().name(), "slots=" + layout.size());
+        if (session == null) return;
+        switch (action.toLowerCase(Locale.ROOT)) {
+            case "slot" -> {
+                int slot;
+                try { slot = Integer.parseInt(rawSlot); }
+                catch (NumberFormatException ex) { player.sendMessage("§cInvalid kit slot."); return; }
+                if (slot < 0 || slot >= PLAYER_SLOTS) { player.sendMessage("§cInvalid kit slot."); return; }
+                UUID id = player.getUniqueId();
+                Integer selected = selectedSlots.get(id);
+                if (selected == null) {
+                    selectedSlots.put(id, slot);
+                    player.sendMessage("§eSelected slot " + (slot + 1) + ". Choose another slot to swap.");
+                } else {
+                    ItemStack[] contents = player.getInventory().getStorageContents();
+                    ItemStack tmp = contents[selected] == null ? null : contents[selected].clone();
+                    contents[selected] = contents[slot] == null ? null : contents[slot].clone();
+                    contents[slot] = tmp;
+                    player.getInventory().setStorageContents(contents);
+                    selectedSlots.remove(id);
+                }
+                openDialog(player);
             }
-            player.sendMessage(plugin.message("kit-editor-saved").replace("<kit>", pretty(session.kit())));
-        } else {
-            player.sendMessage(plugin.message("kit-editor-failed"));
+            case "save" -> {
+                List<Integer> layout = captureLayout(player.getInventory());
+                if (layout == null) { player.sendMessage(plugin.message("kit-editor-failed")); openDialog(player); return; }
+                save(session.kit(), player.getUniqueId(), layout);
+                sessions.remove(player.getUniqueId(), session);
+                selectedSlots.remove(player.getUniqueId());
+                session.snapshot().restore(player);
+                player.sendMessage(plugin.message("kit-editor-saved").replace("<kit>", pretty(session.kit())));
+            }
+            case "reset" -> {
+                selectedSlots.remove(player.getUniqueId());
+                if (plugin.kitManager().applyBase(player, session.kit())) {
+                    tagBaseItems(player);
+                    openDialog(player);
+                } else {
+                    player.sendMessage(plugin.message("kit-editor-failed"));
+                }
+            }
+            case "cancel" -> {
+                sessions.remove(player.getUniqueId(), session);
+                selectedSlots.remove(player.getUniqueId());
+                session.snapshot().restore(player);
+                player.sendMessage("§7Kit layout changes cancelled.");
+            }
+            default -> openDialog(player);
         }
-        session.snapshot().restore(player);
+    }
+
+    private final Map<UUID, Integer> selectedSlots = new ConcurrentHashMap<>();
+
+    private ActionButton editorButton(String label, String tooltip, String command, NamedTextColor color) {
+        return ActionButton.create(Component.text(label, color), Component.text(tooltip, NamedTextColor.GRAY),
+                180, DialogAction.commandTemplate(command));
+    }
+
+    private String prettyMaterial(Material material) {
+        return material.name().toLowerCase(Locale.ROOT).replace('_', ' ');
     }
 
     public boolean applySavedLayout(Player player, KitType kit) {
@@ -267,5 +309,5 @@ public final class KitEditorManager implements Listener {
         sessions.clear();
     }
 
-    private record Session(KitType kit, PlayerSnapshot snapshot, Inventory inventory) {}
+    private record Session(KitType kit, PlayerSnapshot snapshot) {}
 }
