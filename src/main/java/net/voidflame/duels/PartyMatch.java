@@ -136,14 +136,16 @@ public final class PartyMatch {
         if (!plugin.getConfig().getBoolean("settings.party-reconnect-enabled", true) || finished || !players.contains(id)) return false;
         Long until = disconnectedUntil.get(id);
         if (until == null || until <= System.currentTimeMillis()) return false;
-        disconnectedUntil.remove(id);
-        disconnectTokens.remove(id);
         player.closeInventory();
         if (!prepare(player, spawnFor(players.indexOf(id)))) {
             PlayerSnapshot snapshot = snapshots.get(id);
             if (snapshot != null) snapshot.restore(player);
+            // Keep the disconnect token and deadline active so the match still
+            // resolves if the player cannot be restored into the match.
             return false;
         }
+        disconnectedUntil.remove(id);
+        disconnectTokens.remove(id);
         player.setInvulnerable(startedAt == 0L);
         player.sendMessage(plugin.message("rejoined"));
         return true;
