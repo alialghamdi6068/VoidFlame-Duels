@@ -135,11 +135,11 @@ public final class MatchManager implements Listener {
         if (mode != LobbyItemsManager.PartyMode.FFA && participants.size() != required) return false;
         if (participants.size() < 2) return false;
         if (participants.size() > plugin.getConfig().getInt("settings.party-max-size", 8)) return false;
-        Arena arena = arenas.acquire();
-        if (arena == null) return false;
         KitType partyKit;
         try { partyKit = KitType.fromConfig(plugin.getConfig().getString("settings.party-default-kit", "sword")); }
         catch (RuntimeException ex) { partyKit = KitType.SWORD; }
+        Arena arena = arenas.acquire(partyKit);
+        if (arena == null) return false;
         PartyMatch match = new PartyMatch(plugin, this, arena, mode, partyKit, participants);
         for (Player player : participants) partyMatches.put(player.getUniqueId(), match);
         match.start();
