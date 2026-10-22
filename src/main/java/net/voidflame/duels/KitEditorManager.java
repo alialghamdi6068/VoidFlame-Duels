@@ -26,7 +26,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class KitEditorManager implements Listener {
-    private static final int EDITOR_SIZE = 45;
     private static final int PLAYER_SLOTS = 36;
 
     private final VoidFlameDuelsPlugin plugin;
@@ -227,18 +226,6 @@ public final class KitEditorManager implements Listener {
             item.setItemMeta(meta);
         }
         player.getInventory().setContents(contents);
-    }
-
-    private void copyPlayerContents(Inventory editor, Player player) {
-        ItemStack[] contents = player.getInventory().getContents();
-        for (int i = 0; i < PLAYER_SLOTS; i++) {
-            if (contents[i] != null) editor.setItem(i, contents[i].clone());
-        }
-    }
-
-    private void fillLockedRows(Inventory editor) {
-        ItemStack filler = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
-        for (int i = PLAYER_SLOTS; i < EDITOR_SIZE; i++) editor.setItem(i, filler.clone());
     }
 
     private List<Integer> captureLayout(Inventory inventory) {
