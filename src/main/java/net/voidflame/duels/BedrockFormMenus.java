@@ -3,6 +3,7 @@ package net.voidflame.duels;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.geysermc.cumulus.form.SimpleForm;
+import org.geysermc.cumulus.form.CustomForm;
 import org.geysermc.cumulus.response.SimpleFormResponse;
 import org.geysermc.floodgate.api.FloodgateApi;
 
@@ -114,6 +115,7 @@ public final class BedrockFormMenus {
         List<Runnable> actions = new ArrayList<>();
         add(form, actions, "Create Party", () -> player.performCommand("party create"));
         add(form, actions, "Accept Invite", () -> player.performCommand("party accept"));
+        add(form, actions, "Invite Player", () -> openPartyInvite(player));
         add(form, actions, "Party Info", () -> player.performCommand("party info"));
         add(form, actions, "Queue 1v1", () -> player.performCommand("party queue 1v1"));
         add(form, actions, "Queue 2v2", () -> player.performCommand("party queue 2v2"));
@@ -121,6 +123,44 @@ public final class BedrockFormMenus {
         add(form, actions, "Leave Party", () -> player.performCommand("party leave"));
         add(form, actions, "Main Menu", () -> openMain(player));
         send(player, form, actions);
+    }
+
+    private void openPartyInvite(Player player) {
+        CustomForm form = CustomForm.builder()
+                .title("Invite Player")
+                .input("Player name", "Enter exact online username")
+                .validResultHandler(response -> {
+                    String name = response.asInput(0);
+                    run(player, () -> {
+                        if (name == null || name.isBlank()) {
+                            player.sendMessage(plugin.message("party-invite-failed"));
+                            return;
+                        }
+                        Player target = Bukkit.getPlayerExact(name.trim());
+                        if (target == null || !target.isOnline()) {
+                            player.sendMessage(plugin.message("player-not-found"));
+                            return;
+                        }
+                        if (plugin.partyManager().invite(player, target)) {
+                            player.sendMessage(plugin.message("party-invite-sent").replace("<player>", target.getName()));
+                            target.sendMessage(plugin.message("party-invite-received").replace("<player>", player.getName()));
+                        } else {
+                            player.sendMessage(plugin.message("party-invite-failed"));
+                        }
+                    });
+                })
+                .build();
+        try {
+            if (!available()) {
+                player.sendMessage("§cBedrock Forms require Floodgate to be installed.");
+                return;
+            }
+            boolean sent = FloodgateApi.getInstance().sendForm(player.getUniqueId(), form);
+            if (!sent) player.sendMessage("§cCould not open the Bedrock form. Please try again.");
+        } catch (LinkageError | RuntimeException error) {
+            plugin.getLogger().warning("Could not send Bedrock party invite form: " + error.getMessage());
+            player.sendMessage("§cCould not open this menu right now.");
+        }
     }
 
     public void openMatchResult(Player player, String result, String opponent, String kit, String arena, long durationSeconds) {
