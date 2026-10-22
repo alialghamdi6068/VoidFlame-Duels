@@ -97,23 +97,12 @@ public final class QueueManager implements Listener {
         if (queue == null || queue.isEmpty()) return null;
 
         QueueEntry selected = null;
-        if (!ranked) {
-            for (QueueEntry entry : queue.values()) {
-                if (!entry.ranked()) { selected = entry; break; }
-            }
-        } else {
-            long now = System.currentTimeMillis();
-            double maxRange = Math.max(1.0, plugin.getConfig().getDouble("queue.ranked.initial-elo-range", 100.0));
-            double growth = Math.max(0.0, plugin.getConfig().getDouble("queue.ranked.elo-range-growth-per-second", 10.0));
-            double selectedDistance = Double.MAX_VALUE;
-            for (QueueEntry entry : queue.values()) {
-                if (!entry.ranked()) continue;
-                double range = maxRange + (Math.max(0L, now - entry.joinedAt()) / 1000.0) * growth;
-                double distanceFromReference = selected == null ? 0.0 : Math.abs(entry.elo() - selected.elo());
-                if (selected == null || (distanceFromReference <= range && distanceFromReference < selectedDistance)) {
-                    selected = entry;
-                    selectedDistance = distanceFromReference;
-                }
+        // pollEntry chooses the oldest eligible player. pollRankedPair then
+        // searches the remaining queue for the closest ELO-compatible opponent.
+        for (QueueEntry entry : queue.values()) {
+            if (entry.ranked() == ranked) {
+                selected = entry;
+                break;
             }
         }
         if (selected == null) return null;
