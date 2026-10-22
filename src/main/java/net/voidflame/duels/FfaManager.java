@@ -100,18 +100,30 @@ public final class FfaManager implements Listener {
             }
 
             PlayerSnapshot snapshot = PlayerSnapshot.capture(player);
-            Session session = new Session(snapshot, kit, stats.kills, stats.deaths, stats.streak);
-            sessions.put(id, session);
-            player.closeInventory();
-            player.setGameMode(GameMode.SURVIVAL);
-            player.setInvulnerable(false);
-            player.teleport(currentWorld.getSpawnLocation());
-            player.setHealth(player.getMaxHealth());
-            player.setFoodLevel(20);
-            player.setSaturation(20f);
-            player.setFireTicks(0);
-            plugin.kitManager().apply(player, parseKit(kit));
-            player.sendMessage(plugin.message("ffa-joined").replace("<kit>", pretty(kit)));
+            try {
+                player.closeInventory();
+                if (!player.teleport(currentWorld.getSpawnLocation())) {
+                    player.sendMessage(plugin.message("ffa-join-failed"));
+                    return;
+                }
+                player.setGameMode(GameMode.SURVIVAL);
+                player.setInvulnerable(false);
+                player.setHealth(player.getMaxHealth());
+                player.setFoodLevel(20);
+                player.setSaturation(20f);
+                player.setFireTicks(0);
+                if (!plugin.kitManager().apply(player, parseKit(kit))) {
+                    snapshot.restore(player);
+                    player.sendMessage(plugin.message("ffa-join-failed"));
+                    return;
+                }
+                sessions.put(id, new Session(snapshot, kit, stats.kills, stats.deaths, stats.streak));
+                player.sendMessage(plugin.message("ffa-joined").replace("<kit>", pretty(kit)));
+            } catch (RuntimeException ex) {
+                snapshot.restore(player);
+                plugin.getLogger().warning("Could not prepare FFA session for " + id + ": " + ex.getMessage());
+                player.sendMessage(plugin.message("ffa-join-failed"));
+            }
         }));
         return true;
     }
