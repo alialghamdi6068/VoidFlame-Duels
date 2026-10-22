@@ -32,6 +32,7 @@ public final class FfaManager implements Listener {
     private final VoidFlameDuelsPlugin plugin;
     private final StorageService storage;
     private final Map<UUID, Session> sessions = new ConcurrentHashMap<>();
+    private final Set<UUID> pendingJoins = ConcurrentHashMap.newKeySet();
     private final Map<UUID, UUID> lastKiller = new ConcurrentHashMap<>();
 
     public FfaManager(VoidFlameDuelsPlugin plugin) {
@@ -46,49 +47,87 @@ public final class FfaManager implements Listener {
 
     public boolean join(Player player, String kitName) {
         if (!plugin.getConfig().getBoolean("features.ffa.enabled", true)) {
-            player.sendMessage(plugin.message("ffa-disabled")); return false;
+            player.sendMessage(plugin.message("ffa-disabled"));
+            return false;
         }
         UUID id = player.getUniqueId();
         if (sessions.containsKey(id)) return true;
-        if (plugin.matchManager().isInMatch(id)) {
-            player.sendMessage(plugin.message("already-in-match")); return false;
+        if (pendingJoins.contains(id)) {
+            player.sendMessage(plugin.message("already-in-match"));
+            return false;
         }
-        if (plugin.queueManager().isQueued(id) || plugin.spectatorManager().isSpectating(id)
-                || plugin.partyManager().partyOf(id) != null) {
-            player.sendMessage(plugin.message("already-in-match")); return false;
+        if (!canJoin(player)) {
+            player.sendMessage(plugin.message("already-in-match"));
+            return false;
         }
         World world = Bukkit.getWorld(plugin.getConfig().getString("features.ffa.world", "ffa"));
         if (world == null) {
-            player.sendMessage(plugin.message("ffa-world-missing")); return false;
+            player.sendMessage(plugin.message("ffa-world-missing"));
+            return false;
         }
         int max = Math.max(1, plugin.getConfig().getInt("features.ffa.max-players", 32));
-        if (sessions.size() >= max) {
-            player.sendMessage(plugin.message("ffa-full")); return false;
+        if (sessions.size() + pendingJoins.size() >= max) {
+            player.sendMessage(plugin.message("ffa-full"));
+            return false;
         }
 
         String kit = normalizeKit(kitName);
-        PlayerSnapshot snapshot = PlayerSnapshot.capture(player);
-        Stats stats = loadStats(player.getUniqueId());
-        Session session = new Session(snapshot, kit, stats.kills, stats.deaths, stats.streak);
-        sessions.put(id, session);
+        pendingJoins.add(id);
+        loadStatsAsync(id).whenComplete((stats, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+            pendingJoins.remove(id);
+            if (!player.isOnline()) return;
+            if (error != null) {
+                plugin.getLogger().warning("Could not load FFA stats for " + id + ": " + error.getMessage());
+                player.sendMessage(plugin.message("ffa-join-failed"));
+                return;
+            }
+            if (sessions.containsKey(id)) return;
+            if (!canJoin(player)) {
+                player.sendMessage(plugin.message("already-in-match"));
+                return;
+            }
+            World currentWorld = Bukkit.getWorld(plugin.getConfig().getString("features.ffa.world", "ffa"));
+            if (currentWorld == null) {
+                player.sendMessage(plugin.message("ffa-world-missing"));
+                return;
+            }
+            int currentMax = Math.max(1, plugin.getConfig().getInt("features.ffa.max-players", 32));
+            if (sessions.size() >= currentMax) {
+                player.sendMessage(plugin.message("ffa-full"));
+                return;
+            }
 
-        player.closeInventory();
-        player.setGameMode(GameMode.SURVIVAL);
-        player.setInvulnerable(false);
-        player.teleport(world.getSpawnLocation());
-        player.setHealth(player.getMaxHealth());
-        player.setFoodLevel(20);
-        player.setSaturation(20f);
-        player.setFireTicks(0);
-        plugin.kitManager().apply(player, parseKit(kit));
-        player.sendMessage(plugin.message("ffa-joined").replace("<kit>", pretty(kit)));
+            PlayerSnapshot snapshot = PlayerSnapshot.capture(player);
+            Session session = new Session(snapshot, kit, stats.kills, stats.deaths, stats.streak);
+            sessions.put(id, session);
+            player.closeInventory();
+            player.setGameMode(GameMode.SURVIVAL);
+            player.setInvulnerable(false);
+            player.teleport(currentWorld.getSpawnLocation());
+            player.setHealth(player.getMaxHealth());
+            player.setFoodLevel(20);
+            player.setSaturation(20f);
+            player.setFireTicks(0);
+            plugin.kitManager().apply(player, parseKit(kit));
+            player.sendMessage(plugin.message("ffa-joined").replace("<kit>", pretty(kit)));
+        }));
         return true;
     }
 
+    private boolean canJoin(Player player) {
+        UUID id = player.getUniqueId();
+        return !plugin.matchManager().isInMatch(id)
+                && !plugin.queueManager().isQueued(id)
+                && !plugin.spectatorManager().isSpectating(id)
+                && plugin.partyManager().partyOf(id) == null;
+    }
+
     public boolean leave(Player player) {
-        Session session = sessions.remove(player.getUniqueId());
-        lastKiller.remove(player.getUniqueId());
-        if (session == null) return false;
+        UUID id = player.getUniqueId();
+        boolean cancelledPendingJoin = pendingJoins.remove(id);
+        Session session = sessions.remove(id);
+        lastKiller.remove(id);
+        if (session == null) return cancelledPendingJoin;
         session.snapshot.restore(player);
         player.sendMessage(plugin.message("ffa-left"));
         persist(player.getUniqueId(), session);
@@ -128,6 +167,7 @@ public final class FfaManager implements Listener {
             if (p != null) leave(p);
         }
         sessions.clear();
+        pendingJoins.clear();
         lastKiller.clear();
     }
 
@@ -207,16 +247,6 @@ public final class FfaManager implements Listener {
 
     private void playerMessage(Player player, String key, String placeholder, String value) {
         player.sendMessage(plugin.message(key).replace(placeholder, value));
-    }
-
-    private Stats loadStats(UUID uuid) {
-        try {
-            String raw = storage.get("duels.ffa", uuid.toString()).getNow(null);
-            if (raw == null) return new Stats(0, 0, 0);
-            String[] p = raw.split(",", -1);
-            if (p.length != 3) return new Stats(0, 0, 0);
-            return new Stats(Math.max(0, Long.parseLong(p[0])), Math.max(0, Long.parseLong(p[1])), Math.max(0, Long.parseLong(p[2])));
-        } catch (Exception ignored) { return new Stats(0, 0, 0); }
     }
 
     private void persist(UUID uuid, Session session) {
