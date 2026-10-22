@@ -57,6 +57,9 @@ public final class Match {
                 if (left <= 0) {
                     transition(MatchState.ACTIVE);
                     startedAt = System.currentTimeMillis();
+                    // Protection is only for the countdown; combat must be enabled when the fight starts.
+                    x.setInvulnerable(false);
+                    y.setInvulnerable(false);
                     x.setWalkSpeed(0.2f);
                     y.setWalkSpeed(0.2f);
                     x.sendMessage(plugin.message("fight"));
