@@ -81,6 +81,7 @@ public final class PartyManager implements Listener {
 
         if (members.isEmpty()) {
             queuedParties.remove(party.leader());
+            partyModes.remove(party.leader());
             parties.remove(party.leader());
         } else if (party.leader().equals(playerId)) {
             UUID newLeader = members.iterator().next();
@@ -106,6 +107,7 @@ public final class PartyManager implements Listener {
         Party party = partyOf(leader.getUniqueId());
         if (party == null || !party.leader().equals(leader.getUniqueId())) return false;
         queuedParties.remove(leader.getUniqueId());
+        partyModes.remove(leader.getUniqueId());
         parties.remove(leader.getUniqueId());
         party.members().forEach(this::clearInvitesFor);
         return true;
