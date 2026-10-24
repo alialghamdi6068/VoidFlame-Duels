@@ -13,10 +13,12 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -46,7 +48,8 @@ public final class LobbyItemsManager implements Listener {
 
     public void giveLobbyItems(Player p) {
         if(plugin.matchManager().isInMatch(p.getUniqueId()) || plugin.matchManager().isDisconnected(p.getUniqueId())
-                || plugin.spectatorManager().isSpectating(p.getUniqueId())) return;
+                || plugin.spectatorManager().isSpectating(p.getUniqueId())
+                || plugin.ffaManager().isInFfa(p.getUniqueId())) return;
         PlayerInventory inv=p.getInventory();
         inv.setItem(0, item(Material.DIAMOND_SWORD,"§5§lDUEL","§7Right-click §8» §fChoose a kit and play","§7Left-click a player §8» §fChoose a kit and duel"));
         inv.setItem(1, item(Material.GOAT_HORN,"§b§lPARTY +","§7Right-click §8» §fOpen Party"));
@@ -74,6 +77,20 @@ public final class LobbyItemsManager implements Listener {
         mark(inv.getItem(7), "party-info");
         mark(inv.getItem(8), "party-leave");
         p.updateInventory();
+    }
+
+    @EventHandler
+    public void onDeath(PlayerDeathEvent event) {
+        // The spawn sword is a permanent menu item, never a death drop.
+        event.getDrops().removeIf(this::is);
+    }
+
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (player.isOnline()) giveLobbyItems(player);
+        });
     }
 
     @EventHandler public void onInteract(PlayerInteractEvent e) {
