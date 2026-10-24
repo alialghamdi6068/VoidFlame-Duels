@@ -50,15 +50,33 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
         }
         KitType kit = parseKit(kitArg);
         if (kit == null) { p.sendMessage(plugin.message("unknown-kit")); return true; }
-        if (plugin.partyManager().partyOf(p.getUniqueId()) != null) {
+        UUID id = p.getUniqueId();
+        if (plugin.partyManager().partyOf(id) != null) {
             p.sendMessage(plugin.message("party-cannot-queue"));
+            return true;
+        }
+        if (plugin.matchManager().isInMatch(id) || plugin.matchManager().isDisconnected(id)
+                || plugin.ffaManager().isInFfa(id) || plugin.spectatorManager().isSpectating(id)) {
+            p.sendMessage(plugin.message("already-in-match"));
+            return true;
+        }
+        if (plugin.kitEditorManager().isEditing(id)) {
+            p.sendMessage(ChatColor.RED + "Finish or cancel the kit editor before joining a queue.");
+            return true;
+        }
+        if (plugin.queueManager().isQueued(id)) {
+            p.sendMessage(plugin.message("already-queued"));
+            return true;
+        }
+        if (ranked && !plugin.getConfig().getBoolean("queue.ranked.enabled", true)) {
+            p.sendMessage(ChatColor.RED + "Ranked queue is currently disabled.");
             return true;
         }
         boolean ok = plugin.queueManager().join(p, kit, ranked);
         String queueType = ranked ? "Ranked" : "Unranked";
         p.sendMessage(ok
                 ? plugin.message("joined-queue").replace("<kit>", pretty(kit)).replace("<type>", queueType)
-                : plugin.message("already-queued"));
+                : ChatColor.RED + "This queue is unavailable for the selected kit right now.");
         
         return true;
     }
