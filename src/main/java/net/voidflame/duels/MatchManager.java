@@ -352,6 +352,13 @@ public final class MatchManager implements Listener {
         UUID loser = match.opponent(winner);
         String firstName = name(match.first());
         String secondName = name(match.second());
+        var auditRegistration = Bukkit.getServicesManager()
+                .getRegistration(net.voidflame.core.api.AuditLogService.class);
+        var auditLogs = auditRegistration == null ? null : auditRegistration.getProvider();
+        var profileRegistration = Bukkit.getServicesManager()
+                .getRegistration(net.voidflame.core.storage.PlayerProfileService.class);
+        var profiles = profileRegistration == null ? null : profileRegistration.getProvider();
+
         CompletableFuture<Void> persisted = registration.getProvider().recordAsync(
                 new net.voidflame.core.api.MatchResultService.MatchResult(
                         match.matchId(),
@@ -366,9 +373,8 @@ public final class MatchManager implements Listener {
                 ));
 
         persisted.thenRun(() -> {
-            var logs = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.AuditLogService.class);
-            if (logs != null && logs.getProvider() != null) {
-                logs.getProvider().log(
+            if (auditLogs != null) {
+                auditLogs.log(
                         winner.toString(),
                         "DUEL_FINISH",
                         loser.toString(),
@@ -379,13 +385,10 @@ public final class MatchManager implements Listener {
         });
 
         return persisted.thenCompose(ignored -> {
-            var profileRegistration = Bukkit.getServicesManager()
-                    .getRegistration(net.voidflame.core.storage.PlayerProfileService.class);
-            if (profileRegistration == null || profileRegistration.getProvider() == null) {
+            if (profiles == null) {
                 plugin.getLogger().warning("PlayerProfileService is unavailable; ranked ELO cache refresh skipped.");
                 return CompletableFuture.completedFuture(null);
             }
-            var profiles = profileRegistration.getProvider();
             profiles.invalidate(match.first());
             profiles.invalidate(match.second());
             return profiles.load(match.first(), firstName).thenCombine(
