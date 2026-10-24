@@ -47,10 +47,15 @@ public final class LobbyItemsManager implements Listener {
     }
 
     public void giveLobbyItems(Player p) {
-        if(plugin.matchManager().isInMatch(p.getUniqueId()) || plugin.matchManager().isDisconnected(p.getUniqueId())
-                || plugin.matchManager().hasPendingRestore(p.getUniqueId())
-                || plugin.spectatorManager().isSpectating(p.getUniqueId())
-                || plugin.ffaManager().isInFfa(p.getUniqueId())) return;
+        UUID id = p.getUniqueId();
+        if (plugin.partyManager().partyOf(id) != null) {
+            givePartyItems(p);
+            return;
+        }
+        if(plugin.matchManager().isInMatch(id) || plugin.matchManager().isDisconnected(id)
+                || plugin.matchManager().hasPendingRestore(id)
+                || plugin.spectatorManager().isSpectating(id)
+                || plugin.ffaManager().isInFfa(id) || plugin.kitEditorManager().isEditing(id)) return;
         PlayerInventory inv=p.getInventory();
         inv.setItem(0, item(Material.DIAMOND_SWORD,"§5§lDUEL","§7Right-click §8» §fChoose a kit and play","§7Left-click a player §8» §fChoose a kit and duel"));
         inv.setItem(1, item(Material.GOAT_HORN,"§b§lPARTY +","§7Right-click §8» §fOpen Party"));
@@ -115,7 +120,10 @@ public final class LobbyItemsManager implements Listener {
     public void givePartyItems(Player p) {
         if (plugin.matchManager().isInMatch(p.getUniqueId())
                 || plugin.matchManager().isDisconnected(p.getUniqueId())
-                || plugin.spectatorManager().isSpectating(p.getUniqueId())) return;
+                || plugin.matchManager().hasPendingRestore(p.getUniqueId())
+                || plugin.spectatorManager().isSpectating(p.getUniqueId())
+                || plugin.ffaManager().isInFfa(p.getUniqueId())
+                || plugin.kitEditorManager().isEditing(p.getUniqueId())) return;
         PlayerInventory inv = p.getInventory();
         inv.setItem(0, item(Material.PLAYER_HEAD, "§b§lParty", "§7Right-click §8» §fManage your party"));
         inv.setItem(1, item(Material.NETHER_STAR, "§d§lParty Queue", "§7Right-click §8» §fChoose a party mode"));
