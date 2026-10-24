@@ -85,6 +85,7 @@ public final class MatchManager implements Listener {
     }
 
     public boolean startDirect(Player a, Player b, KitType kit) {
+        if (a == null || b == null || kit == null) return false;
         if (a.equals(b) || !a.isOnline() || !b.isOnline()
                 || isInMatch(a.getUniqueId()) || isInMatch(b.getUniqueId())
                 || isDisconnected(a.getUniqueId()) || isDisconnected(b.getUniqueId())
