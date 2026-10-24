@@ -112,11 +112,16 @@ public final class KitEditorManager implements Listener {
                         return;
                     }
                     if (error != null) {
-                        sessions.remove(id, session);
-                        snapshot.restore(player);
-                        selectedSlots.remove(id);
                         plugin.getLogger().warning("Could not load kit layout for " + id + " (" + kit.name()
                                 + "): " + error.getMessage());
+                        try {
+                            snapshot.restore(player);
+                            sessions.remove(id, session);
+                            selectedSlots.remove(id);
+                        } catch (RuntimeException restoreError) {
+                            plugin.getLogger().severe("Could not restore inventory after kit layout load failure for "
+                                    + id + "; session retained for recovery: " + restoreError.getMessage());
+                        }
                         player.sendMessage(plugin.message("kit-editor-failed"));
                         return;
                     }
@@ -206,10 +211,18 @@ public final class KitEditorManager implements Listener {
                                 }
                                 return;
                             }
-                            if (!sessions.remove(playerId, session)) return;
-                            selectedSlots.remove(playerId);
-                            session.snapshot().restore(player);
-                            player.sendMessage(plugin.message("kit-editor-saved").replace("<kit>", pretty(session.kit())));
+                            if (sessions.get(playerId) != session) return;
+                            try {
+                                session.snapshot().restore(player);
+                                sessions.remove(playerId, session);
+                                selectedSlots.remove(playerId);
+                                player.sendMessage(plugin.message("kit-editor-saved").replace("<kit>", pretty(session.kit())));
+                            } catch (RuntimeException restoreError) {
+                                plugin.getLogger().severe("Layout was saved but original player state could not be restored for "
+                                        + playerId + "; editor session retained: " + restoreError.getMessage());
+                                player.sendMessage(plugin.message("kit-editor-failed"));
+                                openDialog(player);
+                            }
                         }));
             }
             case "reset" -> {
@@ -222,10 +235,17 @@ public final class KitEditorManager implements Listener {
                 }
             }
             case "cancel" -> {
-                sessions.remove(player.getUniqueId(), session);
-                selectedSlots.remove(player.getUniqueId());
-                session.snapshot().restore(player);
-                player.sendMessage("§7Kit layout changes cancelled.");
+                try {
+                    session.snapshot().restore(player);
+                    sessions.remove(player.getUniqueId(), session);
+                    selectedSlots.remove(player.getUniqueId());
+                    player.sendMessage("§7Kit layout changes cancelled.");
+                } catch (RuntimeException error) {
+                    plugin.getLogger().severe("Could not restore player state while cancelling kit editor for "
+                            + player.getUniqueId() + ": " + error.getMessage());
+                    player.sendMessage(plugin.message("kit-editor-failed"));
+                    openDialog(player);
+                }
             }
             default -> openDialog(player);
         }
