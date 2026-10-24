@@ -71,6 +71,9 @@ public final class AdvancedFeatures implements Listener {
         }
         this.storage = registration.getProvider();
         loadAnnouncements();
+        // Support plugin reloads while players are already online; their join event
+        // will not fire again to populate the coin cache.
+        for (Player player : Bukkit.getOnlinePlayers()) loadCoins(player);
         long period = Math.max(20L, plugin.getConfig().getLong("announcements.interval-seconds", 90L) * 20L);
         if (plugin.getConfig().getBoolean("announcements.enabled", true)) {
             announcementTask = plugin.getServer().getScheduler()
@@ -428,8 +431,9 @@ public final class AdvancedFeatures implements Listener {
     }
 
     public void addCoins(UUID player, int amount) {
-        if (amount == 0) return;
-        int next = Math.max(0, coins.getOrDefault(player, 0) + amount);
+        if (player == null || amount == 0) return;
+        long calculated = (long) coins.getOrDefault(player, 0) + amount;
+        int next = (int) Math.max(0L, Math.min(Integer.MAX_VALUE, calculated));
         coins.put(player, next);
         storagePut(COIN_MODULE, player.toString(), String.valueOf(next));
     }
