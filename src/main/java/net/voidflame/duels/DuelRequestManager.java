@@ -60,5 +60,17 @@ public final class DuelRequestManager {
     }
 
     public void remove(Player target) { incoming.remove(target.getUniqueId()); }
+
+    public void removePlayer(UUID playerId) {
+        if (playerId == null) return;
+        incoming.entrySet().removeIf(entry -> entry.getKey().equals(playerId)
+                || entry.getValue().sender().equals(playerId));
+    }
+
+    public void expireStale() {
+        long now = System.currentTimeMillis();
+        incoming.entrySet().removeIf(entry -> entry.getValue().expiresAt() <= now);
+    }
+
     public void clear() { incoming.clear(); }
 }
