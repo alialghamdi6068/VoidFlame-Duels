@@ -19,7 +19,8 @@ public final class DuelRequestManager {
         if (plugin.matchManager().isInMatch(sender.getUniqueId()) || plugin.matchManager().isInMatch(target.getUniqueId())) return false;
         if (plugin.queueManager().isQueued(sender.getUniqueId()) || plugin.queueManager().isQueued(target.getUniqueId())) return false;
         if (plugin.partyManager().partyOf(sender.getUniqueId()) != null || plugin.partyManager().partyOf(target.getUniqueId()) != null) return false;
-        long ttl = Math.max(1, plugin.getConfig().getLong("settings.request-expiry-seconds", 60));
+        long ttl = Math.max(1L, Math.min(3600L,
+                plugin.getConfig().getLong("settings.request-expiry-seconds", 60L)));
         incoming.put(target.getUniqueId(), new Request(sender.getUniqueId(), target.getUniqueId(), kit, System.currentTimeMillis() + ttl * 1000L));
         return true;
     }
