@@ -50,7 +50,8 @@ public final class PartyManager implements Listener {
         if (party.members().contains(target.getUniqueId()) || partyOf(target.getUniqueId()) != null) return false;
         int max = Math.max(2, plugin.getConfig().getInt("settings.party-max-size", 8));
         if (party.members().size() >= max) return false;
-        long ttl = Math.max(5, plugin.getConfig().getLong("settings.party-invite-expiry-seconds", 60));
+        long ttl = Math.max(5L, Math.min(86400L,
+                plugin.getConfig().getLong("settings.party-invite-expiry-seconds", 60L)));
         pendingInvites.put(target.getUniqueId(), new Invite(leader.getUniqueId(), System.currentTimeMillis() + ttl * 1000L));
         return true;
     }
