@@ -19,8 +19,8 @@ public final class VoidFlamePlaceholders extends PlaceholderExpansion implements
     private final VoidFlameDuelsPlugin plugin;
     private final Map<UUID, Profile> profiles = new ConcurrentHashMap<>();
 
-    private record Profile(int wins, int losses, int streak, int bestStreak, int elo, long coins, String rank) {
-        static Profile empty() { return new Profile(0, 0, 0, 0, 1000, 0, "Player"); }
+    private record Profile(int wins, int losses, int streak, int bestStreak, double elo, long coins, String rank) {
+        static Profile empty() { return new Profile(0, 0, 0, 0, 1000.0D, 0, "Player"); }
     }
 
     public VoidFlamePlaceholders(VoidFlameDuelsPlugin plugin) { this.plugin = plugin; }
@@ -72,7 +72,7 @@ public final class VoidFlamePlaceholders extends PlaceholderExpansion implements
                     Map<String, Object> row = rows.get(0);
                     Profile profile = new Profile(number(row.get("wins")), number(row.get("losses")),
                             number(row.get("winstreak")), number(row.get("best_winstreak")),
-                            number(row.get("elo"), 1000), longNumber(row.get("coins")),
+                            decimalNumber(row.get("elo"), 1000.0D), longNumber(row.get("coins")),
                             row.get("rank") == null ? "Player" : String.valueOf(row.get("rank")));
                     profiles.put(uuid, profile);
                 });
@@ -91,7 +91,7 @@ public final class VoidFlamePlaceholders extends PlaceholderExpansion implements
             case "losses" -> String.valueOf(p.losses());
             case "winstreak", "streak" -> String.valueOf(p.streak());
             case "beststreak" -> String.valueOf(p.bestStreak());
-            case "elo" -> String.valueOf(p.elo());
+            case "elo" -> formatElo(p.elo());
             case "coins" -> String.valueOf(p.coins());
             case "rank" -> p.rank();
             case "mode", "status" -> {
@@ -102,11 +102,27 @@ public final class VoidFlamePlaceholders extends PlaceholderExpansion implements
         };
     }
 
-    private int number(Object value) { return number(value, 0); }
-    private int number(Object value, int fallback) {
+    private int number(Object value) {
         if (value instanceof Number n) return n.intValue();
-        try { return value == null ? fallback : Integer.parseInt(String.valueOf(value)); }
-        catch (NumberFormatException ignored) { return fallback; }
+        try { return value == null ? 0 : Integer.parseInt(String.valueOf(value)); }
+        catch (NumberFormatException ignored) { return 0; }
+    }
+    private double decimalNumber(Object value, double fallback) {
+        if (value instanceof Number n) {
+            double parsed = n.doubleValue();
+            return Double.isFinite(parsed) && parsed >= 0.0D ? parsed : fallback;
+        }
+        try {
+            double parsed = value == null ? fallback : Double.parseDouble(String.valueOf(value));
+            return Double.isFinite(parsed) && parsed >= 0.0D ? parsed : fallback;
+        } catch (NumberFormatException ignored) {
+            return fallback;
+        }
+    }
+    private String formatElo(double elo) {
+        if (!Double.isFinite(elo)) return "1000";
+        if (elo == Math.rint(elo) && elo >= Long.MIN_VALUE && elo <= Long.MAX_VALUE) return Long.toString((long) elo);
+        return String.format(java.util.Locale.ROOT, "%.1f", elo);
     }
     private long longNumber(Object value) {
         if (value instanceof Number n) return n.longValue();
