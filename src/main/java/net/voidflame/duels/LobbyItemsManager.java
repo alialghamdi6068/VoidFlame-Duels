@@ -218,8 +218,7 @@ public final class LobbyItemsManager implements Listener {
         }
 
         int hotbarButton = e.getHotbarButton();
-        if ((e.getClick() == ClickType.NUMBER_KEY || e.getAction() == InventoryAction.HOTBAR_SWAP
-                || e.getAction() == InventoryAction.HOTBAR_MOVE_AND_READD)
+        if ((e.getClick() == ClickType.NUMBER_KEY || e.getAction() == InventoryAction.HOTBAR_SWAP)
                 && hotbarButton >= 0 && hotbarButton <= 8
                 && is(player.getInventory().getItem(hotbarButton))) {
             e.setCancelled(true);
