@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class VoidFlamePlaceholders extends PlaceholderExpansion implements Listener {
     private final VoidFlameDuelsPlugin plugin;
     private final Map<UUID, Profile> profiles = new ConcurrentHashMap<>();
+    private final java.util.Set<UUID> refreshInFlight = ConcurrentHashMap.newKeySet();
 
     private record Profile(long wins, long losses, long streak, long bestStreak, double elo, long coins, String rank) {
         static Profile empty() { return new Profile(0, 0, 0, 0, 1000.0D, 0, "Player"); }
@@ -50,16 +51,19 @@ public final class VoidFlamePlaceholders extends PlaceholderExpansion implements
     }
 
     private void refresh(Player player) {
+        UUID uuid = player.getUniqueId();
+        if (!player.isOnline() || !refreshInFlight.add(uuid)) return;
         var registration = Bukkit.getServicesManager().getRegistration(StorageService.class);
         if (registration == null || registration.getProvider() == null) {
-            profiles.putIfAbsent(player.getUniqueId(), Profile.empty());
+            profiles.putIfAbsent(uuid, Profile.empty());
+            refreshInFlight.remove(uuid);
             return;
         }
-        UUID uuid = player.getUniqueId();
         registration.getProvider().query(
                 "SELECT wins, losses, winstreak, best_winstreak, elo, coins, rank FROM player_profiles WHERE uuid = ? LIMIT 1",
                 uuid.toString()
         ).whenComplete((rows, error) -> {
+            refreshInFlight.remove(uuid);
             // Database callbacks run asynchronously. Publish cache changes on the main
             // thread and ignore late results for players who have already disconnected.
             try {
