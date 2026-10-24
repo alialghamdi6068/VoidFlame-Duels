@@ -46,6 +46,7 @@ public final class FfaManager implements Listener {
     }
 
     public boolean join(Player player, String kitName) {
+        if (player == null) return false;
         if (!plugin.getConfig().getBoolean("features.ffa.enabled", true)) {
             player.sendMessage(plugin.message("ffa-disabled"));
             return false;
