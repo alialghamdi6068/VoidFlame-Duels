@@ -60,16 +60,26 @@ public final class VoidFlamePlaceholders extends PlaceholderExpansion implements
                 "SELECT wins, losses, winstreak, best_winstreak, elo, coins, rank FROM player_profiles WHERE uuid = ? LIMIT 1",
                 uuid.toString()
         ).whenComplete((rows, error) -> {
-            if (error != null || rows == null || rows.isEmpty()) {
-                profiles.putIfAbsent(uuid, Profile.empty());
-                return;
+            // Database callbacks run asynchronously. Publish cache changes on the main
+            // thread and ignore late results for players who have already disconnected.
+            try {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (!player.isOnline() || !uuid.equals(player.getUniqueId())) return;
+                    if (error != null || rows == null || rows.isEmpty()) {
+                        profiles.putIfAbsent(uuid, Profile.empty());
+                        return;
+                    }
+                    Map<String, Object> row = rows.get(0);
+                    Profile profile = new Profile(number(row.get("wins")), number(row.get("losses")),
+                            number(row.get("winstreak")), number(row.get("best_winstreak")),
+                            number(row.get("elo"), 1000), longNumber(row.get("coins")),
+                            row.get("rank") == null ? "Player" : String.valueOf(row.get("rank")));
+                    profiles.put(uuid, profile);
+                });
+            } catch (RuntimeException schedulingFailure) {
+                plugin.getLogger().fine("Skipping placeholder refresh after scheduler shutdown for " + uuid
+                        + ": " + schedulingFailure.getMessage());
             }
-            Map<String, Object> row = rows.get(0);
-            Profile profile = new Profile(number(row.get("wins")), number(row.get("losses")),
-                    number(row.get("winstreak")), number(row.get("best_winstreak")),
-                    number(row.get("elo"), 1000), longNumber(row.get("coins")),
-                    row.get("rank") == null ? "Player" : String.valueOf(row.get("rank")));
-            profiles.put(uuid, profile);
         });
     }
 
