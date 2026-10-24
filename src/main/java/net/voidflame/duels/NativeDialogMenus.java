@@ -317,7 +317,12 @@ public final class NativeDialogMenus {
     }
 
     public boolean handle(Player player, String[] args) {
-        if (args.length == 0 || args[0].equalsIgnoreCase("main")) { openMain(player); return true; }
+        if (args.length == 0 || args[0].equalsIgnoreCase("main")) {
+            duelTargets.remove(player.getUniqueId());
+            openMain(player);
+            return true;
+        }
+        if (!args[0].equalsIgnoreCase("targetkit")) duelTargets.remove(player.getUniqueId());
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "kits", "queue" -> openQueue(player);
             case "kit" -> { if (args.length < 2) openQueue(player); else openKit(player, args[1]); }
