@@ -70,30 +70,41 @@ public final class KitEditorManager implements Listener {
 
     public boolean open(Player player, KitType kit) {
         UUID id = player.getUniqueId();
-        if (plugin.matchManager().isInMatch(id) || plugin.matchManager().isDisconnected(id)) return false;
+        if (player == null || kit == null || plugin.matchManager().isInMatch(id)
+                || plugin.matchManager().isDisconnected(id) || plugin.queueManager().isQueued(id)
+                || plugin.ffaManager().isInFfa(id) || plugin.spectatorManager().isSpectating(id)) return false;
         if (sessions.containsKey(id)) return false;
 
         PlayerSnapshot snapshot = PlayerSnapshot.capture(player);
         if (!plugin.kitManager().applyBase(player, kit)) return false;
 
+        Session session = new Session(kit, snapshot);
+        sessions.put(id, session);
         tagBaseItems(player);
-        storage.get("kit-layouts", path(kit, id)).thenAccept(raw -> Bukkit.getScheduler().runTask(plugin, () -> {
-            if (!player.isOnline()) return;
-            List<Integer> layout = decode(raw);
-            if (layout != null) layoutCache.put(path(kit, id), layout);
-            if (layout != null && validLayout(layout, player.getInventory().getContents())) {
-                applyLayout(player, layout);
-            }
-            sessions.put(id, new Session(kit, snapshot));
-            openDialog(player);
-            player.sendMessage(plugin.message("kit-editor-opened").replace("<kit>", pretty(kit)));
-        })).exceptionally(error -> {
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                snapshot.restore(player);
-                player.sendMessage(plugin.message("kit-editor-failed"));
-            });
-            return null;
-        });
+        storage.get("kit-layouts", path(kit, id)).whenComplete((raw, error) ->
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (sessions.get(id) != session) return;
+                    if (!player.isOnline()) {
+                        sessions.remove(id, session);
+                        return;
+                    }
+                    if (error != null) {
+                        sessions.remove(id, session);
+                        snapshot.restore(player);
+                        selectedSlots.remove(id);
+                        plugin.getLogger().warning("Could not load kit layout for " + id + " (" + kit.name()
+                                + "): " + error.getMessage());
+                        player.sendMessage(plugin.message("kit-editor-failed"));
+                        return;
+                    }
+                    List<Integer> layout = decode(raw);
+                    if (layout != null) layoutCache.put(path(kit, id), layout);
+                    if (layout != null && validLayout(layout, player.getInventory().getContents())) {
+                        applyLayout(player, layout);
+                    }
+                    openDialog(player);
+                    player.sendMessage(plugin.message("kit-editor-opened").replace("<kit>", pretty(kit)));
+                }));
         return true;
     }
 
