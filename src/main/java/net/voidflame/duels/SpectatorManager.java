@@ -22,12 +22,15 @@ public final class SpectatorManager implements Listener {
     }
 
     public boolean spectate(Player spectator, Player target) {
+        if (spectator == null || target == null || spectator.equals(target)) return false;
+        UUID id = spectator.getUniqueId();
         Match match = plugin.matchManager().get(target.getUniqueId());
-        if (match == null || match.state() == MatchState.FINISHED) return false;
-        if (plugin.matchManager().isInMatch(spectator.getUniqueId())) return false;
-        leave(spectator);
-        snapshots.put(spectator.getUniqueId(), PlayerSnapshot.capture(spectator));
-        watching.put(spectator.getUniqueId(), match);
+        if (match == null || match.state() == MatchState.FINISHED || isSpectating(id)) return false;
+        if (plugin.matchManager().isInMatch(id) || plugin.matchManager().isDisconnected(id)
+                || plugin.queueManager().isQueued(id) || plugin.ffaManager().isInFfa(id)
+                || plugin.kitEditorManager().isEditing(id) || plugin.partyManager().partyOf(id) != null) return false;
+        snapshots.put(id, PlayerSnapshot.capture(spectator));
+        watching.put(id, match);
         spectator.getInventory().clear();
         spectator.setGameMode(GameMode.SPECTATOR);
         spectator.setSpectatorTarget(target);
@@ -40,11 +43,18 @@ public final class SpectatorManager implements Listener {
     }
 
     public boolean leave(Player spectator) {
-        PlayerSnapshot snapshot = snapshots.remove(spectator.getUniqueId());
-        watching.remove(spectator.getUniqueId());
+        if (spectator == null) return false;
+        UUID id = spectator.getUniqueId();
+        PlayerSnapshot snapshot = snapshots.remove(id);
+        watching.remove(id);
         if (snapshot == null) return false;
-        spectator.setSpectatorTarget(null);
-        snapshot.restore(spectator);
+        try {
+            spectator.setSpectatorTarget(null);
+        } catch (RuntimeException error) {
+            plugin.getLogger().warning("Could not clear spectator target for " + id + ": " + error.getMessage());
+        }
+        // Shared recovery retains the snapshot if restoration fails.
+        plugin.matchManager().restorePartySnapshot(id, snapshot);
         return true;
     }
 
@@ -61,7 +71,8 @@ public final class SpectatorManager implements Listener {
         UUID id = event.getPlayer().getUniqueId();
         PlayerSnapshot snapshot = pendingRestores.remove(id);
         if (snapshot != null) {
-            org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> snapshot.restore(event.getPlayer()));
+            org.bukkit.Bukkit.getScheduler().runTask(plugin, () ->
+                    plugin.matchManager().restorePartySnapshot(id, snapshot));
         }
     }
 
@@ -79,14 +90,20 @@ public final class SpectatorManager implements Listener {
     }
 
     public void shutdown() {
-        for (UUID uuid : snapshots.keySet()) {
-            Player player = plugin.getServer().getPlayer(uuid);
-            if (player != null) leave(player);
+        for (Map.Entry<UUID, PlayerSnapshot> entry : snapshots.entrySet()) {
+            UUID id = entry.getKey();
+            Player player = plugin.getServer().getPlayer(id);
+            if (player != null && player.isOnline()) {
+                leave(player);
+            } else {
+                pendingRestores.putIfAbsent(id, entry.getValue());
+                snapshots.remove(id, entry.getValue());
+            }
         }
-        for (UUID uuid : pendingRestores.keySet()) {
-            Player player = plugin.getServer().getPlayer(uuid);
-            PlayerSnapshot snapshot = pendingRestores.remove(uuid);
-            if (player != null && snapshot != null) snapshot.restore(player);
+        for (Map.Entry<UUID, PlayerSnapshot> entry : pendingRestores.entrySet()) {
+            if (pendingRestores.remove(entry.getKey(), entry.getValue())) {
+                plugin.matchManager().restorePartySnapshot(entry.getKey(), entry.getValue());
+            }
         }
         snapshots.clear();
         watching.clear();
