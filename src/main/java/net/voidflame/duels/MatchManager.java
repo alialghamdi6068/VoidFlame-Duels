@@ -213,19 +213,39 @@ public final class MatchManager implements Listener {
         plugin.spectatorManager().stopWatching(match);
         match.transition(MatchState.RESULT);
         if (winner != null) {
-            plugin.advancedFeatures().rewardMatch(winner, "win", false);
-            plugin.advancedFeatures().rewardMatch(match.opponent(winner), "loss", false);
+            try {
+                plugin.advancedFeatures().rewardMatch(winner, "win", false);
+            } catch (RuntimeException error) {
+                plugin.getLogger().severe("Could not apply duel win reward for " + winner + ": " + error.getMessage());
+            }
+            try {
+                plugin.advancedFeatures().rewardMatch(match.opponent(winner), "loss", false);
+            } catch (RuntimeException error) {
+                plugin.getLogger().severe("Could not apply duel loss reward for " + match.opponent(winner) + ": " + error.getMessage());
+            }
         }
 
         match.transition(MatchState.REWARDS);
         // Stats/ELO persistence is owned by the Core service.
         match.transition(MatchState.STATS);
         if (winner != null) {
-            recordExternalMatchResult(match, winner);
-            plugin.advancedFeatures().saveReplay(
-                    match.matchId(), match.first(), match.second(), match.arena().name(),
-                    match.kit().name(), match.durationSeconds() * 1000L);
-            plugin.advancedFeatures().saveReplay(match);
+            try {
+                recordExternalMatchResult(match, winner);
+            } catch (RuntimeException error) {
+                plugin.getLogger().severe("Could not record duel result for " + match.matchId() + ": " + error.getMessage());
+            }
+            try {
+                plugin.advancedFeatures().saveReplay(
+                        match.matchId(), match.first(), match.second(), match.arena().name(),
+                        match.kit().name(), match.durationSeconds() * 1000L);
+            } catch (RuntimeException error) {
+                plugin.getLogger().warning("Could not save duel replay metadata for " + match.matchId() + ": " + error.getMessage());
+            }
+            try {
+                plugin.advancedFeatures().saveReplay(match);
+            } catch (RuntimeException error) {
+                plugin.getLogger().warning("Could not save duel replay for " + match.matchId() + ": " + error.getMessage());
+            }
         } else {
             audit("DUEL_CANCEL", match.matchId().toString(),
                     "reason=no-winner|kit=" + match.kit() + "|arena=" + match.arena().name());
