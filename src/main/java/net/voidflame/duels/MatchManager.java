@@ -387,7 +387,7 @@ public final class MatchManager implements Listener {
         return persisted.thenCompose(ignored -> {
             if (profiles == null) {
                 plugin.getLogger().warning("PlayerProfileService is unavailable; ranked ELO cache refresh skipped.");
-                return CompletableFuture.completedFuture(null);
+                return CompletableFuture.<Void>completedFuture(null);
             }
             profiles.invalidate(match.first());
             profiles.invalidate(match.second());
@@ -396,7 +396,7 @@ public final class MatchManager implements Listener {
                     (firstProfile, secondProfile) -> {
                         queues.refreshElo(match.first(), firstProfile.elo());
                         queues.refreshElo(match.second(), secondProfile.elo());
-                        return null;
+                        return (Void) null;
                     });
         }).whenComplete((ignored, error) -> {
             if (error != null) {
