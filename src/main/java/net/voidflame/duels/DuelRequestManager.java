@@ -23,8 +23,11 @@ public final class DuelRequestManager {
         if (plugin.partyManager().partyOf(senderId) != null || plugin.partyManager().partyOf(targetId) != null) return false;
         long ttl = Math.max(1L, Math.min(3600L,
                 plugin.getConfig().getLong("settings.request-expiry-seconds", 60L)));
-        incoming.put(target.getUniqueId(), new Request(sender.getUniqueId(), target.getUniqueId(), kit, System.currentTimeMillis() + ttl * 1000L));
-        return true;
+        long now = System.currentTimeMillis();
+        Request request = new Request(senderId, targetId, kit, now + ttl * 1000L);
+        incoming.compute(targetId, (id, existing) ->
+                existing == null || existing.expiresAt() <= now ? request : existing);
+        return incoming.get(targetId) == request;
     }
 
     private boolean unavailable(UUID id) {
