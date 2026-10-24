@@ -123,7 +123,7 @@ public final class MatchManager implements Listener {
         LobbyItemsManager.PartyMode mode = plugin.partyManager().modeOf(leader);
         if (mode == null) return false;
         if (!plugin.getConfig().getBoolean("settings.party-matchmaking-enabled", true)) return false;
-        List<Player> participants = plugin.partyManager().onlineMembers(leader);
+        List<Player> participants = plugin.partyManager().onlineMembers(leader).stream().toList();
         boolean busyMember = participants.stream().anyMatch(player -> {
             UUID id = player.getUniqueId();
             return isInMatch(id) || isDisconnected(id) || queues.isQueued(id)
