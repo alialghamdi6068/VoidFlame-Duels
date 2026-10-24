@@ -98,12 +98,20 @@ public final class VoidFlamePlaceholders extends PlaceholderExpansion implements
             case "elo" -> formatElo(p.elo());
             case "coins" -> String.valueOf(p.coins());
             case "rank" -> p.rank();
-            case "mode", "status" -> {
-                Player online = Bukkit.getPlayer(player.getUniqueId());
-                yield online != null && plugin.matchManager() != null && plugin.matchManager().isInMatch(online.getUniqueId()) ? "§cIn Duel" : "§aPractice";
-            }
+            case "mode", "status" -> status(player.getUniqueId());
+            case "queue" -> plugin.queueManager().isQueued(player.getUniqueId()) ? "Queued" : "Not Queued";
+            case "party" -> plugin.partyManager().partyOf(player.getUniqueId()) == null ? "None" : "In Party";
             default -> null;
         };
+    }
+
+    private String status(UUID id) {
+        if (plugin.matchManager().isInMatch(id)) return "In Duel";
+        if (plugin.spectatorManager().isSpectating(id)) return "Spectating";
+        if (plugin.ffaManager().isInFfa(id)) return "FFA";
+        if (plugin.queueManager().isQueued(id)) return "In Queue";
+        if (plugin.partyManager().partyOf(id) != null) return "In Party";
+        return "Spawn";
     }
 
     private double decimalNumber(Object value, double fallback) {
