@@ -243,7 +243,14 @@ public final class FfaManager implements Listener {
             player.setFoodLevel(20);
             player.setSaturation(20f);
             player.setFireTicks(0);
-            plugin.kitManager().apply(player, parseKit(session.kit));
+            if (!plugin.kitManager().apply(player, parseKit(session.kit))) {
+                if (sessions.remove(player.getUniqueId(), session)) {
+                    session.snapshot.restore(player);
+                    plugin.getLogger().warning("Could not reapply FFA kit '" + session.kit
+                            + "' after respawn for " + player.getUniqueId() + "; restored the pre-FFA snapshot.");
+                    player.sendMessage(plugin.message("ffa-join-failed"));
+                }
+            }
         });
     }
 
@@ -278,7 +285,11 @@ public final class FfaManager implements Listener {
 
     private void persist(UUID uuid, Session session) {
         storage.put("duels.ffa", uuid.toString(),
-                session.kills + "," + session.deaths + "," + session.streak);
+                session.kills + "," + session.deaths + "," + session.streak)
+                .exceptionally(error -> {
+                    plugin.getLogger().severe("Could not persist FFA stats for " + uuid + ": " + error.getMessage());
+                    return null;
+                });
     }
 
     private void rewardFfa(Player player, String outcome) {
