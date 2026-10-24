@@ -53,8 +53,10 @@ public final class KitEditorManager implements Listener {
             try {
                 session.snapshot().restore(event.getPlayer());
             } catch (RuntimeException error) {
+                // Retain the snapshot so a later join can retry restoration.
+                sessions.putIfAbsent(id, session);
                 plugin.getLogger().severe("Could not restore inventory after kit editor disconnect for " + id
-                        + ": " + error.getMessage());
+                        + "; snapshot retained for retry: " + error.getMessage());
             }
         }
     }
@@ -62,6 +64,19 @@ public final class KitEditorManager implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         UUID playerId = event.getPlayer().getUniqueId();
+        Session pendingRestore = sessions.get(playerId);
+        if (pendingRestore != null) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!event.getPlayer().isOnline()) return;
+                try {
+                    pendingRestore.snapshot().restore(event.getPlayer());
+                    sessions.remove(playerId, pendingRestore);
+                } catch (RuntimeException error) {
+                    plugin.getLogger().severe("Could not retry kit editor inventory restoration for " + playerId
+                            + ": " + error.getMessage());
+                }
+            });
+        }
         for (KitType kit : KitType.values()) {
             String key = path(kit, playerId);
             storage.get("kit-layouts", key).thenAccept(raw -> {
@@ -326,9 +341,15 @@ public final class KitEditorManager implements Listener {
     public void shutdown() {
         for (Map.Entry<UUID, Session> entry : new ArrayList<>(sessions.entrySet())) {
             Player player = Bukkit.getPlayer(entry.getKey());
-            if (player != null) entry.getValue().snapshot().restore(player);
+            if (player == null || !player.isOnline()) continue;
+            try {
+                entry.getValue().snapshot().restore(player);
+                sessions.remove(entry.getKey(), entry.getValue());
+            } catch (RuntimeException error) {
+                plugin.getLogger().severe("Could not restore kit editor inventory during shutdown for "
+                        + entry.getKey() + ": " + error.getMessage());
+            }
         }
-        sessions.clear();
     }
 
     private record Session(KitType kit, PlayerSnapshot snapshot) {}
