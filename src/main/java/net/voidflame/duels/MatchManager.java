@@ -154,12 +154,19 @@ public final class MatchManager implements Listener {
         }
         
         plugin.partyManager().clearMode(match.players());
-        arenas.reset(match.arena()).thenAccept(success -> plugin.getServer().getScheduler().runTask(plugin, () -> {
-            if (!success) {
-                plugin.getLogger().severe("Party arena '" + match.arena().name()
-                        + "' failed to reset and will remain unavailable.");
-            }
-        }));
+        try {
+            arenas.reset(match.arena()).whenComplete((success, error) ->
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        if (error != null || !Boolean.TRUE.equals(success)) {
+                            plugin.getLogger().severe("Party arena '" + match.arena().name()
+                                    + "' failed to reset and will remain unavailable."
+                                    + (error == null ? "" : " Cause: " + error.getMessage()));
+                        }
+                    }));
+        } catch (RuntimeException error) {
+            plugin.getLogger().severe("Could not start reset for party arena '" + match.arena().name()
+                    + "'; it must remain unavailable. Cause: " + error.getMessage());
+        }
     }
 
     public boolean isDisconnected(UUID id) {
@@ -230,16 +237,23 @@ public final class MatchManager implements Listener {
 
         // The arena remains RESETTING until its template has been restored successfully.
         // Never make a modified arena available for another match.
-        arenas.reset(match.arena()).thenAccept(success ->
-                plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    if (!success) {
-                        plugin.getLogger().severe("Arena '" + match.arena().name()
-                                + "' was disabled because its reset failed.");
-                    }
-                    match.transition(MatchState.FINISHED);
-                    
-                })
-        );
+        try {
+            arenas.reset(match.arena()).whenComplete((success, error) ->
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        if (error != null || !Boolean.TRUE.equals(success)) {
+                            plugin.getLogger().severe("Arena '" + match.arena().name()
+                                    + "' remains unavailable because its reset failed."
+                                    + (error == null ? "" : " Cause: " + error.getMessage()));
+                        }
+                        // Complete the match lifecycle even when reset fails. ArenaManager
+                        // keeps the failed arena reserved so it cannot be reused unsafely.
+                        match.transition(MatchState.FINISHED);
+                    }));
+        } catch (RuntimeException error) {
+            plugin.getLogger().severe("Could not start reset for arena '" + match.arena().name()
+                    + "'; the arena must remain unavailable. Cause: " + error.getMessage());
+            match.transition(MatchState.FINISHED);
+        }
 
         if (winner == null) {
             String cancelled = "Match cancelled. No win or loss was recorded.";
