@@ -40,6 +40,7 @@ public final class QueueManager implements Listener {
     }
 
     public synchronized boolean join(Player player, KitType kit, boolean ranked) {
+        if (player == null || kit == null) return false;
         UUID id = player.getUniqueId();
         if (!player.isOnline() || playerQueues.containsKey(id) || plugin.matchManager().isInMatch(id)
                 || plugin.matchManager().isDisconnected(id) || plugin.kitEditorManager().isEditing(id)
