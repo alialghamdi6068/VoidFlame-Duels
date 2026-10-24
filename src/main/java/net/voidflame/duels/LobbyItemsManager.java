@@ -9,6 +9,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -179,10 +181,36 @@ public final class LobbyItemsManager implements Listener {
     }
 
     @EventHandler public void onClick(InventoryClickEvent e) {
-        if (!(e.getWhoClicked() instanceof Player p)) return;
-        if (plugin.matchManager().isInMatch(p.getUniqueId())) return;
-        if (e.getRawSlot() < 9 && is(e.getCurrentItem())) e.setCancelled(true);
-        if (e.isShiftClick() && is(e.getCurrentItem())) e.setCancelled(true);
+        if (!(e.getWhoClicked() instanceof Player player)) return;
+        if (plugin.matchManager().isInMatch(player.getUniqueId())
+                || plugin.matchManager().isDisconnected(player.getUniqueId())
+                || plugin.spectatorManager().isSpectating(player.getUniqueId())) return;
+
+        // Protect the lobby items themselves and their fixed hotbar slots.
+        if (is(e.getCurrentItem()) || is(e.getCursor())) {
+            e.setCancelled(true);
+            return;
+        }
+        if (e.getClickedInventory() instanceof PlayerInventory clickedInventory) {
+            int slot = e.getSlot();
+            if (slot >= 0 && slot <= 8 && is(clickedInventory.getItem(slot))) {
+                e.setCancelled(true);
+                return;
+            }
+        }
+
+        int hotbarButton = e.getHotbarButton();
+        if ((e.getClick() == ClickType.NUMBER_KEY || e.getAction() == InventoryAction.HOTBAR_SWAP
+                || e.getAction() == InventoryAction.HOTBAR_MOVE_AND_READD)
+                && hotbarButton >= 0 && hotbarButton <= 8
+                && is(player.getInventory().getItem(hotbarButton))) {
+            e.setCancelled(true);
+            return;
+        }
+        if (e.getClick() == ClickType.SWAP_OFFHAND
+                && (is(player.getInventory().getItemInOffHand()) || is(player.getInventory().getItemInMainHand()))) {
+            e.setCancelled(true);
+        }
     }
 
     private void startParty(Player p,PartyMode mode){
@@ -193,8 +221,26 @@ public final class LobbyItemsManager implements Listener {
         plugin.partyManager().queue(p.getUniqueId(),mode);p.closeInventory();
     }
 
-    @EventHandler public void onDrop(PlayerDropItemEvent e){if(is(e.getItemDrop().getItemStack()))e.setCancelled(true);}
-    @EventHandler public void onDrag(InventoryDragEvent e){if(e.getWhoClicked() instanceof Player p&&e.getRawSlots().stream().anyMatch(s->s<9)&&is(e.getOldCursor()))e.setCancelled(true);}
+    @EventHandler public void onDrop(PlayerDropItemEvent e) {
+        if (is(e.getItemDrop().getItemStack())) e.setCancelled(true);
+    }
+
+    @EventHandler public void onDrag(InventoryDragEvent e) {
+        if (!(e.getWhoClicked() instanceof Player player)) return;
+        if (is(e.getOldCursor())) {
+            e.setCancelled(true);
+            return;
+        }
+        for (int rawSlot : e.getRawSlots()) {
+            if (e.getView().getInventory(rawSlot) == player.getInventory()) {
+                int slot = e.getView().convertSlot(rawSlot);
+                if (slot >= 0 && slot <= 8 && is(player.getInventory().getItem(slot))) {
+                    e.setCancelled(true);
+                    return;
+                }
+            }
+        }
+    }
 
     private boolean is(ItemStack x){if(x==null||x.getType()==Material.AIR||x.getItemMeta()==null)return false;return x.getItemMeta().getPersistentDataContainer().has(key,PersistentDataType.STRING);}
     private boolean isType(ItemStack x,String type){if(!is(x))return false;return type.equals(x.getItemMeta().getPersistentDataContainer().get(key,PersistentDataType.STRING));}
