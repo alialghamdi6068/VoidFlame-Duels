@@ -49,7 +49,14 @@ public final class KitEditorManager implements Listener {
         UUID id = event.getPlayer().getUniqueId();
         Session session = sessions.remove(id);
         selectedSlots.remove(id);
-        if (session != null) session.snapshot().restore(event.getPlayer());
+        if (session != null) {
+            try {
+                session.snapshot().restore(event.getPlayer());
+            } catch (RuntimeException error) {
+                plugin.getLogger().severe("Could not restore inventory after kit editor disconnect for " + id
+                        + ": " + error.getMessage());
+            }
+        }
     }
 
     @EventHandler
@@ -69,8 +76,9 @@ public final class KitEditorManager implements Listener {
     }
 
     public boolean open(Player player, KitType kit) {
+        if (player == null || kit == null) return false;
         UUID id = player.getUniqueId();
-        if (player == null || kit == null || plugin.matchManager().isInMatch(id)
+        if (plugin.matchManager().isInMatch(id)
                 || plugin.matchManager().isDisconnected(id) || plugin.queueManager().isQueued(id)
                 || plugin.ffaManager().isInFfa(id) || plugin.spectatorManager().isSpectating(id)) return false;
         if (sessions.containsKey(id)) return false;
