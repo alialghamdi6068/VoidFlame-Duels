@@ -18,6 +18,8 @@ import org.bukkit.enchantments.Enchantment;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public final class KitManager {
     private final VoidFlameDuelsPlugin plugin;
@@ -47,24 +49,52 @@ public final class KitManager {
             return false;
         }
 
-        // Validate the kit structure before clearing the player's inventory.
+        // Fully parse and validate configured items before clearing any player inventory.
+        Map<Integer, ItemStack> preparedItems = new LinkedHashMap<>();
+        for (String key : items.getKeys(false)) {
+            int slot;
+            try {
+                slot = Integer.parseInt(key);
+            } catch (NumberFormatException invalidSlot) {
+                plugin.getLogger().warning("Ignoring invalid slot '" + key + "' in kit '" + id + "'.");
+                continue;
+            }
+            if (slot < 0 || slot > 40) {
+                plugin.getLogger().warning("Ignoring out-of-range slot " + slot + " in kit '" + id + "'.");
+                continue;
+            }
+            try {
+                ItemStack item = readItem(items.getConfigurationSection(key));
+                if (item != null) preparedItems.put(slot, item);
+                else plugin.getLogger().warning("Ignoring invalid item at slot " + slot + " in kit '" + id + "'.");
+            } catch (RuntimeException invalidItem) {
+                plugin.getLogger().warning("Ignoring malformed item at slot " + slot + " in kit '" + id
+                        + "': " + invalidItem.getMessage());
+            }
+        }
+
+        ItemStack configuredOffhand = null;
+        ConfigurationSection offhand = root.getConfigurationSection("offhand");
+        if (offhand != null) {
+            try {
+                configuredOffhand = readItem(offhand);
+            } catch (RuntimeException invalidOffhand) {
+                plugin.getLogger().warning("Ignoring malformed offhand item in kit '" + id
+                        + "': " + invalidOffhand.getMessage());
+            }
+        }
+        if (preparedItems.isEmpty() && configuredOffhand == null) {
+            plugin.getLogger().severe("Cannot apply kit '" + id
+                    + "': no valid items were parsed. Player inventory was left untouched.");
+            return false;
+        }
+
         player.getInventory().clear();
         player.getInventory().setArmorContents(new ItemStack[4]);
         player.getInventory().setItemInOffHand(new ItemStack(Material.AIR));
         player.setItemOnCursor(new ItemStack(Material.AIR));
-        for (String key : items.getKeys(false)) {
-            int slot;
-            try { slot = Integer.parseInt(key); } catch (NumberFormatException ignored) { continue; }
-            if (slot < 0 || slot > 40) continue;
-            ItemStack item = readItem(items.getConfigurationSection(key));
-            if (item != null) setSlot(player, slot, item);
-        }
-
-        ConfigurationSection offhand = root.getConfigurationSection("offhand");
-        if (offhand != null) {
-            ItemStack item = readItem(offhand);
-            if (item != null) player.getInventory().setItemInOffHand(item);
-        }
+        preparedItems.forEach((slot, item) -> setSlot(player, slot, item));
+        if (configuredOffhand != null) player.getInventory().setItemInOffHand(configuredOffhand);
         return true;
     }
 
