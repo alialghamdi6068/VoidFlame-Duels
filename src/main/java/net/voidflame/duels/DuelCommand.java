@@ -113,13 +113,28 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean accept(Player p, String[] args) {
-        if (args.length < 1) { p.sendMessage(ChatColor.YELLOW + "/accept <player>"); return true; }
-        Player sender = Bukkit.getPlayerExact(args[0]);
-        if (sender == null) { p.sendMessage(plugin.message("player-not-found")); return true; }
-        DuelRequestManager.Request request = plugin.requests().getFrom(p, sender);
-        if (request == null) { p.sendMessage(plugin.message("request-expired")); return true; }
+        DuelRequestManager.Request request;
+        Player sender;
+        if (args.length >= 1) {
+            sender = Bukkit.getPlayerExact(args[0]);
+            if (sender == null) { p.sendMessage(plugin.message("player-not-found")); return true; }
+            request = plugin.requests().getFrom(p, sender);
+        } else {
+            request = plugin.requests().get(p);
+            sender = request == null ? null : Bukkit.getPlayer(request.sender());
+        }
+        if (request == null || sender == null || !sender.isOnline()) {
+            p.sendMessage(plugin.message("request-expired"));
+            return true;
+        }
+        if (!plugin.playerSettings().duelRequests(p) || !plugin.playerSettings().duelRequests(sender)) {
+            plugin.requests().remove(p);
+            p.sendMessage(plugin.message("duel-unavailable"));
+            return true;
+        }
         if (!plugin.matchManager().startDirect(p, sender, request.kit())) {
-            p.sendMessage(plugin.message("duel-start-failed")); return true;
+            p.sendMessage(plugin.message("duel-start-failed"));
+            return true;
         }
         plugin.requests().remove(p);
         p.sendMessage(plugin.message("request-accepted"));
@@ -127,11 +142,20 @@ public final class DuelCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean deny(Player p, String[] args) {
-        if (args.length < 1) { p.sendMessage(ChatColor.YELLOW + "/deny <player>"); return true; }
-        Player sender = Bukkit.getPlayerExact(args[0]);
-        if (sender == null) { p.sendMessage(plugin.message("player-not-found")); return true; }
-        DuelRequestManager.Request request = plugin.requests().getFrom(p, sender);
-        if (request == null) { p.sendMessage(plugin.message("request-expired")); return true; }
+        DuelRequestManager.Request request;
+        Player sender;
+        if (args.length >= 1) {
+            sender = Bukkit.getPlayerExact(args[0]);
+            if (sender == null) { p.sendMessage(plugin.message("player-not-found")); return true; }
+            request = plugin.requests().getFrom(p, sender);
+        } else {
+            request = plugin.requests().get(p);
+            sender = request == null ? null : Bukkit.getPlayer(request.sender());
+        }
+        if (request == null || sender == null || !sender.isOnline()) {
+            p.sendMessage(plugin.message("request-expired"));
+            return true;
+        }
         plugin.requests().remove(p);
         p.sendMessage(ChatColor.GRAY + "Duel request denied.");
         sender.sendMessage(ChatColor.RED + p.getName() + " denied your duel request.");
