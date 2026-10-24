@@ -611,18 +611,6 @@ public final class AdvancedFeatures implements Listener {
     }
 
     @EventHandler
-    public void onQuickDuel(PlayerInteractEntityEvent event) {
-        if (!plugin.getConfig().getBoolean("duel-menu.right-click-enabled", true)) return;
-        if (!(event.getRightClicked() instanceof Player target)) return;
-        Player player = event.getPlayer();
-        if (player.equals(target) || plugin.matchManager().isInMatch(player.getUniqueId())
-                || plugin.matchManager().isInMatch(target.getUniqueId())) return;
-        event.setCancelled(true);
-        player.sendMessage(color("&bDuel Menu &7» &fOpening a duel request for &e" + target.getName()));
-        plugin.requests().send(player, target, KitType.SWORD);
-    }
-
-    @EventHandler
     public void onTrimInteract(PlayerInteractEvent event) {
         if (!plugin.getConfig().getBoolean("trim-editor.enabled", true)) return;
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
