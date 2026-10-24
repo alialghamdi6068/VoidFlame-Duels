@@ -49,6 +49,8 @@ public final class KitEditorManager implements Listener {
         UUID id = event.getPlayer().getUniqueId();
         Session session = sessions.remove(id);
         selectedSlots.remove(id);
+        String layoutPrefix = "players." + id + ".";
+        layoutCache.keySet().removeIf(key -> key.startsWith(layoutPrefix));
         if (session != null) {
             try {
                 session.snapshot().restore(event.getPlayer());
@@ -108,7 +110,8 @@ public final class KitEditorManager implements Listener {
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (sessions.get(id) != session) return;
                     if (!player.isOnline()) {
-                        sessions.remove(id, session);
+                        // Keep the snapshot while offline so the next join can retry
+                        // restoration if the quit-time restore failed.
                         return;
                     }
                     if (error != null) {
@@ -321,8 +324,8 @@ public final class KitEditorManager implements Listener {
         if (layout.size() != PLAYER_SLOTS) return false;
         Set<Integer> seen = new HashSet<>();
         for (int source : layout) {
-            if (source < 0) continue;
-            if (source >= PLAYER_SLOTS || base[source] == null || !seen.add(source)) return false;
+            if (source == -1) continue;
+            if (source < 0 || source >= PLAYER_SLOTS || base[source] == null || !seen.add(source)) return false;
         }
         return true;
     }
