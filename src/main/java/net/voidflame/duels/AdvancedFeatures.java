@@ -79,11 +79,19 @@ public final class AdvancedFeatures implements Listener {
     }
 
     private void storagePut(String module, String key, String value) {
-        storage.put(module, key, value);
+        storage.put(module, key, value).exceptionally(error -> {
+            plugin.getLogger().warning("Could not persist Core module data for module '" + module
+                    + "' and key '" + key + "': " + error.getMessage());
+            return null;
+        });
     }
 
     private void storageGet(String module, String key, java.util.function.Consumer<String> consumer) {
-        storage.get(module, key).thenAccept(consumer);
+        storage.get(module, key).thenAccept(consumer).exceptionally(error -> {
+            plugin.getLogger().warning("Could not load Core module data for module '" + module
+                    + "' and key '" + key + "': " + error.getMessage());
+            return null;
+        });
     }
 
     private void loadAnnouncements() {
