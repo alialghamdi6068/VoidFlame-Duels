@@ -322,8 +322,12 @@ public final class MatchManager implements Listener {
 
         // Restore the canonical spawn items after the match inventory is restored.
         Bukkit.getScheduler().runTask(plugin, () -> {
-            if (a != null && a.isOnline()) plugin.lobbyItemsManager().giveLobbyItems(a);
-            if (b != null && b.isOnline()) plugin.lobbyItemsManager().giveLobbyItems(b);
+            if (a != null && a.isOnline() && !pendingRestores.containsKey(match.first())) {
+                plugin.lobbyItemsManager().giveLobbyItems(a);
+            }
+            if (b != null && b.isOnline() && !pendingRestores.containsKey(match.second())) {
+                plugin.lobbyItemsManager().giveLobbyItems(b);
+            }
         });
     }
 
@@ -384,6 +388,14 @@ public final class MatchManager implements Listener {
 
         matches.remove(player, match);
         disconnected.put(player, match);
+
+        UUID opponentId = match.opponent(player);
+        if (disconnected.containsKey(opponentId)) {
+            plugin.getLogger().info("Cancelling duel " + match.matchId()
+                    + " without a result because both players disconnected.");
+            match.finish(null);
+            return;
+        }
 
         long token = System.nanoTime();
         disconnectTokens.put(player, token);
