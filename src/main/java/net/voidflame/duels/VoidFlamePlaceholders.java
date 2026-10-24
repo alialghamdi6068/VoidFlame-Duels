@@ -60,7 +60,7 @@ public final class VoidFlamePlaceholders extends PlaceholderExpansion implements
             return;
         }
         registration.getProvider().query(
-                "SELECT wins, losses, winstreak, best_winstreak, elo, coins, rank FROM player_profiles WHERE uuid = ? LIMIT 1",
+                "SELECT wins, losses, winstreak, best_winstreak, elo, rank FROM player_profiles WHERE uuid = ? LIMIT 1",
                 uuid.toString()
         ).whenComplete((rows, error) -> {
             refreshInFlight.remove(uuid);
@@ -76,7 +76,7 @@ public final class VoidFlamePlaceholders extends PlaceholderExpansion implements
                     Map<String, Object> row = rows.get(0);
                     Profile profile = new Profile(longNumber(row.get("wins")), longNumber(row.get("losses")),
                             longNumber(row.get("winstreak")), longNumber(row.get("best_winstreak")),
-                            decimalNumber(row.get("elo"), 1000.0D), longNumber(row.get("coins")),
+                            decimalNumber(row.get("elo"), 1000.0D), plugin.advancedFeatures().coinBalance(uuid),
                             row.get("rank") == null ? "Player" : String.valueOf(row.get("rank")));
                     profiles.put(uuid, profile);
                 });
