@@ -62,7 +62,10 @@ public final class Match {
                 if (state != MatchState.COUNTDOWN) { cancel(); return; }
                 Player x = Bukkit.getPlayer(first), y = Bukkit.getPlayer(second);
                 if (x == null || y == null || !x.isOnline() || !y.isOnline()) {
-                    finish(x == null ? second : first);
+                    boolean firstOnline = x != null && x.isOnline();
+                    boolean secondOnline = y != null && y.isOnline();
+                    UUID winner = firstOnline == secondOnline ? null : (firstOnline ? first : second);
+                    finish(winner);
                     cancel();
                     return;
                 }
