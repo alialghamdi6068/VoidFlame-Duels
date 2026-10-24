@@ -448,6 +448,8 @@ public final class KitEditorManager implements Listener {
             } catch (RuntimeException error) {
                 plugin.getLogger().severe("Could not restore kit editor inventory during shutdown for "
                         + entry.getKey() + ": " + error.getMessage());
+                // Hand the original snapshot to MatchManager's shutdown recovery path.
+                plugin.matchManager().restorePartySnapshot(entry.getKey(), entry.getValue().snapshot());
             }
         }
     }
