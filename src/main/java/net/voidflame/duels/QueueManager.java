@@ -46,7 +46,7 @@ public final class QueueManager implements Listener {
                 || plugin.matchManager().isDisconnected(id) || plugin.kitEditorManager().isEditing(id)
                 || plugin.ffaManager().isInFfa(id) || plugin.spectatorManager().isSpectating(id)
                 || plugin.partyManager().partyOf(id) != null) return false;
-        if (kits != null && !kits.isEnabled(kit.name().toLowerCase(Locale.ROOT))) return false;
+        if (!isKitEnabled(kit)) return false;
         if (ranked && (!plugin.getConfig().getBoolean("queue.ranked.enabled", true) || profiles == null)) return false;
 
         double elo = eloCache.getOrDefault(id, plugin.getConfig().getDouble("queue.ranked.default-elo", 1000.0));
@@ -55,6 +55,13 @@ public final class QueueManager implements Listener {
         playerQueues.put(id, entry);
         loadElo(id, player.getName());
         return true;
+    }
+
+    public boolean isKitEnabled(KitType kit) {
+        if (kit == null) return false;
+        String id = kit.name().toLowerCase(Locale.ROOT);
+        return plugin.getConfig().getBoolean("kits." + id + ".enabled", true)
+                && (kits == null || kits.isEnabled(id));
     }
 
     private void loadElo(UUID id, String name) {
