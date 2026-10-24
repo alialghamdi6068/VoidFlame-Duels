@@ -350,13 +350,15 @@ public final class KitEditorManager implements Listener {
     }
 
     private void applyLayout(Player player, List<Integer> layout) {
-        ItemStack[] base = player.getInventory().getContents().clone();
+        // A saved layout only rearranges the 36 storage slots. Using getContents /
+        // setContents here can overwrite armor and offhand slots on some implementations.
+        ItemStack[] base = player.getInventory().getStorageContents().clone();
         ItemStack[] arranged = new ItemStack[PLAYER_SLOTS];
         for (int destination = 0; destination < PLAYER_SLOTS; destination++) {
             int source = layout.get(destination);
-            arranged[destination] = source < 0 ? null : base[source].clone();
+            arranged[destination] = source == -1 ? null : base[source].clone();
         }
-        player.getInventory().setContents(arranged);
+        player.getInventory().setStorageContents(arranged);
         player.updateInventory();
     }
 
