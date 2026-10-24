@@ -36,7 +36,10 @@ public final class Match {
     public void start() {
         Player a = Bukkit.getPlayer(first), b = Bukkit.getPlayer(second);
         if (a == null || b == null || !a.isOnline() || !b.isOnline()) {
-            finish(a == null ? second : first);
+            boolean firstOnline = a != null && a.isOnline();
+            boolean secondOnline = b != null && b.isOnline();
+            UUID winner = firstOnline == secondOnline ? null : (firstOnline ? first : second);
+            finish(winner);
             return;
         }
         try {
