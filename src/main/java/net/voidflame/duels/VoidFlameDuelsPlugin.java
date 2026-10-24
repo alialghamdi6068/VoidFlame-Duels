@@ -7,6 +7,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.entity.Player;
 
 public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
@@ -199,6 +200,11 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         registerParty("party", partyCommand);
 
         getLogger().info("VoidFlame-Duels enabled with 8 ladders and external arena service.");
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        if (nativeMenus != null) nativeMenus.clearPlayer(event.getPlayer().getUniqueId());
     }
 
     /* removed legacy command preprocess alias */
