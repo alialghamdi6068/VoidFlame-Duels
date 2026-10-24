@@ -109,6 +109,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
         getServer().getScheduler().runTaskTimer(this, partyManager::expireInvites, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, partyManager::processQueue, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, requests::expireStale, 20L, 100L);
+        getServer().getScheduler().runTaskTimer(this, lobbyItemsManager::enforceDuelItems, 20L, 20L);
         getServer().getScheduler().runTask(this, () -> {});
 
         DuelCommand duelCommand = new DuelCommand(this);
