@@ -33,6 +33,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Cross-cutting practice features that belong to the Duels runtime:
@@ -53,6 +54,7 @@ public final class AdvancedFeatures implements Listener {
     private final Map<UUID, Long> reportCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Long> chatCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> coins = new ConcurrentHashMap<>();
+    private final Map<UUID, CompletableFuture<Void>> coinWrites = new ConcurrentHashMap<>();
     private final Map<UUID, Long> combatTags = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> trainingSessions = new ConcurrentHashMap<>();
     private final Map<UUID, Set<ArmorStand>> trainingDummies = new ConcurrentHashMap<>();
@@ -79,6 +81,21 @@ public final class AdvancedFeatures implements Listener {
             announcementTask = plugin.getServer().getScheduler()
                     .runTaskTimer(plugin, this::announce, period, period).getTaskId();
         }
+    }
+
+    private void persistCoinBalance(UUID player, int balance) {
+        CompletableFuture<Void> write = coinWrites.compute(player, (id, previous) -> {
+            CompletableFuture<Void> ready = previous == null
+                    ? CompletableFuture.completedFuture(null)
+                    : previous.handle((ignored, error) -> null);
+            return ready.thenCompose(ignored -> storage.put(COIN_MODULE, id.toString(), String.valueOf(balance)));
+        });
+        write.whenComplete((ignored, error) -> {
+            if (error != null) {
+                plugin.getLogger().severe("Could not persist coin balance for " + player + ": " + error.getMessage());
+            }
+            coinWrites.remove(player, write);
+        });
     }
 
     private void storagePut(String module, String key, String value) {
@@ -458,7 +475,7 @@ public final class AdvancedFeatures implements Listener {
         long calculated = (long) coins.getOrDefault(player, 0) + amount;
         int next = (int) Math.max(0L, Math.min(Integer.MAX_VALUE, calculated));
         coins.put(player, next);
-        storagePut(COIN_MODULE, player.toString(), String.valueOf(next));
+        persistCoinBalance(player, next);
     }
 
     public void rewardMatch(UUID player, String outcome, boolean party) {
@@ -480,7 +497,7 @@ public final class AdvancedFeatures implements Listener {
         if (current < amount) return false;
         int next = current - amount;
         coins.put(player, next);
-        storagePut(COIN_MODULE, player.toString(), String.valueOf(next));
+        persistCoinBalance(player, next);
         return true;
     }
 
