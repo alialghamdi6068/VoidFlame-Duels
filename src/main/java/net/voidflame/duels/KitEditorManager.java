@@ -220,7 +220,8 @@ public final class KitEditorManager implements Listener {
                             } catch (RuntimeException restoreError) {
                                 plugin.getLogger().severe("Layout was saved but original player state could not be restored for "
                                         + playerId + "; editor session retained: " + restoreError.getMessage());
-                                player.sendMessage(plugin.message("kit-editor-failed"));
+                                player.sendMessage(ChatColor.RED
+                                        + "Your layout was saved, but your previous player state could not be restored. Please retry or contact staff.");
                                 openDialog(player);
                             }
                         }));
