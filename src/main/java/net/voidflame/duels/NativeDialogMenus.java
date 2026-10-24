@@ -44,6 +44,7 @@ public final class NativeDialogMenus {
 
     private final VoidFlameDuelsPlugin plugin;
     private final Map<UUID, UUID> duelTargets = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> duelTargetCreatedAt = new ConcurrentHashMap<>();
 
     public NativeDialogMenus(VoidFlameDuelsPlugin plugin) {
         this.plugin = plugin;
@@ -56,8 +57,12 @@ public final class NativeDialogMenus {
      */
     public void clearPlayer(UUID playerId) {
         if (playerId == null) return;
-        duelTargets.entrySet().removeIf(entry ->
-                entry.getKey().equals(playerId) || entry.getValue().equals(playerId));
+        duelTargets.entrySet().removeIf(entry -> {
+            boolean remove = entry.getKey().equals(playerId) || entry.getValue().equals(playerId);
+            if (remove) duelTargetCreatedAt.remove(entry.getKey());
+            return remove;
+        });
+        duelTargetCreatedAt.remove(playerId);
     }
 
     public void openMain(Player player) {
@@ -135,6 +140,7 @@ public final class NativeDialogMenus {
     public void openTargetKit(Player player, Player target) {
         if (JavaAdminAccess.isBedrock(player)) { plugin.bedrockMenus().openTargetKit(player, target); return; }
         duelTargets.put(player.getUniqueId(), target.getUniqueId());
+        duelTargetCreatedAt.put(player.getUniqueId(), System.currentTimeMillis());
         List<DialogBody> body = new ArrayList<>();
         body.add(DialogBody.plainMessage(Component.text("Choose the kit for your duel with " + target.getName() + ".", NamedTextColor.GRAY), 300));
         for (KitCard kit : enabledKits()) {
@@ -151,9 +157,12 @@ public final class NativeDialogMenus {
     }
 
     private void sendTargetDuel(Player player, String id) {
-        UUID targetId = duelTargets.remove(player.getUniqueId());
+        UUID playerId = player.getUniqueId();
+        UUID targetId = duelTargets.remove(playerId);
+        Long createdAt = duelTargetCreatedAt.remove(playerId);
         KitCard kit = enabledKits().stream().filter(value -> value.id().equalsIgnoreCase(id)).findFirst().orElse(null);
-        if (targetId == null || kit == null) {
+        if (targetId == null || createdAt == null || System.currentTimeMillis() < createdAt
+                || System.currentTimeMillis() - createdAt > 30_000L || kit == null) {
             player.sendMessage(Component.text("Duel target expired. Choose a player again.", NamedTextColor.RED));
             return;
         }
@@ -319,10 +328,14 @@ public final class NativeDialogMenus {
     public boolean handle(Player player, String[] args) {
         if (args.length == 0 || args[0].equalsIgnoreCase("main")) {
             duelTargets.remove(player.getUniqueId());
+            duelTargetCreatedAt.remove(player.getUniqueId());
             openMain(player);
             return true;
         }
-        if (!args[0].equalsIgnoreCase("targetkit")) duelTargets.remove(player.getUniqueId());
+        if (!args[0].equalsIgnoreCase("targetkit")) {
+            duelTargets.remove(player.getUniqueId());
+            duelTargetCreatedAt.remove(player.getUniqueId());
+        }
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "kits", "queue" -> openQueue(player);
             case "kit" -> { if (args.length < 2) openQueue(player); else openKit(player, args[1]); }
