@@ -595,14 +595,14 @@ public final class AdvancedFeatures implements Listener {
     }
 
     private void startTraining(Player player, String drill) {
-        UUID uuid = player.getUniqueId();
+        UUID id = player.getUniqueId();
         if (!player.isOnline()
-                || plugin.matchManager().isInMatch(uuid)
-                || plugin.matchManager().isDisconnected(uuid)
-                || plugin.queueManager().isQueued(uuid)
-                || plugin.ffaManager().isInFfa(uuid)
-                || plugin.spectatorManager().isSpectating(uuid)
-                || plugin.partyManager().partyOf(uuid) != null) {
+                || plugin.matchManager().isInMatch(id)
+                || plugin.matchManager().isDisconnected(id)
+                || plugin.queueManager().isQueued(id)
+                || plugin.ffaManager().isInFfa(id)
+                || plugin.spectatorManager().isSpectating(id)
+                || plugin.partyManager().partyOf(id) != null) {
             player.sendMessage(color("&cYou cannot start training while queued, in a match, spectating, in FFA, or in a party."));
             return;
         }
