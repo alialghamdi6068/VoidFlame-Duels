@@ -160,9 +160,23 @@ public final class PartyMatch {
     }
 
     private void checkWinner() {
-        if (mode == LobbyItemsManager.PartyMode.FFA) { if (alive.size() <= 1) finish(alive.stream().findFirst().orElse(null)); return; }
-        if (firstTeam.stream().noneMatch(alive::contains)) finish(secondTeam.stream().filter(alive::contains).findFirst().orElse(null));
-        else if (secondTeam.stream().noneMatch(alive::contains)) finish(firstTeam.stream().filter(alive::contains).findFirst().orElse(null));
+        if (mode == LobbyItemsManager.PartyMode.FFA) {
+            if (alive.size() <= 1) {
+                finish(alive.stream().findFirst().filter(this::isOnlineAlive).orElse(null));
+            }
+            return;
+        }
+        if (firstTeam.stream().noneMatch(alive::contains)) {
+            finish(secondTeam.stream().filter(alive::contains).filter(this::isOnlineAlive).findFirst().orElse(null));
+        } else if (secondTeam.stream().noneMatch(alive::contains)) {
+            finish(firstTeam.stream().filter(alive::contains).filter(this::isOnlineAlive).findFirst().orElse(null));
+        }
+    }
+
+    private boolean isOnlineAlive(UUID id) {
+        if (id == null || !alive.contains(id) || disconnectedUntil.containsKey(id)) return false;
+        Player player = Bukkit.getPlayer(id);
+        return player != null && player.isOnline();
     }
 
     public void finish(UUID winner) {
