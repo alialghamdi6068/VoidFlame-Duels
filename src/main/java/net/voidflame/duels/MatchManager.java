@@ -89,6 +89,8 @@ public final class MatchManager implements Listener {
                 || isInMatch(a.getUniqueId()) || isInMatch(b.getUniqueId())
                 || isDisconnected(a.getUniqueId()) || isDisconnected(b.getUniqueId())
                 || queues.isQueued(a.getUniqueId()) || queues.isQueued(b.getUniqueId())
+                || plugin.kitEditorManager().isEditing(a.getUniqueId())
+                || plugin.kitEditorManager().isEditing(b.getUniqueId())
                 || plugin.spectatorManager().isSpectating(a.getUniqueId())
                 || plugin.spectatorManager().isSpectating(b.getUniqueId())
                 || plugin.ffaManager().isInFfa(a.getUniqueId())
