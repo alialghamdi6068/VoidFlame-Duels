@@ -120,6 +120,10 @@ public final class Match {
         if (state == MatchState.FINISHED || state == MatchState.ENDING || state == MatchState.RESULT
                 || state == MatchState.REWARDS || state == MatchState.STATS || state == MatchState.REPLAY
                 || state == MatchState.LOG || state == MatchState.RESET) return;
+        if (winner != null && !winner.equals(first) && !winner.equals(second)) {
+            plugin.getLogger().warning("Ignoring invalid winner " + winner + " for duel " + matchId + ".");
+            winner = null;
+        }
         transition(MatchState.ENDING);
         cancelTasks();
         Player a = Bukkit.getPlayer(first), b = Bukkit.getPlayer(second);
