@@ -19,7 +19,7 @@ public final class VoidFlamePlaceholders extends PlaceholderExpansion implements
     private final VoidFlameDuelsPlugin plugin;
     private final Map<UUID, Profile> profiles = new ConcurrentHashMap<>();
 
-    private record Profile(int wins, int losses, int streak, int bestStreak, double elo, long coins, String rank) {
+    private record Profile(long wins, long losses, long streak, long bestStreak, double elo, long coins, String rank) {
         static Profile empty() { return new Profile(0, 0, 0, 0, 1000.0D, 0, "Player"); }
     }
 
@@ -70,8 +70,8 @@ public final class VoidFlamePlaceholders extends PlaceholderExpansion implements
                         return;
                     }
                     Map<String, Object> row = rows.get(0);
-                    Profile profile = new Profile(number(row.get("wins")), number(row.get("losses")),
-                            number(row.get("winstreak")), number(row.get("best_winstreak")),
+                    Profile profile = new Profile(longNumber(row.get("wins")), longNumber(row.get("losses")),
+                            longNumber(row.get("winstreak")), longNumber(row.get("best_winstreak")),
                             decimalNumber(row.get("elo"), 1000.0D), longNumber(row.get("coins")),
                             row.get("rank") == null ? "Player" : String.valueOf(row.get("rank")));
                     profiles.put(uuid, profile);
@@ -102,11 +102,6 @@ public final class VoidFlamePlaceholders extends PlaceholderExpansion implements
         };
     }
 
-    private int number(Object value) {
-        if (value instanceof Number n) return n.intValue();
-        try { return value == null ? 0 : Integer.parseInt(String.valueOf(value)); }
-        catch (NumberFormatException ignored) { return 0; }
-    }
     private double decimalNumber(Object value, double fallback) {
         if (value instanceof Number n) {
             double parsed = n.doubleValue();
