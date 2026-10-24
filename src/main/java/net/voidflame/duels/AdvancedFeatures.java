@@ -419,14 +419,29 @@ public final class AdvancedFeatures implements Listener {
     public int coinBalance(UUID player) { return coins.getOrDefault(player, 0); }
 
     private void loadCoins(Player player) {
-        coins.putIfAbsent(player.getUniqueId(), 0);
-        storageGet(COIN_MODULE, player.getUniqueId().toString(), raw -> {
-            int value = 0;
-            if (raw != null) {
-                try { value = Math.max(0, Integer.parseInt(raw)); }
-                catch (NumberFormatException ignored) { }
+        UUID id = player.getUniqueId();
+        coins.putIfAbsent(id, 0);
+        storage.get(COIN_MODULE, id.toString()).whenComplete((raw, error) -> {
+            try {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (!player.isOnline() || !id.equals(player.getUniqueId())) return;
+                    if (error != null) {
+                        plugin.getLogger().warning("Could not load coins for " + id + ": " + error.getMessage());
+                        return;
+                    }
+                    int value = 0;
+                    if (raw != null) {
+                        try { value = Math.max(0, Integer.parseInt(raw)); }
+                        catch (NumberFormatException invalid) {
+                            plugin.getLogger().warning("Ignoring invalid stored coin balance for " + id + ".");
+                        }
+                    }
+                    coins.put(id, value);
+                });
+            } catch (RuntimeException schedulingFailure) {
+                plugin.getLogger().fine("Skipping coin-cache refresh after scheduler shutdown for " + id
+                        + ": " + schedulingFailure.getMessage());
             }
-            coins.put(player.getUniqueId(), value);
         });
     }
 
