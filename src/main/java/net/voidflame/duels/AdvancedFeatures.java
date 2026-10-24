@@ -443,7 +443,6 @@ public final class AdvancedFeatures implements Listener {
 
     private void loadCoins(Player player) {
         UUID id = player.getUniqueId();
-        coins.putIfAbsent(id, 0);
         storage.get(COIN_MODULE, id.toString()).whenComplete((raw, error) -> {
             try {
                 Bukkit.getScheduler().runTask(plugin, () -> {
