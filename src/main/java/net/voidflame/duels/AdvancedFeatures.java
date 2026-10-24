@@ -152,7 +152,13 @@ public final class AdvancedFeatures implements Listener {
             recentCombat.computeIfAbsent(event.getPlayer().getUniqueId(), ignored -> Collections.synchronizedList(new ArrayList<>()))
                     .add(System.currentTimeMillis() + "|QUIT");
         }
-        coins.remove(event.getPlayer().getUniqueId());
+        UUID id = event.getPlayer().getUniqueId();
+        // A disconnected duelist may still receive the loss reward when the
+        // reconnect window expires. Keep their cached balance until that match
+        // finalizes; otherwise addCoins would incorrectly start from zero.
+        if (!plugin.matchManager().isInMatch(id) && !plugin.matchManager().isDisconnected(id)) {
+            coins.remove(id);
+        }
         finishTraining(event.getPlayer(), false);
     }
 
@@ -436,7 +442,9 @@ public final class AdvancedFeatures implements Listener {
                             plugin.getLogger().warning("Ignoring invalid stored coin balance for " + id + ".");
                         }
                     }
-                    coins.put(id, value);
+                    // A match reward may have updated this cache while the
+                    // asynchronous read was in flight. Never overwrite that newer value.
+                    coins.putIfAbsent(id, value);
                 });
             } catch (RuntimeException schedulingFailure) {
                 plugin.getLogger().fine("Skipping coin-cache refresh after scheduler shutdown for " + id
