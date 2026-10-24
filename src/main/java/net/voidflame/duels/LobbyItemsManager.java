@@ -48,6 +48,7 @@ public final class LobbyItemsManager implements Listener {
 
     public void giveLobbyItems(Player p) {
         if(plugin.matchManager().isInMatch(p.getUniqueId()) || plugin.matchManager().isDisconnected(p.getUniqueId())
+                || plugin.matchManager().hasPendingRestore(p.getUniqueId())
                 || plugin.spectatorManager().isSpectating(p.getUniqueId())
                 || plugin.ffaManager().isInFfa(p.getUniqueId())) return;
         PlayerInventory inv=p.getInventory();
