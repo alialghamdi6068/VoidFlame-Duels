@@ -350,8 +350,18 @@ public final class MatchManager implements Listener {
 
     private void restoreOrDefer(UUID id, PlayerSnapshot snapshot) {
         Player player = Bukkit.getPlayer(id);
-        if (player != null && player.isOnline()) snapshot.restore(player);
-        else pendingRestores.put(id, snapshot);
+        if (player == null || !player.isOnline()) {
+            pendingRestores.put(id, snapshot);
+            return;
+        }
+        try {
+            snapshot.restore(player);
+            pendingRestores.remove(id, snapshot);
+        } catch (RuntimeException error) {
+            pendingRestores.put(id, snapshot);
+            plugin.getLogger().severe("Could not restore player state for " + id
+                    + "; recovery will be retried on join: " + error.getMessage());
+        }
     }
 
     void markDisconnected(Match match, UUID player) {
@@ -496,9 +506,22 @@ public final class MatchManager implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         UUID id = event.getPlayer().getUniqueId();
-        PlayerSnapshot snapshot = pendingRestores.remove(id);
+        PlayerSnapshot snapshot = pendingRestores.get(id);
         if (snapshot != null) {
-            plugin.getServer().getScheduler().runTask(plugin, () -> snapshot.restore(event.getPlayer()));
+            Player joiningPlayer = event.getPlayer();
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                if (!joiningPlayer.isOnline()) return;
+                try {
+                    snapshot.restore(joiningPlayer);
+                    pendingRestores.remove(id, snapshot);
+                } catch (RuntimeException error) {
+                    // Keep the snapshot until restoration succeeds; never discard the only
+                    // recovery copy because one join-time restore attempt failed.
+                    pendingRestores.put(id, snapshot);
+                    plugin.getLogger().severe("Could not restore pending player state for " + id
+                            + "; snapshot retained for retry: " + error.getMessage());
+                }
+            });
         }
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             PartyMatch partyMatch = partyMatches.get(id);
@@ -531,16 +554,20 @@ public final class MatchManager implements Listener {
 
         for (Map.Entry<UUID, PlayerSnapshot> entry : pendingRestores.entrySet()) {
             Player player = Bukkit.getPlayer(entry.getKey());
-            if (player != null) entry.getValue().restore(player);
+            if (player == null || !player.isOnline()) continue;
+            try {
+                entry.getValue().restore(player);
+                pendingRestores.remove(entry.getKey(), entry.getValue());
+            } catch (RuntimeException error) {
+                plugin.getLogger().severe("Could not restore pending player state during shutdown for "
+                        + entry.getKey() + ": " + error.getMessage());
+            }
         }
-        pendingRestores.clear();
     }
 
     void restorePartySnapshot(UUID id, PlayerSnapshot snapshot) {
         if (id == null || snapshot == null) return;
-        Player player = Bukkit.getPlayer(id);
-        if (player != null && player.isOnline()) snapshot.restore(player);
-        else pendingRestores.put(id, snapshot);
+        restoreOrDefer(id, snapshot);
     }
 
     void clearPartyModes(Collection<UUID> ids) { plugin.partyManager().clearMode(ids); }
