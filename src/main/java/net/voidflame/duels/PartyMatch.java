@@ -166,50 +166,79 @@ public final class PartyMatch {
     }
 
     public void finish(UUID winner) {
-        if (finished) return; finished = true;
+        if (finished) return;
+        finished = true;
         if (countdownTask != -1) Bukkit.getScheduler().cancelTask(countdownTask);
         if (limitTask != -1) Bukkit.getScheduler().cancelTask(limitTask);
-        for (UUID id : players) {
-            PlayerSnapshot snapshot = snapshots.get(id);
-            if (snapshot != null) manager.restorePartySnapshot(id, snapshot);
-            Player player = Bukkit.getPlayer(id);
-            if (player != null && player.isOnline()) {
-                player.sendMessage(winner == null
-                        ? org.bukkit.ChatColor.RED + "Match cancelled. No win or loss was recorded."
-                        : plugin.message("match-ended").replace("<winner>", name(winner)).replace("<kit>", pretty(kit)));
+
+        try {
+            for (UUID id : players) {
+                PlayerSnapshot snapshot = snapshots.get(id);
+                if (snapshot != null) {
+                    try {
+                        manager.restorePartySnapshot(id, snapshot);
+                    } catch (RuntimeException error) {
+                        plugin.getLogger().severe("Could not restore player state for party match " + matchId
+                                + ", player " + id + ": " + error.getMessage());
+                    }
+                }
+                Player player = Bukkit.getPlayer(id);
+                if (player != null && player.isOnline()) {
+                    player.sendMessage(winner == null
+                            ? org.bukkit.ChatColor.RED + "Match cancelled. No win or loss was recorded."
+                            : plugin.message("match-ended").replace("<winner>", name(winner)).replace("<kit>", pretty(kit)));
+                }
+            }
+
+            try {
+                var partyResults = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.PartyMatchResultService.class);
+                if (winner != null && partyResults != null && partyResults.getProvider() != null
+                        && plugin.getConfig().getBoolean("features.party-stats.enabled", true)) {
+                    List<UUID> winners = winningPlayers(winner);
+                    partyResults.getProvider().record(new net.voidflame.core.api.PartyMatchResultService.PartyMatchResult(
+                            matchId, players, winners, kit.name(), mode.name(), arena.name(),
+                            startedAt == 0L ? 0L : Math.max(0L, System.currentTimeMillis() - startedAt)
+                    ));
+                }
+            } catch (RuntimeException error) {
+                plugin.getLogger().severe("Could not record party match result " + matchId + ": " + error.getMessage());
+            }
+
+            if (winner != null) {
+                Set<UUID> winningTeam = mode == LobbyItemsManager.PartyMode.TWO_V_TWO
+                        ? (firstTeam.contains(winner) ? firstTeam : secondTeam) : Set.of(winner);
+                for (UUID id : players) {
+                    try {
+                        boolean won = winningTeam.contains(id);
+                        plugin.advancedFeatures().rewardMatch(id, won ? "win" : "loss", true);
+                    } catch (RuntimeException error) {
+                        plugin.getLogger().severe("Could not apply party match reward for " + id
+                                + " in match " + matchId + ": " + error.getMessage());
+                    }
+                }
+            }
+
+            try {
+                var logs = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.AuditLogService.class);
+                if (logs != null && logs.getProvider() != null) {
+                    logs.getProvider().log(
+                            winner == null ? "SYSTEM" : winner.toString(),
+                            winner == null ? "PARTY_MATCH_CANCEL" : "PARTY_MATCH_FINISH",
+                            arena.name(),
+                            "mode=" + mode + "|kit=" + kit + "|players=" + players.size()
+                    );
+                }
+            } catch (RuntimeException error) {
+                plugin.getLogger().warning("Could not audit party match " + matchId + ": " + error.getMessage());
+            }
+        } finally {
+            try {
+                manager.finishParty(this);
+            } catch (RuntimeException error) {
+                plugin.getLogger().severe("Could not complete cleanup for party match " + matchId
+                        + "; arena may require staff recovery: " + error.getMessage());
             }
         }
-        var partyResults = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.PartyMatchResultService.class);
-        if (winner != null && partyResults != null && partyResults.getProvider() != null
-                && plugin.getConfig().getBoolean("features.party-stats.enabled", true)) {
-            List<UUID> winners = winningPlayers(winner);
-            partyResults.getProvider().record(new net.voidflame.core.api.PartyMatchResultService.PartyMatchResult(
-                    matchId, players, winners, kit.name(), mode.name(), arena.name(),
-                    startedAt == 0L ? 0L : Math.max(0L, System.currentTimeMillis() - startedAt)
-            ));
-        }
-
-        if (winner != null) {
-            if (mode == LobbyItemsManager.PartyMode.TWO_V_TWO) {
-                Set<UUID> winningTeam = firstTeam.contains(winner) ? firstTeam : secondTeam;
-                for (UUID id : players) plugin.advancedFeatures().rewardMatch(id, winningTeam.contains(id) ? "win" : "loss", true);
-            } else if (mode == LobbyItemsManager.PartyMode.FFA) {
-                for (UUID id : players) plugin.advancedFeatures().rewardMatch(id, id.equals(winner) ? "win" : "loss", true);
-            } else {
-                for (UUID id : players) plugin.advancedFeatures().rewardMatch(id, id.equals(winner) ? "win" : "loss", true);
-            }
-        }
-
-        var logs = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.AuditLogService.class);
-        if (logs != null && logs.getProvider() != null) {
-            logs.getProvider().log(
-                    winner == null ? "SYSTEM" : winner.toString(),
-                    winner == null ? "PARTY_MATCH_CANCEL" : "PARTY_MATCH_FINISH",
-                    arena.name(),
-                    "mode=" + mode + "|kit=" + kit + "|players=" + players.size()
-            );
-        }
-        manager.finishParty(this);
     }
 
     private List<UUID> winningPlayers(UUID winner) {
