@@ -108,6 +108,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
 
         getServer().getScheduler().runTaskTimer(this, partyManager::expireInvites, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, partyManager::processQueue, 20L, 20L);
+        getServer().getScheduler().runTaskTimer(this, requests::expireStale, 20L, 100L);
         getServer().getScheduler().runTask(this, () -> {});
 
         DuelCommand duelCommand = new DuelCommand(this);
@@ -205,6 +206,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         if (nativeMenus != null) nativeMenus.clearPlayer(event.getPlayer().getUniqueId());
+        if (requests != null) requests.removePlayer(event.getPlayer().getUniqueId());
     }
 
     /* removed legacy command preprocess alias */
