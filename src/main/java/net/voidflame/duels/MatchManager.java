@@ -537,6 +537,9 @@ public final class MatchManager implements Listener {
                 try {
                     snapshot.restore(joiningPlayer);
                     pendingRestores.remove(id, snapshot);
+                    if (plugin.lobbyItemsManager() != null) {
+                        plugin.lobbyItemsManager().giveLobbyItems(joiningPlayer);
+                    }
                 } catch (RuntimeException error) {
                     // Keep the snapshot until restoration succeeds; never discard the only
                     // recovery copy because one join-time restore attempt failed.
@@ -563,6 +566,10 @@ public final class MatchManager implements Listener {
 
     private long graceSeconds() {
         return Math.max(1, plugin.getConfig().getLong("settings.disconnect-grace-seconds", 30));
+    }
+
+    public boolean hasPendingRestore(UUID playerId) {
+        return playerId != null && pendingRestores.containsKey(playerId);
     }
 
     public void shutdown() {
