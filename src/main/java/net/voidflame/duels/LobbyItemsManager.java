@@ -61,6 +61,57 @@ public final class LobbyItemsManager implements Listener {
         p.updateInventory();
     }
 
+    public void enforceDuelItems() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            UUID id = player.getUniqueId();
+            if (plugin.matchManager().isInMatch(id) || plugin.matchManager().isDisconnected(id)
+                    || plugin.matchManager().hasPendingRestore(id) || plugin.spectatorManager().isSpectating(id)
+                    || plugin.ffaManager().isInFfa(id) || plugin.kitEditorManager().isEditing(id)
+                    || plugin.partyManager().partyOf(id) != null) continue;
+
+            PlayerInventory inventory = player.getInventory();
+            ItemStack current = inventory.getItem(0);
+            if (isType(current, "duel")) continue;
+
+            int existingDuelSlot = -1;
+            ItemStack[] contents = inventory.getStorageContents();
+            for (int slot = 0; slot < contents.length; slot++) {
+                if (slot != 0 && isType(contents[slot], "duel")) {
+                    existingDuelSlot = slot;
+                    break;
+                }
+            }
+
+            if (current != null && current.getType() != Material.AIR) {
+                int emptySlot = -1;
+                for (int slot = 9; slot < Math.min(36, contents.length); slot++) {
+                    if (contents[slot] == null || contents[slot].getType() == Material.AIR) {
+                        emptySlot = slot;
+                        break;
+                    }
+                }
+                if (emptySlot < 0) continue; // Never delete the item occupying the reserved slot.
+                inventory.setItem(emptySlot, current.clone());
+            }
+
+            ItemStack duelItem;
+            if (existingDuelSlot >= 0) {
+                duelItem = inventory.getItem(existingDuelSlot);
+                inventory.setItem(existingDuelSlot, null);
+            } else {
+                duelItem = item(Material.DIAMOND_SWORD, "§5§lDUEL",
+                        "§7Right-click §8» §fChoose a kit and play",
+                        "§7Left-click a player §8» §fChoose a kit and duel");
+                mark(duelItem, "duel");
+            }
+            inventory.setItem(0, duelItem);
+        }
+    }
+
+    private boolean isReservedLobbySlot(int slot) {
+        return slot == 0 || slot == 1 || slot == 7 || slot == 8;
+    }
+
     public void givePartyItems(Player p) {
         if (plugin.matchManager().isInMatch(p.getUniqueId())
                 || plugin.matchManager().isDisconnected(p.getUniqueId())
@@ -211,7 +262,8 @@ public final class LobbyItemsManager implements Listener {
         }
         if (e.getClickedInventory() instanceof PlayerInventory clickedInventory) {
             int slot = e.getSlot();
-            if (slot >= 0 && slot <= 8 && is(clickedInventory.getItem(slot))) {
+            if (slot >= 0 && slot <= 8
+                    && (isReservedLobbySlot(slot) || is(clickedInventory.getItem(slot)))) {
                 e.setCancelled(true);
                 return;
             }
@@ -251,7 +303,8 @@ public final class LobbyItemsManager implements Listener {
         for (int rawSlot : e.getRawSlots()) {
             if (e.getView().getInventory(rawSlot) == player.getInventory()) {
                 int slot = e.getView().convertSlot(rawSlot);
-                if (slot >= 0 && slot <= 8 && is(player.getInventory().getItem(slot))) {
+                if (slot >= 0 && slot <= 8
+                        && (isReservedLobbySlot(slot) || is(player.getInventory().getItem(slot)))) {
                     e.setCancelled(true);
                     return;
                 }
