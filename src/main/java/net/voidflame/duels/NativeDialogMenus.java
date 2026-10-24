@@ -49,6 +49,17 @@ public final class NativeDialogMenus {
         this.plugin = plugin;
     }
 
+    /**
+     * Release temporary target selections when either participant disconnects.
+     * Dialogs can be closed without activating a button, so these entries must
+     * not remain retained indefinitely.
+     */
+    public void clearPlayer(UUID playerId) {
+        if (playerId == null) return;
+        duelTargets.entrySet().removeIf(entry ->
+                entry.getKey().equals(playerId) || entry.getValue().equals(playerId));
+    }
+
     public void openMain(Player player) {
         if (JavaAdminAccess.isBedrock(player)) { plugin.bedrockMenus().openMain(player); return; }
         List<DialogBody> body = List.of(
