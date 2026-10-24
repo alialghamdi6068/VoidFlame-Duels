@@ -120,7 +120,7 @@ public final class FfaManager implements Listener {
                 sessions.put(id, new Session(snapshot, kit, stats.kills, stats.deaths, stats.streak));
                 player.sendMessage(plugin.message("ffa-joined").replace("<kit>", pretty(kit)));
             } catch (RuntimeException ex) {
-                snapshot.restore(player);
+                plugin.matchManager().restorePartySnapshot(id, snapshot);
                 plugin.getLogger().warning("Could not prepare FFA session for " + id + ": " + ex.getMessage());
                 player.sendMessage(plugin.message("ffa-join-failed"));
             }
@@ -144,7 +144,7 @@ public final class FfaManager implements Listener {
         Session session = sessions.remove(id);
         lastKiller.remove(id);
         if (session == null) return cancelledPendingJoin;
-        session.snapshot.restore(player);
+        plugin.matchManager().restorePartySnapshot(id, session.snapshot);
         player.sendMessage(plugin.message("ffa-left"));
         persist(player.getUniqueId(), session);
         return true;
@@ -247,7 +247,7 @@ public final class FfaManager implements Listener {
             player.setFireTicks(0);
             if (!plugin.kitManager().apply(player, parseKit(session.kit))) {
                 if (sessions.remove(player.getUniqueId(), session)) {
-                    session.snapshot.restore(player);
+                    plugin.matchManager().restorePartySnapshot(player.getUniqueId(), session.snapshot);
                     plugin.getLogger().warning("Could not reapply FFA kit '" + session.kit
                             + "' after respawn for " + player.getUniqueId() + "; restored the pre-FFA snapshot.");
                     player.sendMessage(plugin.message("ffa-join-failed"));
@@ -263,8 +263,8 @@ public final class FfaManager implements Listener {
         lastKiller.remove(id);
         if (session != null) {
             // Never persist the temporary FFA kit as the player's real inventory.
-            // Restore before the disconnect is saved by Minecraft.
-            session.snapshot.restore(event.getPlayer());
+            // Preserve a retryable snapshot if immediate restoration fails.
+            plugin.matchManager().restorePartySnapshot(id, session.snapshot);
             persist(id, session);
         }
     }
