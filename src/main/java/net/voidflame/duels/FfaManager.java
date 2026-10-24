@@ -235,7 +235,17 @@ public final class FfaManager implements Listener {
         Session session = sessions.get(event.getPlayer().getUniqueId());
         if (session == null) return;
         World world = Bukkit.getWorld(plugin.getConfig().getString("features.ffa.world", "ffa"));
-        if (world == null) return;
+        if (world == null) {
+            event.setRespawnLocation(session.snapshot.location());
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                UUID id = event.getPlayer().getUniqueId();
+                if (!sessions.remove(id, session)) return;
+                plugin.matchManager().restorePartySnapshot(id, session.snapshot);
+                playerMessage(event.getPlayer(), "ffa-join-failed", "<player>", event.getPlayer().getName());
+                plugin.getLogger().warning("Ending FFA session for " + id + " because its configured world is no longer loaded.");
+            });
+            return;
+        }
         event.setRespawnLocation(world.getSpawnLocation());
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = event.getPlayer();
