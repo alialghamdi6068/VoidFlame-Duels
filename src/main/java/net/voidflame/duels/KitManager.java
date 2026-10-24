@@ -51,25 +51,32 @@ public final class KitManager {
 
         // Fully parse and validate configured items before clearing any player inventory.
         Map<Integer, ItemStack> preparedItems = new LinkedHashMap<>();
+        boolean invalidConfiguration = false;
         for (String key : items.getKeys(false)) {
             int slot;
             try {
                 slot = Integer.parseInt(key);
             } catch (NumberFormatException invalidSlot) {
-                plugin.getLogger().warning("Ignoring invalid slot '" + key + "' in kit '" + id + "'.");
+                plugin.getLogger().warning("Invalid slot '" + key + "' in kit '" + id + "'.");
+                invalidConfiguration = true;
                 continue;
             }
             if (slot < 0 || slot > 40) {
-                plugin.getLogger().warning("Ignoring out-of-range slot " + slot + " in kit '" + id + "'.");
+                plugin.getLogger().warning("Out-of-range slot " + slot + " in kit '" + id + "'.");
+                invalidConfiguration = true;
                 continue;
             }
             try {
                 ItemStack item = readItem(items.getConfigurationSection(key));
                 if (item != null) preparedItems.put(slot, item);
-                else plugin.getLogger().warning("Ignoring invalid item at slot " + slot + " in kit '" + id + "'.");
+                else {
+                    plugin.getLogger().warning("Invalid item at slot " + slot + " in kit '" + id + "'.");
+                    invalidConfiguration = true;
+                }
             } catch (RuntimeException invalidItem) {
-                plugin.getLogger().warning("Ignoring malformed item at slot " + slot + " in kit '" + id
+                plugin.getLogger().warning("Malformed item at slot " + slot + " in kit '" + id
                         + "': " + invalidItem.getMessage());
+                invalidConfiguration = true;
             }
         }
 
@@ -78,14 +85,16 @@ public final class KitManager {
         if (offhand != null) {
             try {
                 configuredOffhand = readItem(offhand);
+                if (configuredOffhand == null) invalidConfiguration = true;
             } catch (RuntimeException invalidOffhand) {
-                plugin.getLogger().warning("Ignoring malformed offhand item in kit '" + id
+                plugin.getLogger().warning("Malformed offhand item in kit '" + id
                         + "': " + invalidOffhand.getMessage());
+                invalidConfiguration = true;
             }
         }
-        if (preparedItems.isEmpty() && configuredOffhand == null) {
+        if (invalidConfiguration || (preparedItems.isEmpty() && configuredOffhand == null)) {
             plugin.getLogger().severe("Cannot apply kit '" + id
-                    + "': no valid items were parsed. Player inventory was left untouched.");
+                    + "': its item configuration is invalid or empty. Player inventory was left untouched.");
             return false;
         }
 
