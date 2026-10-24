@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CompletableFuture;
 
 public final class MatchManager implements Listener {
     private final VoidFlameDuelsPlugin plugin;
@@ -241,7 +242,11 @@ public final class MatchManager implements Listener {
         match.transition(MatchState.STATS);
         if (winner != null) {
             try {
-                recordExternalMatchResult(match, winner);
+                recordExternalMatchResult(match, winner).exceptionally(error -> {
+                    plugin.getLogger().severe("Could not finish persistence/cache refresh for duel "
+                            + match.matchId() + ": " + error.getMessage());
+                    return null;
+                });
             } catch (RuntimeException error) {
                 plugin.getLogger().severe("Could not record duel result for " + match.matchId() + ": " + error.getMessage());
             }
@@ -337,30 +342,65 @@ public final class MatchManager implements Listener {
         if (logs != null && logs.getProvider() != null) logs.getProvider().log("SYSTEM", action, target, metadata);
     }
 
-    private void recordExternalMatchResult(Match match, UUID winner) {
+    private CompletableFuture<Void> recordExternalMatchResult(Match match, UUID winner) {
         var registration = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.MatchResultService.class);
-        if (registration == null || registration.getProvider() == null) return;
-        UUID loser = match.opponent(winner);
-        registration.getProvider().record(new net.voidflame.core.api.MatchResultService.MatchResult(
-                match.matchId(),
-                match.first(),
-                match.second(),
-                winner,
-                loser,
-                match.kit().name(),
-                "DUEL",
-                match.arena().name(),
-                match.durationSeconds() * 1000L
-        ));
-        var logs = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.AuditLogService.class);
-        if (logs != null && logs.getProvider() != null) {
-            logs.getProvider().log(
-                    winner.toString(),
-                    "DUEL_FINISH",
-                    match.opponent(winner).toString(),
-                    "kit=" + match.kit() + "|arena=" + match.arena().name() + "|duration_ms=" + (match.durationSeconds() * 1000L)
-            );
+        if (registration == null || registration.getProvider() == null) {
+            plugin.getLogger().severe("MatchResultService is unavailable; duel result " + match.matchId() + " was not persisted.");
+            return CompletableFuture.failedFuture(new IllegalStateException("Core MatchResultService is unavailable."));
         }
+
+        UUID loser = match.opponent(winner);
+        String firstName = name(match.first());
+        String secondName = name(match.second());
+        CompletableFuture<Void> persisted = registration.getProvider().recordAsync(
+                new net.voidflame.core.api.MatchResultService.MatchResult(
+                        match.matchId(),
+                        match.first(),
+                        match.second(),
+                        winner,
+                        loser,
+                        match.kit().name(),
+                        "DUEL",
+                        match.arena().name(),
+                        match.durationSeconds() * 1000L
+                ));
+
+        persisted.thenRun(() -> {
+            var logs = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.AuditLogService.class);
+            if (logs != null && logs.getProvider() != null) {
+                logs.getProvider().log(
+                        winner.toString(),
+                        "DUEL_FINISH",
+                        loser.toString(),
+                        "kit=" + match.kit() + "|arena=" + match.arena().name()
+                                + "|duration_ms=" + (match.durationSeconds() * 1000L)
+                );
+            }
+        });
+
+        return persisted.thenCompose(ignored -> {
+            var profileRegistration = Bukkit.getServicesManager()
+                    .getRegistration(net.voidflame.core.storage.PlayerProfileService.class);
+            if (profileRegistration == null || profileRegistration.getProvider() == null) {
+                plugin.getLogger().warning("PlayerProfileService is unavailable; ranked ELO cache refresh skipped.");
+                return CompletableFuture.completedFuture(null);
+            }
+            var profiles = profileRegistration.getProvider();
+            profiles.invalidate(match.first());
+            profiles.invalidate(match.second());
+            return profiles.load(match.first(), firstName).thenCombine(
+                    profiles.load(match.second(), secondName),
+                    (firstProfile, secondProfile) -> {
+                        queues.refreshElo(match.first(), firstProfile.elo());
+                        queues.refreshElo(match.second(), secondProfile.elo());
+                        return null;
+                    });
+        }).whenComplete((ignored, error) -> {
+            if (error != null) {
+                plugin.getLogger().severe("Failed to persist duel result or refresh ranked ELO for "
+                        + match.matchId() + ": " + error.getMessage());
+            }
+        });
     }
 
     private void restoreOrDefer(UUID id, PlayerSnapshot snapshot) {
