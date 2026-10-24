@@ -131,7 +131,9 @@ public final class FfaManager implements Listener {
     private boolean canJoin(Player player) {
         UUID id = player.getUniqueId();
         return !plugin.matchManager().isInMatch(id)
+                && !plugin.matchManager().isDisconnected(id)
                 && !plugin.queueManager().isQueued(id)
+                && !plugin.kitEditorManager().isEditing(id)
                 && !plugin.spectatorManager().isSpectating(id)
                 && plugin.partyManager().partyOf(id) == null;
     }
