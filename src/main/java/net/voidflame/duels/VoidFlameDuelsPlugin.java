@@ -264,15 +264,20 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         if (advancedFeatures != null) advancedFeatures.shutdown();
-        if (kitEditorManager != null) kitEditorManager.shutdown();
-        if (matchManager != null) matchManager.shutdown();
-        if (spectatorManager != null) spectatorManager.shutdown();
         if (requests != null) requests.clear();
         if (rematches != null) rematches.clear();
+
+        // Restore temporary player states before MatchManager performs its final
+        // recovery pass; otherwise failed restores created by these managers would
+        // be left behind after MatchManager has already shut down.
+        if (kitEditorManager != null) kitEditorManager.shutdown();
+        if (spectatorManager != null) spectatorManager.shutdown();
+        if (ffaManager != null) ffaManager.shutdown();
+        if (combatTagManager != null) combatTagManager.clearAll();
+
+        if (matchManager != null) matchManager.shutdown();
         if (partyManager != null) partyManager.shutdown();
         if (queueManager != null) queueManager.shutdown();
-        if (combatTagManager != null) combatTagManager.clearAll();
-        if (ffaManager != null) ffaManager.shutdown();
         unregisterPublicServices();
 
         if (coreServices != null) {
@@ -280,7 +285,7 @@ public final class VoidFlameDuelsPlugin extends JavaPlugin implements Listener {
             coreServices.unregister(MatchManager.class);
             coreServices.unregister(KitManager.class);
             coreServices.unregister(PartyManager.class);
-            }
+        }
     }
 
     public String message(String key) {
