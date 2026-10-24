@@ -123,11 +123,19 @@ public final class MatchManager implements Listener {
         LobbyItemsManager.PartyMode mode = plugin.partyManager().modeOf(leader);
         if (mode == null) return false;
         if (!plugin.getConfig().getBoolean("settings.party-matchmaking-enabled", true)) return false;
-        List<Player> participants = plugin.partyManager().onlineMembers(leader).stream()
-                .filter(p -> !isInMatch(p.getUniqueId()))
-                .filter(p -> !plugin.spectatorManager().isSpectating(p.getUniqueId()))
-                .filter(p -> !plugin.ffaManager().isInFfa(p.getUniqueId()))
-                .toList();
+        List<Player> participants = plugin.partyManager().onlineMembers(leader);
+        boolean busyMember = participants.stream().anyMatch(player -> {
+            UUID id = player.getUniqueId();
+            return isInMatch(id) || isDisconnected(id) || queues.isQueued(id)
+                    || plugin.kitEditorManager().isEditing(id)
+                    || plugin.spectatorManager().isSpectating(id)
+                    || plugin.ffaManager().isInFfa(id);
+        });
+        if (busyMember) {
+            Player onlineLeader = Bukkit.getPlayer(leader);
+            if (onlineLeader != null) onlineLeader.sendMessage(plugin.message("party-busy"));
+            return false;
+        }
         int required = switch (mode) {
             case ONE_V_ONE -> 2;
             case TWO_V_TWO -> 4;
