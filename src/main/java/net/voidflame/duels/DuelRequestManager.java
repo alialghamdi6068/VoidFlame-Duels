@@ -17,6 +17,9 @@ public final class DuelRequestManager {
     public boolean send(Player sender, Player target, KitType kit) {
         if (sender == null || target == null || kit == null || sender.equals(target)
                 || !sender.isOnline() || !target.isOnline()) return false;
+        if (!plugin.queueManager().isKitEnabled(kit)
+                || !plugin.playerSettings().duelRequests(sender)
+                || !plugin.playerSettings().duelRequests(target)) return false;
         UUID senderId = sender.getUniqueId();
         UUID targetId = target.getUniqueId();
         if (unavailable(senderId) || unavailable(targetId)) return false;
