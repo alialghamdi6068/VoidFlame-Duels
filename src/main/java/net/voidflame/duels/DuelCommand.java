@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 public final class DuelCommand implements CommandExecutor, TabCompleter {
     private final VoidFlameDuelsPlugin plugin;
