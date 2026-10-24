@@ -167,6 +167,10 @@ public final class PartyMatch {
 
     public void finish(UUID winner) {
         if (finished) return;
+        if (winner != null && !players.contains(winner)) {
+            plugin.getLogger().warning("Ignoring invalid winner " + winner + " for party match " + matchId + ".");
+            winner = null;
+        }
         finished = true;
         if (countdownTask != -1) Bukkit.getScheduler().cancelTask(countdownTask);
         if (limitTask != -1) Bukkit.getScheduler().cancelTask(limitTask);
@@ -190,18 +194,28 @@ public final class PartyMatch {
                 }
             }
 
-            try {
-                var partyResults = Bukkit.getServicesManager().getRegistration(net.voidflame.core.api.PartyMatchResultService.class);
-                if (winner != null && partyResults != null && partyResults.getProvider() != null
-                        && plugin.getConfig().getBoolean("features.party-stats.enabled", true)) {
-                    List<UUID> winners = winningPlayers(winner);
-                    partyResults.getProvider().record(new net.voidflame.core.api.PartyMatchResultService.PartyMatchResult(
-                            matchId, players, winners, kit.name(), mode.name(), arena.name(),
-                            startedAt == 0L ? 0L : Math.max(0L, System.currentTimeMillis() - startedAt)
-                    ));
+            if (winner != null && plugin.getConfig().getBoolean("features.party-stats.enabled", true)) {
+                try {
+                    var partyResults = Bukkit.getServicesManager()
+                            .getRegistration(net.voidflame.core.api.PartyMatchResultService.class);
+                    if (partyResults == null || partyResults.getProvider() == null) {
+                        plugin.getLogger().severe("PartyMatchResultService is unavailable; party result "
+                                + matchId + " was not persisted.");
+                    } else {
+                        List<UUID> winners = winningPlayers(winner);
+                        partyResults.getProvider().recordAsync(
+                                new net.voidflame.core.api.PartyMatchResultService.PartyMatchResult(
+                                        matchId, players, winners, kit.name(), mode.name(), arena.name(),
+                                        startedAt == 0L ? 0L : Math.max(0L, System.currentTimeMillis() - startedAt)
+                                )).exceptionally(error -> {
+                                    plugin.getLogger().severe("Could not persist party match result " + matchId
+                                            + ": " + error.getMessage());
+                                    return null;
+                                });
+                    }
+                } catch (RuntimeException error) {
+                    plugin.getLogger().severe("Could not record party match result " + matchId + ": " + error.getMessage());
                 }
-            } catch (RuntimeException error) {
-                plugin.getLogger().severe("Could not record party match result " + matchId + ": " + error.getMessage());
             }
 
             if (winner != null) {
