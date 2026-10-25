@@ -261,6 +261,8 @@ public final class MatchManager implements Listener {
                 });
             } catch (RuntimeException error) {
                 plugin.getLogger().severe("Could not record duel result for " + match.matchId() + ": " + error.getMessage());
+                pendingResults.remove(match.first());
+                pendingResults.remove(match.second());
             }
             try {
                 plugin.advancedFeatures().saveReplay(
