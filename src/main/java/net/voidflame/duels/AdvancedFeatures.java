@@ -55,6 +55,7 @@ public final class AdvancedFeatures implements Listener {
     private final Map<UUID, Long> chatCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> coins = new ConcurrentHashMap<>();
     private final Map<UUID, CompletableFuture<Void>> coinWrites = new ConcurrentHashMap<>();
+    private final Set<UUID> shopPurchasesInFlight = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Long> combatTags = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> trainingSessions = new ConcurrentHashMap<>();
     private final Map<UUID, Set<ArmorStand>> trainingDummies = new ConcurrentHashMap<>();
@@ -540,29 +541,71 @@ public final class AdvancedFeatures implements Listener {
             player.sendMessage(color("&cUnknown product."));
             return;
         }
+
+        UUID playerId = player.getUniqueId();
+        if (!shopPurchasesInFlight.add(playerId)) {
+            player.sendMessage(color("&eYour previous shop purchase is still processing."));
+            return;
+        }
+
         String tag = String.valueOf(entry.containsKey("id") ? entry.get("id") : entry.get("name"));
         int cost = Math.max(0, parseInt(entry.get("price"), 0));
         storage.database().query("SELECT 1 FROM player_shop_purchases WHERE uuid=? AND product_id=?",
-                player.getUniqueId().toString(), tag).thenAccept(rows -> Bukkit.getScheduler().runTask(plugin, () -> {
-            if (!rows.isEmpty()) {
-                player.sendMessage(color("&eYou already own this product."));
-                openCoinShop(player);
+                playerId.toString(), tag).whenComplete((rows, lookupError) -> {
+            if (lookupError != null) {
+                shopPurchasesInFlight.remove(playerId);
+                plugin.getLogger().warning("Shop purchase lookup failed: " + lookupError.getMessage());
+                runShopTask(player, () -> player.sendMessage(color("&cPurchase failed. Try again.")));
                 return;
             }
-            if (!takeCoins(player.getUniqueId(), cost)) {
-                player.sendMessage(color("&cYou do not have enough coins."));
-                openCoinShop(player);
-                return;
-            }
-            storage.database().execute("INSERT INTO player_shop_purchases(uuid, product_id, purchased_at) VALUES (?, ?, ?)",
-                    player.getUniqueId().toString(), tag, System.currentTimeMillis());
-            storagePut(TAG_MODULE, player.getUniqueId().toString(), tag);
-            player.sendMessage(color("&aPurchased &f" + tag + " &afor &e" + cost + " coins&a."));
-            openCoinShop(player);
-        })).exceptionally(error -> {
-            plugin.getLogger().warning("Shop purchase failed: " + error.getMessage());
-            Bukkit.getScheduler().runTask(plugin, () -> player.sendMessage(color("&cPurchase failed. Try again.")));
-            return null;
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!player.isOnline()) {
+                    shopPurchasesInFlight.remove(playerId);
+                    return;
+                }
+                if (rows != null && !rows.isEmpty()) {
+                    shopPurchasesInFlight.remove(playerId);
+                    player.sendMessage(color("&eYou already own this product."));
+                    openCoinShop(player);
+                    return;
+                }
+                if (!takeCoins(playerId, cost)) {
+                    shopPurchasesInFlight.remove(playerId);
+                    player.sendMessage(color("&cYou do not have enough coins."));
+                    openCoinShop(player);
+                    return;
+                }
+
+                // Keep the per-player purchase lock until the insert has committed.
+                // If persistence fails, refund the reserved coins instead of charging
+                // the player for an item they do not own.
+                storage.database().execute(
+                        "INSERT INTO player_shop_purchases(uuid, product_id, purchased_at) VALUES (?, ?, ?)",
+                        playerId.toString(), tag, System.currentTimeMillis()
+                ).whenComplete((ignored, insertError) -> {
+                    if (insertError != null) {
+                        addCoins(playerId, cost);
+                        plugin.getLogger().warning("Shop purchase insert failed for " + playerId + ": " + insertError.getMessage());
+                        runShopTask(player, () -> {
+                            player.sendMessage(color("&cPurchase failed. Your coins have been refunded."));
+                            openCoinShop(player);
+                        });
+                    } else {
+                        storagePut(TAG_MODULE, playerId.toString(), tag);
+                        runShopTask(player, () -> {
+                            player.sendMessage(color("&aPurchased &f" + tag + " &afor &e" + cost + " coins&a."));
+                            openCoinShop(player);
+                        });
+                    }
+                    shopPurchasesInFlight.remove(playerId);
+                });
+            });
+        });
+    }
+
+    private void runShopTask(Player player, Runnable task) {
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (player.isOnline()) task.run();
         });
     }
 
