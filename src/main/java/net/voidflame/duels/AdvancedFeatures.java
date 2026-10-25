@@ -59,6 +59,9 @@ public final class AdvancedFeatures implements Listener {
     private final Map<UUID, Long> combatTags = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> trainingSessions = new ConcurrentHashMap<>();
     private final Map<UUID, Set<ArmorStand>> trainingDummies = new ConcurrentHashMap<>();
+    private final Map<UUID, Float> trainingWalkSpeeds = new ConcurrentHashMap<>();
+    private final Map<UUID, org.bukkit.potion.PotionEffect> trainingSpeedEffects = new ConcurrentHashMap<>();
+    private final Map<UUID, org.bukkit.potion.PotionEffect> trainingJumpEffects = new ConcurrentHashMap<>();
     private final Set<UUID> goldenHard = ConcurrentHashMap.newKeySet();
     private final Map<UUID, List<String>> recentCombat = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> replayMatchByPlayer = new ConcurrentHashMap<>();
@@ -691,6 +694,11 @@ public final class AdvancedFeatures implements Listener {
         finishTraining(player, false);
         UUID sessionId = UUID.randomUUID();
         UUID uuid = player.getUniqueId();
+        trainingWalkSpeeds.put(uuid, player.getWalkSpeed());
+        org.bukkit.potion.PotionEffect previousSpeed = player.getPotionEffect(org.bukkit.potion.PotionEffectType.SPEED);
+        org.bukkit.potion.PotionEffect previousJump = player.getPotionEffect(org.bukkit.potion.PotionEffectType.JUMP_BOOST);
+        if (previousSpeed != null) trainingSpeedEffects.put(uuid, previousSpeed);
+        if (previousJump != null) trainingJumpEffects.put(uuid, previousJump);
         trainingSessions.put(uuid, sessionId);
         storage.database().execute(
                 "INSERT INTO training_sessions(session_id, uuid, drill, started_at, score) VALUES (?, ?, ?, ?, 0)",
@@ -711,7 +719,9 @@ public final class AdvancedFeatures implements Listener {
             trainingDummies.computeIfAbsent(uuid, ignored -> ConcurrentHashMap.newKeySet()).add(dummy);
         }
         player.sendMessage(color("&a" + drill.substring(0, 1).toUpperCase(Locale.ROOT) + drill.substring(1) + " drill started."));
-        Bukkit.getScheduler().runTaskLater(plugin, () -> finishTraining(player, true), duration * 20L);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (sessionId.equals(trainingSessions.get(uuid))) finishTraining(player, true);
+        }, duration * 20L);
     }
 
     private void finishTraining(Player player, boolean completed) {
@@ -727,7 +737,18 @@ public final class AdvancedFeatures implements Listener {
         if (dummies != null) dummies.forEach(dummy -> {
             if (dummy != null && !dummy.isDead()) dummy.remove();
         });
-        if (player.isOnline()) player.setWalkSpeed(0.2f);
+        Float previousWalkSpeed = trainingWalkSpeeds.remove(uuid);
+        org.bukkit.potion.PotionEffect previousSpeed = trainingSpeedEffects.remove(uuid);
+        org.bukkit.potion.PotionEffect previousJump = trainingJumpEffects.remove(uuid);
+        if (player.isOnline()) {
+            if (previousWalkSpeed != null) player.setWalkSpeed(previousWalkSpeed);
+            if (sessionId != null) {
+                player.removePotionEffect(org.bukkit.potion.PotionEffectType.SPEED);
+                player.removePotionEffect(org.bukkit.potion.PotionEffectType.JUMP_BOOST);
+                if (previousSpeed != null) player.addPotionEffect(previousSpeed);
+                if (previousJump != null) player.addPotionEffect(previousJump);
+            }
+        }
     }
 
     private void loadGoldenHard(Player player) {
