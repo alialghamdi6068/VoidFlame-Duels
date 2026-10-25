@@ -31,6 +31,7 @@ public final class MatchManager implements Listener {
     private final Map<UUID, Match> disconnected = new ConcurrentHashMap<>();
     private final Map<UUID, PlayerSnapshot> pendingRestores = new ConcurrentHashMap<>();
     private final Map<UUID, Long> disconnectTokens = new ConcurrentHashMap<>();
+    private final java.util.Set<UUID> pendingResults = ConcurrentHashMap.newKeySet();
 
     public MatchManager(VoidFlameDuelsPlugin plugin, QueueManager queues, ArenaManager arenas, KitManager kits) {
         this.plugin = plugin;
@@ -116,7 +117,7 @@ public final class MatchManager implements Listener {
     }
 
     public boolean isInMatch(UUID id) {
-        return matches.containsKey(id) || partyMatches.containsKey(id);
+        return matches.containsKey(id) || partyMatches.containsKey(id) || pendingResults.contains(id);
     }
 
     public boolean startParty(UUID leader) {
@@ -205,6 +206,12 @@ public final class MatchManager implements Listener {
     }
 
     void finish(Match match, UUID winner) {
+        // Keep both players out of queues until Core has committed the final
+        // result so matchmaking cannot reuse stale ELO immediately after a duel.
+        if (winner != null) {
+            pendingResults.add(match.first());
+            pendingResults.add(match.second());
+        }
         PlayerSnapshot firstSnapshot = match.snapshot(match.first());
         PlayerSnapshot secondSnapshot = match.snapshot(match.second());
 
@@ -242,10 +249,15 @@ public final class MatchManager implements Listener {
         match.transition(MatchState.STATS);
         if (winner != null) {
             try {
-                recordExternalMatchResult(match, winner).exceptionally(error -> {
-                    plugin.getLogger().severe("Could not finish persistence/cache refresh for duel "
-                            + match.matchId() + ": " + error.getMessage());
-                    return null;
+                recordExternalMatchResult(match, winner).whenComplete((ignored, error) -> {
+                    if (error != null) {
+                        plugin.getLogger().severe("Could not finish persistence/cache refresh for duel "
+                                + match.matchId() + ": " + error.getMessage());
+                    }
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        pendingResults.remove(match.first());
+                        pendingResults.remove(match.second());
+                    });
                 });
             } catch (RuntimeException error) {
                 plugin.getLogger().severe("Could not record duel result for " + match.matchId() + ": " + error.getMessage());
