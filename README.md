@@ -9,10 +9,9 @@ Professional practice and duels foundation for VoidFlame MC.
 - Mace
 - Spear & Mace
 - Crystal
-- Netherite Pot
 
 ## Features
-- Eight canonical practice kits: Sword, Axe, UHC, Mace, Crystal, Netherite Pot, SMP, and Spear & Mace.
+- Six active queue kits: Sword, Axe, UHC, Mace, Spear & Mace, and Crystal. Legacy kit definitions remain stored in configuration but are disabled in the player-facing kit list to preserve existing data.
 - Queue and direct duel matchmaking, ranked/unranked queues, parties, FFA, spectators, reconnects, rematches and rewards.
 - Built-in kit definitions and a personal inventory-layout editor persisted through VoidFlame-Core.
 - Built-in arena allocation and bounded region restoration. Each locally configured arena must define `region.min` and `region.max`; arenas without a valid reset region are not allocated.
