@@ -128,27 +128,27 @@ gui:
       icon: END_CRYSTAL
       display-name: "&d&lCRYSTAL"
     netherite_pot:
-      enabled: true
+      enabled: false
       slot: 16
       icon: SPLASH_POTION
       display-name: "&d&lNETHERITE POT"
     smp:
-      enabled: true
+      enabled: false
       slot: 19
       icon: TOTEM_OF_UNDYING
       display-name: "&d&lSMP"
     diamond_smp:
-      enabled: true
+      enabled: false
       slot: 20
       icon: DIAMOND_CHESTPLATE
       display-name: "&b&lDIAMOND SMP"
     tnt_minecart_lt:
-      enabled: true
+      enabled: false
       slot: 21
       icon: TNT_MINECART
       display-name: "&6&lTNT MINECART LT"
     tnt_minecart_ht:
-      enabled: true
+      enabled: false
       slot: 22
       icon: TNT_MINECART
       display-name: "&c&lTNT MINECART HT"
